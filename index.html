@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Color Tile Generator</title>
+
+ <style>
+        #paletteContainer {
+            width: auto; /* Adjust based on your layout */
+            height: 160px; /* Adjust to control the palette height */
+            overflow: auto; /* Makes the palette scrollable */
+            border: 1px solid #ccc; /* Optional: adds border around the palette */
+        }
+        .palette {
+            display: flex;
+            flex-wrap: wrap;
+            padding: 4px;
+        }
+        .colorSquare {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            margin: 1px;
+        }
+    </style>
+    </head>
+<body>
+
+
+<div id="paletteContainer">
+    <div class="palette" id="colorPalette"></div>
+</div>
+
+<input type="text" id="colorInput" placeholder="Selected colors" value="FFFFFF, 000000" />
+<input type="number" id="sizeInput" placeholder="Size of squares" value="50" />
+
+<br />
+<canvas id="canvas"></canvas
+>
+<br />
+
+<button id="createBtn">Generate Palette</button>
+<button id="downloadBtn">Download</button>
+
+<script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    // Function to draw squares on the canvas
+    function drawSquares(colors, size) {
+        const squaresPerRow = 10; // Maximum squares per row
+        const numRows = Math.ceil(colors.length / squaresPerRow); // Calculate the number of rows needed
+
+        // Adjust canvas size based on input
+        canvas.width = squaresPerRow * size; // Width based on 10 squares per row
+        canvas.height = numRows * size; // Height based on the number of rows
+
+        // Clear the canvas before redrawing
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Draw each square
+        colors.forEach((color, index) => {
+            const row = Math.floor(index / squaresPerRow);
+            const col = index % squaresPerRow;
+            ctx.fillStyle = `#${color.trim()}`; // Ensure color is properly formatted
+            ctx.fillRect(col * size, row * size, size, size);
+        });
+    }
+
+    // Event listener for the Create button
+    document.getElementById('createBtn').addEventListener('click', function() {
+        const colorInput = document.getElementById('colorInput').value;
+        const sizeInput = parseInt(document.getElementById('sizeInput').value, 10) || 50; // Use default size 50 if input is invalid
+        const colors = colorInput.split(','); // Split input string into array
+        drawSquares(colors, sizeInput);
+    });
+
+    // Function to trigger download
+    document.getElementById('downloadBtn').onclick = function() {
+        const image = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
+        const link = document.createElement('a');
+        link.download = 'color-grid.png';
+        link.href = image;
+        document.body.appendChild(link); // Temporarily add link to body for Firefox compatibility
+        link.click();
+        document.body.removeChild(link); // Remove the link when done
+    };
+
+    // Generate the grid once with default values before user interaction
+    window.onload = function() {
+        const defaultColors = document.getElementById('colorInput').value.split(',');
+        const defaultSize = parseInt(document.getElementById('sizeInput').value, 10);
+        drawSquares(defaultColors, defaultSize);
+    };
+</script>
+
+
+
+<script>
+    function generateColorPalette() {
+        const palette = document.getElementById('colorPalette');
+        for (let r = 0; r < 256; r += 51) { // Increment by 51 to get 6 shades per color channel
+            for (let g = 0; g < 256; g += 51) {
+                for (let b = 0; b < 256; b += 51) {
+                    const colorSquare = document.createElement('div');
+                    colorSquare.classList.add('colorSquare');
+                    const color = rgbToHex(r, g, b);
+                    colorSquare.style.backgroundColor = `#${color}`;
+                    colorSquare.setAttribute('data-color', color);
+                    colorSquare.addEventListener('click', function() {
+                        const colorInput = document.getElementById('colorInput');
+                        colorInput.value += `${this.getAttribute('data-color')}, `;
+                    });
+                    palette.appendChild(colorSquare);
+                }
+            }
+        }
+    }
+
+    function componentToHex(c) {
+        const hex = c.toString(16);
+        return hex.length == 1 ? "0" + hex : hex;
+    }
+
+    function rgbToHex(r, g, b) {
+        return componentToHex(r) + componentToHex(g) + componentToHex(b);
+    }
+
+    generateColorPalette();
+</script>
+
+</body>
+</html>
