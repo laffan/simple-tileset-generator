@@ -1,132 +1,633 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <title>Color Tile Generator</title>
 
- <style>
-        #paletteContainer {
-            width: auto; /* Adjust based on your layout */
-            height: 160px; /* Adjust to control the palette height */
-            overflow: auto; /* Makes the palette scrollable */
-            border: 1px solid #ccc; /* Optional: adds border around the palette */
-        }
-        .palette {
-            display: flex;
-            flex-wrap: wrap;
-            padding: 4px;
-        }
-        .colorSquare {
-            width: 20px;
-            height: 20px;
-            cursor: pointer;
-            margin: 1px;
-        }
-    </style>
-    </head>
+<head>
+  <title>Color Tile Generator</title>
+
+  <style>
+    html,
+    body {
+      font-family: Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      padding: 30px;
+    }
+
+    #paletteContainer {
+      width: auto;
+      border: 1px solid #eeeeee;
+      height: 100%;
+      max-height: 500px;
+      overflow-y: scroll;
+
+    }
+
+    .palette {
+      display: flex;
+      flex-wrap: wrap;
+      padding: 4px;
+
+    }
+
+    canvas {
+      border: 1px solid #eeeeee;
+
+    }
+
+    .colorSquare {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+      margin: 1px;
+    }
+
+    #colorsPreviewContainer {
+      padding: 10px;
+      border: 1px solid #eeeeee;
+    }
+
+    .colorPreviewButton {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+      margin: 5px;
+      display: inline-block;
+      border: none;
+      box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+
+      /* Optional, removes border */
+    }
+
+    .PreviewBox {
+      background: #eeeeee;
+      padding: 20px;
+      overflow: scroll;
+      text-align: center;
+      max-height: 200px;
+      max-width: 50vw;
+
+    }
+
+    .Columns {
+      display: grid;
+      grid-template-columns: 400px 1fr;
+      gap: 30px;
+    }
+
+    .complexity_slider_wrapper {
+      /* text-align: center; */
+      margin-top: 30px;
+    }
+
+    #downloadBtn {
+      background-color: black;
+      padding: 5px 10px;
+      margin-bottom: 30px;
+      font-size: 17px;
+      border: none;
+      color: white;
+      cursor: pointer;
+
+    }
+
+    #colorInput {
+      width: 100%;
+    }
+
+    #downloadBtn:hover {
+      background-color: gray;
+    }
+
+    footer {
+      position: fixed;
+      bottom: 0;
+      padding-bottom: 10px;
+      height: 30px;
+      z-index: 100;
+      text-align: center;
+      width: 100%;
+    }
+  </style>
+</head>
+
 <body>
 
+  <header>
 
-<div id="paletteContainer">
-    <div class="palette" id="colorPalette"></div>
-</div>
+    <h1>Tileset Generator</h1>
+  </header>
 
-<input type="text" id="colorInput" placeholder="Selected colors" value="FFFFFF, 000000" />
-<input type="number" id="sizeInput" placeholder="Size of squares" value="50" />
+  <div class="Columns">
+    <div class="Column__Left">
 
-<br />
-<canvas id="canvas"></canvas
->
-<br />
+      <div>
 
-<button id="createBtn">Generate Palette</button>
-<button id="downloadBtn">Download</button>
+        <h3>Tile Size</h3>
+        <input type="number" id="sizeInput" placeholder="Size of squares" value="50" />
 
-<script>
+      </div>
+
+      <div>
+        <h3>Selected Colors</h3>
+        <textarea id="colorInput" placeholder="Selected colors">FFFFFF, 000000, </textarea>
+      </div>
+      <div>
+        <br />
+        <label>Click color to remove</label>
+        <div id="colorsPreviewContainer"></div>
+      </div>
+
+      <div>
+
+        <h3>Shapes</h3>
+        <div id="shapeSelection">
+          <ul style="list-style-type: none; padding: 0;">
+            <li><label><input type="checkbox" class="shapeCheckbox" id="square" checked>Square</label></li>
+            <li><label><input type="checkbox" class="shapeCheckbox" id="circle">Circle</label></li>
+            <li><label><input type="checkbox" class="shapeCheckbox" id="triangle">Triangle</label></li>
+            <li><label><input type="checkbox" class="shapeCheckbox" id="diamond">Diamond</label></li>
+            <!-- Half Circles -->
+            <li><label><input type="checkbox" class="shapeCheckbox" id="halfCircleTop">Half Circle (Top)</label></li>
+            <li><label><input type="checkbox" class="shapeCheckbox" id="halfCircleBottom">Half Circle (Bottom)</label>
+            </li>
+            <li><label><input type="checkbox" class="shapeCheckbox" id="halfCircleLeft">Half Circle (Left)</label></li>
+            <li><label><input type="checkbox" class="shapeCheckbox" id="halfCircleRight">Half Circle (Right)</label>
+
+
+
+              <!-- Half Circles -->
+            <li><label><input type="checkbox" class="shapeCheckbox" id="quarterCircleTopLeft">Quarter Circle (Top
+                Left)</label>
+            </li>
+            <li><label><input type="checkbox" class="shapeCheckbox" id="quarterCircleTopRight">Quarter Circle
+                (Top Right)</label></li>
+            <li><label><input type="checkbox" class="shapeCheckbox" id="quarterCircleBottomLeft">Quarter Circle (Bottom
+                Left)</label>
+            </li>
+            <li><label><input type="checkbox" class="shapeCheckbox" id="quarterCircleBottomRight">Quarter Circle
+                (Bottom Right)</label>
+
+            <li><label><input type="checkbox" class="shapeCheckbox" id="angleTopLeft">Angle (Top
+                Left)</label>
+            </li>
+            <li><label><input type="checkbox" class="shapeCheckbox" id="angleTopRight">Angle
+                (Top Right)</label></li>
+            <li><label><input type="checkbox" class="shapeCheckbox" id="angleBottomLeft">Angle (Bottom
+                Left)</label>
+            </li>
+            <li><label><input type="checkbox" class="shapeCheckbox" id="angleBottomRight">Angle
+                (Bottom Right)</label>
+
+              <!-- Half Circles -->
+            <li><label><input type="checkbox" class="shapeCheckbox" id="waves">Waves</label>
+            </li>
+            <li><label><input type="checkbox" class="shapeCheckbox" id="spikes">Spikes</label></li>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <br />
+
+
+    </div>
+
+    <div class="Column__Right">
+
+      <div class="PreviewBox">
+        <canvas id="canvas"></canvas>
+      </div>
+
+
+      <div class="complexity_slider_wrapper">
+        <label for="paletteComplexity">Palette Simplicity:</label>
+        <input type="range" id="paletteComplexity" min="14" max="128" value="40">
+      </div>
+      <div id="paletteContainer">
+        <div class="palette" id="colorPalette"></div>
+      </div>
+
+
+
+    </div>
+  </div>
+  <footer>
+
+    <button id="downloadBtn">Download Tileset</button>
+  </footer>
+
+
+  <script>
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
 
+
+    // Update the drawShapes function to accommodate multiple shapes in separate rows
+    function drawShapes(colors, size) {
+      const squaresPerRow = colors.length;  // Now depends on the number of colors
+      const selectedShapes = getSelectedShapes();
+      const numRows = selectedShapes.length;  // A single row per selected shape
+
+      // Adjust canvas width and height based on the number of colors and selected shapes
+      canvas.width = squaresPerRow * size;
+      canvas.height = numRows * size;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      selectedShapes.forEach((shape, shapeIndex) => {
+        colors.forEach((color, index) => {
+          const x = index * size;  // X position depends on color index
+          const y = shapeIndex * size;  // Y position depends on shape index
+          ctx.fillStyle = `#${color.trim()}`;
+          drawShape(x, y, size, ctx, shape);  // Draw each shape in its respective row
+        });
+      });
+    }
+
+    function updateColorsPreview() {
+      const colorInput = document.getElementById('colorInput');
+      const colors = colorInput.value.split(',').map(color => color.trim()).filter(color => color);
+      const previewContainer = document.getElementById('colorsPreviewContainer');
+
+      // Clear the current preview
+      previewContainer.innerHTML = '';
+
+      // Create a button for each color in the input
+      colors.forEach((color, index) => {
+        const button = document.createElement('button');
+        button.className = 'colorPreviewButton';
+        button.style.backgroundColor = `#${color}`;
+        button.setAttribute('title', `#${color}`); // Optional: shows color code on hover
+
+        // Remove the color from the input when the button is clicked
+        button.addEventListener('click', function () {
+          // Directly manipulate array and reassign to input field
+          colors.splice(index, 1); // Remove the color from array
+          const cleanColorString = colors.join(', ').trim(); // Join and trim the array to string
+          colorInput.value = cleanColorString + ", ";
+          updateColorsPreview(); // Recursively update the preview
+          generateTileset();
+        });
+
+        previewContainer.appendChild(button);
+      });
+    }
+
+
+
+    // Helper function to collect selected shapes
+    function getSelectedShapes() {
+      const shapes = [];
+      if (document.getElementById('square').checked) shapes.push("square");
+      if (document.getElementById('circle').checked) shapes.push("circle");
+      if (document.getElementById('triangle').checked) shapes.push("triangle");
+      if (document.getElementById('diamond').checked) shapes.push("diamond");
+
+      // Half Circles
+      if (document.getElementById('halfCircleTop').checked) shapes.push("halfCircleTop");
+      if (document.getElementById('halfCircleBottom').checked) shapes.push("halfCircleBottom");
+      if (document.getElementById('halfCircleLeft').checked) shapes.push("halfCircleLeft");
+      if (document.getElementById('halfCircleRight').checked) shapes.push("halfCircleRight");
+
+      if (document.getElementById('quarterCircleTopLeft').checked) shapes.push("quarterCircleTopLeft");
+      if (document.getElementById('quarterCircleTopRight').checked) shapes.push("quarterCircleTopRight");
+      if (document.getElementById('quarterCircleBottomLeft').checked) shapes.push("quarterCircleBottomLeft");
+      if (document.getElementById('quarterCircleBottomRight').checked) shapes.push("quarterCircleBottomRight");
+
+      if (document.getElementById('angleTopLeft').checked) shapes.push("angleTopLeft");
+      if (document.getElementById('angleTopRight').checked) shapes.push("angleTopRight");
+      if (document.getElementById('angleBottomLeft').checked) shapes.push("angleBottomLeft");
+      if (document.getElementById('angleBottomRight').checked) shapes.push("angleBottomRight");
+
+      if (document.getElementById('waves').checked) shapes.push("waves");
+      if (document.getElementById('spikes').checked) shapes.push("spikes");
+      return shapes;
+    }
+
+
+    // Update the drawShape function to handle different shapes
+    function drawShape(x, y, size, ctx, shape) {
+      // Adjust x, y for centering non-square shapes if necessary
+      switch (shape) {
+        case "square":
+          ctx.fillRect(x, y, size, size);
+          break;
+        case "circle":
+          ctx.beginPath();
+          ctx.arc(x + size / 2, y + size / 2, size / 2, 0, Math.PI * 2);
+          ctx.fill();
+          break;
+        case "triangle":
+          ctx.beginPath();
+          ctx.moveTo(x + size / 2, y);
+          ctx.lineTo(x + size, y + size);
+          ctx.lineTo(x, y + size);
+          ctx.closePath();
+          ctx.fill();
+          break;
+        case "diamond":
+          ctx.beginPath();
+          ctx.moveTo(x + size / 2, y);
+          ctx.lineTo(x + size, y + size / 2);
+          ctx.lineTo(x + size / 2, y + size);
+          ctx.lineTo(x, y + size / 2);
+          ctx.closePath();
+          ctx.fill();
+          break;
+        case "halfCircleTop":
+          ctx.beginPath();
+          ctx.arc(x + size / 2, y + size, size / 2, Math.PI, 0, false);
+          ctx.lineTo(x + size / 2, y + size);
+          ctx.fill();
+          break;
+        case "halfCircleBottom":
+          ctx.beginPath();
+          ctx.arc(x + size / 2, y, size / 2, Math.PI, 0, true);
+          ctx.lineTo(x + size / 2, y);
+          ctx.fill();
+          break;
+        case "halfCircleLeft":
+          ctx.beginPath();
+          ctx.arc(x + size / 2, y + size / 2, size / 2, Math.PI * 1.5, Math.PI / 2, true);
+          ctx.lineTo(x + size / 2, y + size / 2); // Close path towards the starting point
+          ctx.fill();
+          break;
+        case "halfCircleRight":
+          ctx.beginPath();
+          ctx.arc(x + size / 2, y + size / 2, size / 2, Math.PI / 2, Math.PI * 1.5, true);
+          ctx.lineTo(x + size / 2, y + size / 2); // Close path towards the starting point
+          ctx.fill();
+          break;
+        case "waves":
+          ctx.beginPath();
+          const waveAmplitude = size / 8; // Wave amplitude
+          const waveFrequency = 2; // Determines the number of waves
+          for (let waveX = 0; waveX <= size; waveX++) {
+            const waveY = Math.sin((waveX / size) * Math.PI * waveFrequency) * waveAmplitude + (size / 2);
+            if (waveX === 0) ctx.moveTo(x + waveX, y + waveY);
+            else ctx.lineTo(x + waveX, y + waveY);
+          }
+          ctx.lineTo(x + size, y + size);
+          ctx.lineTo(x, y + size);
+          ctx.closePath();
+          ctx.fill();
+          break;
+
+        case "spikes":
+          // Left Spike
+          ctx.beginPath();
+          ctx.moveTo(x, y + size / 2);
+          ctx.lineTo(x + size / 2, y + size);
+          ctx.lineTo(x, y + size);
+          ctx.closePath();
+          ctx.fill();
+
+          // Right Spike
+          ctx.beginPath();
+          ctx.moveTo(x + size, y + size / 2);
+          ctx.lineTo(x + size / 2, y + size);
+          ctx.lineTo(x + size, y + size);
+          ctx.closePath();
+          ctx.fill();
+          break;
+        case "quarterCircleTopLeft":
+          ctx.beginPath();
+          ctx.moveTo(x, y + size);
+          ctx.lineTo(x + size, y + size);
+          ctx.lineTo(x + size, y);
+          ctx.arc(x + size, y + size, size, Math.PI, 1.5 * Math.PI, false);
+          ctx.closePath();
+          ctx.fill();
+          break;
+        case "quarterCircleTopRight":
+          ctx.beginPath();
+          ctx.moveTo(x + size, y + size);
+          ctx.lineTo(x, y + size);
+          ctx.lineTo(x, y);
+          ctx.arc(x, y + size, size, 1.5 * Math.PI, 0, false);
+          ctx.closePath();
+          ctx.fill();
+          break;
+        case "quarterCircleBottomLeft":
+          ctx.beginPath();
+          ctx.moveTo(x, y);
+          ctx.lineTo(x + size, y);
+          ctx.lineTo(x + size, y + size);
+          ctx.arc(x + size, y, size, 0.5 * Math.PI, Math.PI, false);
+          ctx.closePath();
+          ctx.fill();
+          break;
+        case "quarterCircleBottomRight":
+          ctx.beginPath();
+          ctx.moveTo(x + size, y);
+          ctx.lineTo(x, y);
+          ctx.lineTo(x, y + size);
+          ctx.arc(x, y, size, 0, 0.5 * Math.PI, false);
+          ctx.closePath();
+          ctx.fill();
+          break;
+
+        case "angleTopLeft":
+          ctx.beginPath();
+          ctx.moveTo(x + size, y);
+          ctx.lineTo(x, y);
+          ctx.lineTo(x, y + size);
+          ctx.closePath();
+          ctx.fill();
+          break;
+        case "angleTopRight":
+          ctx.beginPath();
+          ctx.moveTo(x, y);
+          ctx.lineTo(x + size, y);
+          ctx.lineTo(x + size, y + size);
+          ctx.closePath();
+          ctx.fill();
+          break;
+
+        case "angleBottomLeft":
+          ctx.beginPath();
+          ctx.moveTo(x + size, y + size);
+          ctx.lineTo(x, y + size);
+          ctx.lineTo(x, y);
+          ctx.closePath();
+          ctx.fill();
+          break;
+        case "angleBottomRight":
+          ctx.beginPath();
+          ctx.moveTo(x, y + size);
+          ctx.lineTo(x + size, y + size);
+          ctx.lineTo(x + size, y);
+          ctx.closePath();
+          ctx.fill();
+          break;
+
+
+      }
+
+    }
+
     // Function to draw squares on the canvas
     function drawSquares(colors, size) {
-        const squaresPerRow = 10; // Maximum squares per row
-        const numRows = Math.ceil(colors.length / squaresPerRow); // Calculate the number of rows needed
+      const squaresPerRow = 10; // Maximum squares per row
+      const numRows = Math.ceil(colors.length / squaresPerRow); // Calculate the number of rows needed
 
-        // Adjust canvas size based on input
-        canvas.width = squaresPerRow * size; // Width based on 10 squares per row
-        canvas.height = numRows * size; // Height based on the number of rows
+      // Adjust canvas size based on input
+      canvas.width = squaresPerRow * size; // Width based on 10 squares per row
+      canvas.height = numRows * size; // Height based on the number of rows
 
-        // Clear the canvas before redrawing
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      // Clear the canvas before redrawing
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Draw each square
-        colors.forEach((color, index) => {
-            const row = Math.floor(index / squaresPerRow);
-            const col = index % squaresPerRow;
-            ctx.fillStyle = `#${color.trim()}`; // Ensure color is properly formatted
-            ctx.fillRect(col * size, row * size, size, size);
-        });
+      // Draw each square
+      colors.forEach((color, index) => {
+        const row = Math.floor(index / squaresPerRow);
+        const col = index % squaresPerRow;
+        ctx.fillStyle = `#${color.trim()}`; // Ensure color is properly formatted
+        ctx.fillRect(col * size, row * size, size, size);
+      });
     }
 
-    // Event listener for the Create button
-    document.getElementById('createBtn').addEventListener('click', function() {
-        const colorInput = document.getElementById('colorInput').value;
-        const sizeInput = parseInt(document.getElementById('sizeInput').value, 10) || 50; // Use default size 50 if input is invalid
-        const colors = colorInput.split(','); // Split input string into array
-        drawSquares(colors, sizeInput);
-    });
 
     // Function to trigger download
-    document.getElementById('downloadBtn').onclick = function() {
-        const image = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
-        const link = document.createElement('a');
-        link.download = 'color-grid.png';
-        link.href = image;
-        document.body.appendChild(link); // Temporarily add link to body for Firefox compatibility
-        link.click();
-        document.body.removeChild(link); // Remove the link when done
+    document.getElementById('downloadBtn').onclick = function () {
+      const image = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
+      const link = document.createElement('a');
+      link.download = 'tileset.png';
+      link.href = image;
+      document.body.appendChild(link); // Temporarily add link to body for Firefox compatibility
+      link.click();
+      document.body.removeChild(link); // Remove the link when done
     };
 
-    // Generate the grid once with default values before user interaction
-    window.onload = function() {
-        const defaultColors = document.getElementById('colorInput').value.split(',');
-        const defaultSize = parseInt(document.getElementById('sizeInput').value, 10);
-        drawSquares(defaultColors, defaultSize);
-    };
-</script>
 
-
-
-<script>
-    function generateColorPalette() {
-        const palette = document.getElementById('colorPalette');
-        for (let r = 0; r < 256; r += 51) { // Increment by 51 to get 6 shades per color channel
-            for (let g = 0; g < 256; g += 51) {
-                for (let b = 0; b < 256; b += 51) {
-                    const colorSquare = document.createElement('div');
-                    colorSquare.classList.add('colorSquare');
-                    const color = rgbToHex(r, g, b);
-                    colorSquare.style.backgroundColor = `#${color}`;
-                    colorSquare.setAttribute('data-color', color);
-                    colorSquare.addEventListener('click', function() {
-                        const colorInput = document.getElementById('colorInput');
-                        colorInput.value += `${this.getAttribute('data-color')}, `;
-                    });
-                    palette.appendChild(colorSquare);
-                }
-            }
+    function addColorSquareToPalette(color, palette) {
+      const colorSquare = document.createElement('div');
+      colorSquare.classList.add('colorSquare');
+      colorSquare.style.backgroundColor = `#${color}`;
+      colorSquare.setAttribute('data-color', color);
+      colorSquare.addEventListener('click', function () {
+        const colorInput = document.getElementById('colorInput');
+        // Append selected color to colorInput value, ensuring not to leave trailing commas
+        if (colorInput.value) {
+          colorInput.value += `, ${this.getAttribute('data-color')}`;
+        } else {
+          colorInput.value = this.getAttribute('data-color');
         }
+        updateColorsPreview();
+        generateTileset();
+      });
+      palette.appendChild(colorSquare);
     }
 
+
+    function generateColorPalette(complexity) {
+      const palette = document.getElementById('colorPalette');
+      palette.innerHTML = '';
+
+      // Generate grayscales
+      for (let gray = 0; gray < 256; gray += complexity) {
+        const color = rgbToHex(gray, gray, gray);
+        addColorSquareToPalette(color, palette);
+      }
+
+      // Generate the rest of the colors
+      for (let r = 0; r < 256; r += complexity) {
+        for (let g = 0; g < 256; g += complexity) {
+          for (let b = 0; b < 256; b += complexity) {
+            const color = rgbToHex(r, g, b);
+            addColorSquareToPalette(color, palette);
+          }
+        }
+      }
+    }
+
+
     function componentToHex(c) {
-        const hex = c.toString(16);
-        return hex.length == 1 ? "0" + hex : hex;
+      const hex = c.toString(16);
+      return hex.length == 1 ? "0" + hex : hex;
     }
 
     function rgbToHex(r, g, b) {
-        return componentToHex(r) + componentToHex(g) + componentToHex(b);
+      return componentToHex(r) + componentToHex(g) + componentToHex(b);
     }
 
+    function componentToHex(c) {
+      const hex = c.toString(16);
+      return hex.length == 1 ? "0" + hex : hex;
+    }
+
+    function rgbToHex(r, g, b) {
+      return componentToHex(r) + componentToHex(g) + componentToHex(b);
+    }
+
+    // Function to add event listeners to shape checkboxes
+    function addShapeCheckboxesListeners() {
+      const shapeCheckboxes = document.querySelectorAll('.shapeCheckbox');
+      shapeCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function () {
+
+          // Grab the current color selections and size
+          const colorInput = document.getElementById('colorInput').value;
+          const sizeInput = parseInt(document.getElementById('sizeInput').value, 10) || 50;
+
+          const colors = colorInput.split(',').map(color => color.trim()).filter(color => color);
+
+          // Redraw the shapes based on selected colors, size, and shapes
+          drawShapes(colors, sizeInput);
+
+        });
+      });
+    }
+
+
+    // Initial update on page load
+    window.onload = function () {
+      const defaultColors = document.getElementById('colorInput').value.split(',');
+      const defaultSize = parseInt(document.getElementById('sizeInput').value, 10);
+      const complexitySlider = document.getElementById('paletteComplexity');
+
+      // Draw initial shapes and generate initial palette
+      drawShapes(defaultColors, defaultSize);
+      generateColorPalette(parseInt(complexitySlider.value));
+
+      // Add listener to the complexity slider to regenerate palette on change
+      complexitySlider.addEventListener('input', function () {
+        generateColorPalette(parseInt(this.value));
+      });
+      addShapeCheckboxesListeners();
+      // Update colors preview initially
+      updateColorsPreview();
+    };
+
+    function generateTileset() {
+      const colorInput = document.getElementById('colorInput').value;
+      const sizeInput = parseInt(document.getElementById('sizeInput').value, 10) || 50;
+      // Split by comma, then filter out empty strings and strings that only contain whitespace
+      const colors = colorInput.split(',')
+        .map(color => color.trim()) // Remove whitespace from both ends of each color string
+        .filter(color => color); // Filter out empty strings after trim
+      drawShapes(colors, sizeInput);
+    }
+
+
+    // Monitor changes in the color input textarea and update preview accordingly
+    document.getElementById('colorInput').addEventListener('input', () => {
+      updateColorsPreview();
+      generateTileset();
+    });
+
+    document.getElementById('sizeInput').addEventListener('input', () => {
+      updateColorsPreview();
+      generateTileset();
+    });
+
+
     generateColorPalette();
-</script>
+
+
+  </script>
 
 </body>
+
 </html>
