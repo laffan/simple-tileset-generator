@@ -1,3 +1,3 @@
 # Tileset Generator
 
-A bare-bones tileset generator courtsey of ChatGPT. 
+A bare-bones tileset generator courtesy of ChatGPT. 
