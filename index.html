@@ -14,6 +14,7 @@
       font-size: 20px;
       margin: 20px 0 5px 0;
     }
+
     body {
       padding: 30px;
     }
@@ -107,7 +108,7 @@
 
     .complexity_slider_wrapper {
       /* text-align: center; */
-      margin-top: 30px;
+      margin-bottom: 10px;
     }
 
     #downloadBtn {
@@ -147,7 +148,6 @@
       margin-bottom: 3px;
       display: block;
     }
-
   </style>
 </head>
 
@@ -170,9 +170,10 @@
 
       <div>
         <h3 style="margin-top: 20px">Selected Colors</h3>
-        <small>Check out <a href="https://observablehq.com/@makio135/give-me-colors" target="_blank">Give Me Colors</a> for
+        <small>Check out <a href="https://observablehq.com/@makio135/give-me-colors" target="_blank">Give Me Colors</a>
+          for
           some great palettes. Copy/pasting in the whole array should work!</small>
-          <br />
+        <br />
         <textarea id="colorInput" placeholder="Selected colors">FFFFFF, 000000, </textarea>
       </div>
       <div>
@@ -205,9 +206,13 @@
       </div>
 
 
+      <h3>Add Colors</h3>
       <div class="complexity_slider_wrapper">
-        <label for="paletteComplexity">Palette Simplicity:</label>
-        <input type="range" id="paletteComplexity" min="14" max="128" value="40">
+
+        <!-- <label for="paletteComplexity"></label> -->
+        <div style="transform: rotate(180deg); text-align: right;">
+          <input type="range" id="paletteComplexity" min="14" max="128" value="40">
+        </div>
       </div>
       <div id="paletteContainer">
         <div class="palette" id="colorPalette"></div>
