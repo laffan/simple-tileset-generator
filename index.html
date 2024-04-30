@@ -20,6 +20,17 @@
       margin-left: 5px;
     }
 
+    .shapeToggle {
+      font-size: 12px;
+      display: inline;
+      margin-left: 10px;
+      opacity: .3;
+    }
+
+    .shapeToggle a {
+      color: black;
+    }
+
     #paletteContainer {
       width: auto;
       border: 1px solid #eeeeee;
@@ -151,7 +162,12 @@
 
       <div>
 
-        <h3>Shapes</h3>
+        <h3>Shapes
+          <div class="shapeToggle">
+            <a href="#" id="selectAllShapes">all</a> | <a href="#" id="deselectAllShapes">none</a>
+          </div>
+        </h3>
+
         <div id="shapeSelection">
         </div>
       </div>
@@ -194,20 +210,32 @@
       "circle",
       "triangle",
       "diamond",
-      "halfCircleTop",
+
+      "topTriangle",
+      "bottomTriangle",
+      "leftTriangle",
+      "rightTriangle",
+
       "halfCircleBottom",
+      "halfCircleTop",
       "halfCircleLeft",
       "halfCircleRight",
+
       "quarterCircleTopLeft",
       "quarterCircleTopRight",
       "quarterCircleBottomLeft",
       "quarterCircleBottomRight",
+
       "angleTopLeft",
       "angleTopRight",
       "angleBottomLeft",
       "angleBottomRight",
+
+      "smallCircle",
+      "bigDots",
+      "smallDots",
       "waves",
-      "spikes"
+      "spikes",
     ];
 
     function createShapeSelectionHTML() {
@@ -248,7 +276,7 @@
       return previewCanvas;
     }
 
-  
+
     // Update the drawShapes function to accommodate multiple shapes in separate rows
     function drawShapes(colors, size) {
       const squaresPerRow = colors.length;  // Now depends on the number of colors
@@ -311,10 +339,10 @@
 
     // Update the drawShape function to handle different shapes
     function drawShape(x, y, size, ctx, shape) {
-        ctx.imageSmoothingEnabled = true;
-  ctx.mozImageSmoothingEnabled = true;
-  ctx.webkitImageSmoothingEnabled = true;
-  ctx.msImageSmoothingEnabled = true;
+      ctx.imageSmoothingEnabled = true;
+      ctx.mozImageSmoothingEnabled = true;
+      ctx.webkitImageSmoothingEnabled = true;
+      ctx.msImageSmoothingEnabled = true;
 
       // Adjust x, y for centering non-square shapes if necessary
       switch (shape) {
@@ -332,6 +360,43 @@
           ctx.lineTo(x + size, y + size);
           ctx.lineTo(x, y + size);
           ctx.closePath();
+          ctx.fill();
+          break;
+        case "topTriangle":
+          ctx.beginPath();
+          ctx.moveTo(x, y);
+          ctx.lineTo(x + size, y);
+          ctx.lineTo(x + size / 2, y + size / 2);
+          ctx.closePath();
+          ctx.fill();
+          break;
+        case "bottomTriangle":
+          ctx.beginPath();
+          ctx.moveTo(x, y + size);
+          ctx.lineTo(x + size, y + size);
+          ctx.lineTo(x + size / 2, y + size / 2);
+          ctx.closePath();
+          ctx.fill();
+          break;
+        case "leftTriangle":
+          ctx.beginPath();
+          ctx.moveTo(x, y);
+          ctx.lineTo(x, y + size);
+          ctx.lineTo(x + size / 2, y + size / 2);
+          ctx.closePath();
+          ctx.fill();
+          break;
+        case "rightTriangle":
+          ctx.beginPath();
+          ctx.moveTo(x + size, y);
+          ctx.lineTo(x + size, y + size);
+          ctx.lineTo(x + size / 2, y + size / 2);
+          ctx.closePath();
+          ctx.fill();
+          break;
+        case "smallCircle":
+          ctx.beginPath();
+          ctx.arc(x + size / 2, y + size / 2, size / 4, 0, Math.PI * 2);
           ctx.fill();
           break;
         case "diamond":
@@ -469,8 +534,42 @@
           ctx.closePath();
           ctx.fill();
           break;
-      }
 
+        case "bigDots":
+          const bigDotSize = size / 2;
+          const bigDotSpacing = size / 2;
+          for (let i = 0; i < 2; i++) {
+            for (let j = 0; j < 2; j++) {
+              ctx.beginPath();
+              ctx.arc(
+                x + (i * bigDotSpacing) + (bigDotSize / 2),
+                y + (j * bigDotSpacing) + (bigDotSize / 2),
+                bigDotSize / 2,
+                0,
+                Math.PI * 2
+              );
+              ctx.fill();
+            }
+          }
+          break;
+        case "smallDots":
+          const smallDotSize = size / 3;
+          const smallDotSpacing = size / 3;
+          for (let i = 0; i < 3; i++) {
+            for (let j = 0; j < 3; j++) {
+              ctx.beginPath();
+              ctx.arc(
+                x + (i * smallDotSpacing) + (smallDotSize / 2),
+                y + (j * smallDotSpacing) + (smallDotSize / 2),
+                smallDotSize / 2,
+                0,
+                Math.PI * 2
+              );
+              ctx.fill();
+            }
+          }
+          break;
+      }
     }
 
     // Function to draw squares on the canvas
@@ -493,6 +592,28 @@
         ctx.fillRect(col * size, row * size, size, size);
       });
     }
+
+    // Function to select all shape checkboxes
+    function selectAllShapes() {
+      const shapeCheckboxes = document.querySelectorAll('.shapeCheckbox');
+      shapeCheckboxes.forEach(checkbox => {
+        checkbox.checked = true;
+      });
+      generateTileset();
+    }
+
+    // Function to deselect all shape checkboxes
+    function deselectAllShapes() {
+      const shapeCheckboxes = document.querySelectorAll('.shapeCheckbox');
+      shapeCheckboxes.forEach(checkbox => {
+        checkbox.checked = false;
+      });
+      generateTileset();
+    }
+
+    // Add event listeners to the "all" and "none" links
+    document.getElementById('selectAllShapes').addEventListener('click', selectAllShapes);
+    document.getElementById('deselectAllShapes').addEventListener('click', deselectAllShapes);
 
 
     // Function to trigger download
