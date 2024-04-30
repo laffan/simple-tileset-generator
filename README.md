@@ -1,3 +1,3 @@
-# The Simplest Tileset Generator
+# Simple Shape Tileset Generator
 
 A bare-bones tileset generator courtesy (for the most part) of ChatGPT.
