@@ -10,6 +10,10 @@
       font-family: Helvetica, Arial, sans-serif;
     }
 
+    h3 {
+      font-size: 20px;
+      margin: 20px 0 5px 0;
+    }
     body {
       padding: 30px;
     }
@@ -29,6 +33,10 @@
 
     .shapeToggle a {
       color: black;
+    }
+
+    small {
+      color: gray;
     }
 
     #paletteContainer {
@@ -133,6 +141,13 @@
       text-align: center;
       width: 100%;
     }
+
+    small {
+      margin-top: 5px;
+      margin-bottom: 3px;
+      display: block;
+    }
+
   </style>
 </head>
 
@@ -154,12 +169,14 @@
       </div>
 
       <div>
-        <h3>Selected Colors</h3>
+        <h3 style="margin-top: 20px">Selected Colors</h3>
+        <small>Check out <a href="https://observablehq.com/@makio135/give-me-colors" target="_blank">Give Me Colors</a> for
+          some great palettes. Copy/pasting in the whole array should work!</small>
+          <br />
         <textarea id="colorInput" placeholder="Selected colors">FFFFFF, 000000, </textarea>
       </div>
       <div>
-        <br />
-        <label>Click color to remove</label>
+        <small>Click color to remove</small>
         <div id="colorsPreviewContainer"></div>
       </div>
 
@@ -770,8 +787,32 @@
       // Update colors preview initially
       updateColorsPreview();
       addShapePreviews();
+      sanitizeColorInput();
 
     };
+
+    function sanitizeColorInput() {
+      // Get the color input textarea element
+      const colorInput = document.getElementById('colorInput');
+
+      // Add event listener for the "paste" event
+      colorInput.addEventListener('paste', function (event) {
+        event.preventDefault(); // Prevent the default paste behavior
+        console.log("pasted")
+        // Get the pasted content from the clipboard
+        const pastedContent = event.clipboardData.getData('text/plain');
+
+        // Remove quotes, brackets, and hashtags from the pasted content
+        const cleanedContent = pastedContent.replace(/['"\[\]#]/g, '');
+
+        // Update the textarea value with the cleaned content
+        colorInput.value = cleanedContent;
+
+        // Trigger the "input" event to update the colors preview and generate the tileset
+        colorInput.dispatchEvent(new Event('input'));
+      });
+
+    }
 
     function generateTileset() {
       const colorInput = document.getElementById('colorInput').value;
