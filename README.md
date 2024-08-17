@@ -1,6 +1,6 @@
 # Simple Tileset Generator
 
-A bare-bones tileset generator.  Visit demo [here](https://laffan.github.io/simple-tileset-generator/).
+A bare-bones tileset generator.  [Try it out!](https://laffan.github.io/simple-tileset-generator/).
 
 
 ## Credits
