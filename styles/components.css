@@ -23,6 +23,100 @@
   grid-template-columns: repeat(4, 1fr);
 }
 
+/* Shape item with hover buttons */
+.shapeItem {
+  position: relative;
+  display: inline-block;
+}
+
+.shapeItem label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+/* Hover buttons overlay */
+.shapeHoverButtons {
+  position: absolute;
+  bottom: 2px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  pointer-events: none;
+  background: rgba(255, 255, 255, 0.85);
+  padding: 2px 0;
+  border-radius: 3px;
+}
+
+.shapeItem:hover .shapeHoverButtons {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Individual buttons */
+.shapeBtn {
+  width: 16px;
+  height: 16px;
+  font-size: 12px;
+  line-height: 1;
+  padding: 0;
+  border: 1px solid #ccc;
+  background: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 2px;
+  color: #666;
+}
+
+.shapeBtn:hover {
+  background: #eee;
+  border-color: #999;
+  color: #333;
+}
+
+.shapeDuplicateBtn:hover {
+  background: #d4edda;
+  border-color: #28a745;
+  color: #28a745;
+}
+
+.shapeDeleteBtn:hover {
+  background: #f8d7da;
+  border-color: #dc3545;
+  color: #dc3545;
+}
+
+.shapeDragHandle {
+  cursor: grab;
+  font-size: 10px;
+}
+
+.shapeDragHandle:hover {
+  background: #d1ecf1;
+  border-color: #17a2b8;
+  color: #17a2b8;
+}
+
+.shapeDragHandle:active {
+  cursor: grabbing;
+}
+
+/* Drag states */
+.shapeItem.dragging {
+  opacity: 0.5;
+}
+
+.shapeItem.drag-over {
+  border: 2px dashed #17a2b8;
+  background: #e7f5ff;
+}
+
 /* Palette */
 #paletteContainer {
   width: auto;

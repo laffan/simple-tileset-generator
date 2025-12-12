@@ -30,12 +30,12 @@ document.getElementById('downloadBtn').onclick = function () {
 
 // Initial update on page load
 window.onload = function () {
+  // Initialize shape order before creating HTML
+  initializeShapeOrder();
   createShapeSelectionHTML();
   const defaultColors = document.getElementById('colorInput').value.split(',');
   const defaultSize = parseInt(document.getElementById('sizeInput').value, 10);
   const complexitySlider = document.getElementById('paletteComplexity');
-
-
 
   // Draw initial shapes and generate initial palette
   drawShapes(defaultColors, defaultSize);
@@ -51,6 +51,9 @@ window.onload = function () {
   addShapePreviews();
   sanitizeColorInput();
 
+  // Initialize hover buttons and drag-and-drop
+  addShapeButtonListeners();
+  setupDragAndDrop();
 };
 
 

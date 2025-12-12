@@ -6,11 +6,11 @@ function getSessionData() {
   const sizeInput = document.getElementById('sizeInput').value;
   const paletteComplexity = document.getElementById('paletteComplexity').value;
 
-  // Get selected shapes
-  const selectedShapes = [];
-  shapes.forEach(shape => {
-    if (document.getElementById(shape).checked) {
-      selectedShapes.push(shape);
+  // Get selected shape indices (to handle duplicates correctly)
+  const selectedIndices = [];
+  document.querySelectorAll('.shapeCheckbox').forEach((cb, index) => {
+    if (cb.checked) {
+      selectedIndices.push(index);
     }
   });
 
@@ -18,11 +18,12 @@ function getSessionData() {
   const fitPreview = document.getElementById('fitPreview').checked;
 
   return {
-    version: 1,
+    version: 2,
     colors: colorInput,
     tileSize: sizeInput,
     paletteComplexity: paletteComplexity,
-    selectedShapes: selectedShapes,
+    shapeOrder: [...shapeOrder], // Save full shape order (with duplicates)
+    selectedIndices: selectedIndices, // Save which indices are selected
     fitPreview: fitPreview
   };
 }
@@ -44,18 +45,27 @@ function applySessionData(data) {
     generateColorPalette(parseInt(data.paletteComplexity));
   }
 
-  // Apply selected shapes
-  if (data.selectedShapes !== undefined) {
-    // First uncheck all
-    shapes.forEach(shape => {
-      document.getElementById(shape).checked = false;
+  // Handle shape order and selection
+  if (data.version >= 2 && data.shapeOrder !== undefined) {
+    // Version 2+: Restore full shape order (with duplicates/deletions)
+    shapeOrder = [...data.shapeOrder];
+
+    // Rebuild the UI with new shape order
+    createShapeSelectionHTML();
+    addShapePreviews();
+    addShapeCheckboxesListeners();
+    addShapeButtonListeners();
+    setupDragAndDrop();
+
+    // Restore selected indices
+    const checkboxes = document.querySelectorAll('.shapeCheckbox');
+    checkboxes.forEach((cb, index) => {
+      cb.checked = data.selectedIndices && data.selectedIndices.includes(index);
     });
-    // Then check the saved ones
-    data.selectedShapes.forEach(shape => {
-      const checkbox = document.getElementById(shape);
-      if (checkbox) {
-        checkbox.checked = true;
-      }
+  } else if (data.selectedShapes !== undefined) {
+    // Version 1 (backwards compatibility): Just restore selected shapes
+    document.querySelectorAll('.shapeCheckbox').forEach(cb => {
+      cb.checked = data.selectedShapes.includes(cb.dataset.shape);
     });
   }
 
