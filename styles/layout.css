@@ -24,8 +24,18 @@ footer {
   height: 50px;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   z-index: 100;
-  text-align: center;
   width: 100%;
+  padding: 0 30px;
+  box-sizing: border-box;
+}
+
+.footer__left {
+  display: flex;
+  gap: 10px;
+}
+
+.footer__right {
+  display: flex;
 }

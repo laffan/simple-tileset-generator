@@ -75,8 +75,14 @@
     </div>
   </div>
   <footer>
-
-    <button id="downloadBtn">Download Tileset!</button>
+    <div class="footer__left">
+      <button id="saveSessionBtn" class="sessionBtn">Save Session</button>
+      <button id="loadSessionBtn" class="sessionBtn">Load Session</button>
+      <input type="file" id="loadSessionInput" accept=".json">
+    </div>
+    <div class="footer__right">
+      <button id="downloadBtn">Download Tileset!</button>
+    </div>
   </footer>
 
 
@@ -120,6 +126,7 @@
   <script src="scripts/colors.js"></script>
   <script src="scripts/utils.js"></script>
   <script src="scripts/main.js"></script>
+  <script src="scripts/session.js"></script>
 
 </body>
 
