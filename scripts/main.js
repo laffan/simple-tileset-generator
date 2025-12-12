@@ -65,5 +65,15 @@ document.getElementById('sizeInput').addEventListener('input', () => {
   generateTileset();
 });
 
+// Fit preview checkbox
+document.getElementById('fitPreview').addEventListener('change', function() {
+  const previewBox = document.getElementById('previewBox');
+  if (this.checked) {
+    previewBox.classList.add('fit-mode');
+  } else {
+    previewBox.classList.remove('fit-mode');
+  }
+});
+
 
 generateColorPalette();

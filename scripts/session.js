@@ -14,12 +14,16 @@ function getSessionData() {
     }
   });
 
+  // Get fit preview state
+  const fitPreview = document.getElementById('fitPreview').checked;
+
   return {
     version: 1,
     colors: colorInput,
     tileSize: sizeInput,
     paletteComplexity: paletteComplexity,
-    selectedShapes: selectedShapes
+    selectedShapes: selectedShapes,
+    fitPreview: fitPreview
   };
 }
 
@@ -53,6 +57,18 @@ function applySessionData(data) {
         checkbox.checked = true;
       }
     });
+  }
+
+  // Apply fit preview state
+  if (data.fitPreview !== undefined) {
+    const fitCheckbox = document.getElementById('fitPreview');
+    const previewBox = document.getElementById('previewBox');
+    fitCheckbox.checked = data.fitPreview;
+    if (data.fitPreview) {
+      previewBox.classList.add('fit-mode');
+    } else {
+      previewBox.classList.remove('fit-mode');
+    }
   }
 
   // Update the UI
