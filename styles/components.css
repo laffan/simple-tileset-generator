@@ -1,0 +1,91 @@
+/* Component styles - shapes, palette, colors, buttons */
+
+/* Shape selection */
+.shapePreview {
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 5px;
+}
+
+.shapeToggle {
+  font-size: 12px;
+  display: inline;
+  margin-left: 10px;
+  opacity: .3;
+}
+
+.shapeToggle a {
+  color: black;
+}
+
+#shapeSelection ul {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+}
+
+/* Palette */
+#paletteContainer {
+  width: auto;
+  border: 1px solid #eeeeee;
+  height: 100%;
+  max-height: 500px;
+  overflow-y: scroll;
+
+}
+
+.palette {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 4px;
+
+}
+
+.colorSquare {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  margin: 1px;
+}
+
+.complexity_slider_wrapper {
+  /* text-align: center; */
+  margin-bottom: 10px;
+}
+
+/* Color preview */
+#colorsPreviewContainer {
+  padding: 10px;
+  border: 1px solid #eeeeee;
+}
+
+.colorPreviewButton {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  margin: 5px;
+  display: inline-block;
+  border: none;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+
+  /* Optional, removes border */
+}
+
+/* Form elements */
+#colorInput {
+  width: 100%;
+}
+
+/* Buttons */
+#downloadBtn {
+  background-color: black;
+  padding: 5px 10px;
+  font-size: 17px;
+  border: none;
+  color: white;
+  cursor: pointer;
+
+}
+
+#downloadBtn:hover {
+  background-color: gray;
+}

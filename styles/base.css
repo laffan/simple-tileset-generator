@@ -1,0 +1,30 @@
+/* Base styles - typography, resets, global elements */
+
+html,
+body {
+  font-family: Helvetica, Arial, sans-serif;
+}
+
+h3 {
+  font-size: 20px;
+  margin: 20px 0 5px 0;
+}
+
+body {
+  padding: 30px;
+}
+
+small {
+  color: gray;
+}
+
+small {
+  margin-top: 5px;
+  margin-bottom: 3px;
+  display: block;
+}
+
+canvas {
+  border: 1px solid #eeeeee;
+
+}

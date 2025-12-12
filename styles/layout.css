@@ -1,0 +1,31 @@
+/* Layout styles - grid, columns, containers */
+
+.Columns {
+  display: grid;
+  grid-template-columns: 400px 1fr;
+  gap: 30px;
+}
+
+.PreviewBox {
+  background: #eeeeee;
+  padding: 20px;
+  overflow: scroll;
+  text-align: center;
+  max-height: 300px;
+  max-width: 50vw;
+
+}
+
+footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  background-color: #eeeeee;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  text-align: center;
+  width: 100%;
+}
