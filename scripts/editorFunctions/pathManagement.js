@@ -153,7 +153,8 @@ function duplicateCurrentPath() {
 }
 
 // Duplicate all selected paths and return array of new path indices
-function duplicateSelectedPaths() {
+// Explicitly global for cross-file access
+window.duplicateSelectedPaths = function duplicateSelectedPaths() {
   const selectedIndices = EditorState.selectedPathIndices;
   if (selectedIndices.length === 0) return [];
 
@@ -202,7 +203,7 @@ function duplicateSelectedPaths() {
 
   EditorState.two.update();
   return newIndices;
-}
+};
 
 // Convert a single path to normalized path data
 function pathToNormalizedData(path) {
