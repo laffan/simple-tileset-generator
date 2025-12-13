@@ -16,16 +16,26 @@ function setupEditorEvents() {
 
   // Track CMD key for showing/hiding bounding box and anchor points
   document.addEventListener('keydown', (e) => {
+    // Only handle if the editor modal is visible
+    const modal = document.getElementById('shapeEditorModal');
+    if (!modal || !modal.classList.contains('active')) return;
+
     if (e.metaKey || e.ctrlKey) {
       if (EditorState.paths.length > 0 && !EditorState.boundingBox) {
         createBoundingBox();
       }
       // Hide anchor points in transform mode
-      hideAnchorPoints();
+      if (typeof hideAnchorPoints === 'function') {
+        hideAnchorPoints();
+      }
     }
   });
 
   document.addEventListener('keyup', (e) => {
+    // Only handle if the editor modal is visible
+    const modal = document.getElementById('shapeEditorModal');
+    if (!modal || !modal.classList.contains('active')) return;
+
     // Check if the released key is Meta or Control
     if (e.key === 'Meta' || e.key === 'Control') {
       // Only hide bounding box if not currently dragging a handle
@@ -33,7 +43,9 @@ function setupEditorEvents() {
         clearBoundingBox();
       }
       // Show anchor points again
-      showAnchorPoints();
+      if (typeof showAnchorPoints === 'function') {
+        showAnchorPoints();
+      }
     }
   });
 
@@ -214,10 +226,17 @@ function setupEditorEvents() {
 
     // Update cursor and ghost point based on what's under it
     if (!EditorState.isDragging) {
+      // In transform mode (CMD held), don't show ghost points for edge insertion
+      const isTransformMode = e.metaKey || e.ctrlKey;
+
       // Check bounding box handles first
       const handleHit = findBoundingBoxHandle(x, y);
       if (handleHit) {
         svg.style.cursor = handleHit.handle._cursor || 'pointer';
+        hideGhostPoint();
+      } else if (isTransformMode) {
+        // In transform mode, just show default cursor and hide ghost point
+        svg.style.cursor = 'default';
         hideGhostPoint();
       } else {
         const anchorHit = findAnchorAtPosition(x, y);
