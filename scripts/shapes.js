@@ -291,9 +291,9 @@ function setupDragAndDrop() {
       draggedItem = null;
       draggedIndex = null;
 
-      // Remove all drag-over classes
+      // Remove all drag indicator classes
       document.querySelectorAll('.shapeItem').forEach(item => {
-        item.classList.remove('drag-over');
+        item.classList.remove('drag-insert-before', 'drag-insert-after');
       });
     });
 
@@ -301,18 +301,34 @@ function setupDragAndDrop() {
       e.preventDefault();
       e.dataTransfer.dropEffect = 'move';
 
-      if (this !== draggedItem) {
-        this.classList.add('drag-over');
+      if (this === draggedItem) return;
+
+      const targetIndex = parseInt(this.dataset.index);
+
+      // Remove classes from all other items
+      document.querySelectorAll('.shapeItem').forEach(item => {
+        if (item !== this) {
+          item.classList.remove('drag-insert-before', 'drag-insert-after');
+        }
+      });
+
+      // Show insertion indicator - push item in the direction the dragged item will come from
+      if (draggedIndex < targetIndex) {
+        this.classList.remove('drag-insert-before');
+        this.classList.add('drag-insert-after');
+      } else {
+        this.classList.remove('drag-insert-after');
+        this.classList.add('drag-insert-before');
       }
     });
 
     item.addEventListener('dragleave', function() {
-      this.classList.remove('drag-over');
+      this.classList.remove('drag-insert-before', 'drag-insert-after');
     });
 
     item.addEventListener('drop', function(e) {
       e.preventDefault();
-      this.classList.remove('drag-over');
+      this.classList.remove('drag-insert-before', 'drag-insert-after');
 
       if (this === draggedItem) return;
 
