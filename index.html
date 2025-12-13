@@ -11,8 +11,17 @@
   <header>
     <h1>Simple Tileset Generator</h1>
     <div class="header-tile-size">
-      <label for="sizeInput">Tile Size</label>
-      <input type="number" id="sizeInput" placeholder="Size" value="50" />
+      <label>Tile Size</label>
+      <div class="tile-size-buttons">
+        <button class="tile-size-btn" data-size="8">8</button>
+        <button class="tile-size-btn" data-size="16">16</button>
+        <button class="tile-size-btn" data-size="32">32</button>
+        <button class="tile-size-btn active" data-size="64">64</button>
+        <button class="tile-size-btn" data-size="128">128</button>
+        <button class="tile-size-btn" data-size="256">256</button>
+        <button class="tile-size-btn tile-size-custom" id="tileSizeCustomBtn">Custom</button>
+      </div>
+      <input type="hidden" id="sizeInput" value="64" />
     </div>
   </header>
 
@@ -191,12 +200,14 @@
           <!-- Left side: Toolbar -->
           <div class="pattern-toolbar">
             <div class="pattern-size-control">
-              <span class="pattern-toolbar-label">Size</span>
-              <div class="pattern-size-buttons">
-                <button id="patternSizeDecrement" class="pattern-step-btn">-</button>
-                <input type="number" id="patternSizeInput" value="8" min="4" max="32">
-                <button id="patternSizeIncrement" class="pattern-step-btn">+</button>
+              <span class="pattern-toolbar-label">Grid Size</span>
+              <div class="pattern-size-btn-group">
+                <button class="pattern-size-btn active" data-size="8">8</button>
+                <button class="pattern-size-btn" data-size="16">16</button>
+                <button class="pattern-size-btn" data-size="32">32</button>
+                <button class="pattern-size-btn pattern-size-custom-btn" id="patternSizeCustomBtn">Custom</button>
               </div>
+              <input type="hidden" id="patternSizeInput" value="8">
             </div>
             <div class="pattern-toolbar-divider"></div>
             <button id="patternInvertBtn" class="pattern-tool-btn" title="Invert pattern">Invert</button>
@@ -234,6 +245,56 @@
       <div class="modal-footer">
         <button id="cancelPatternEditorBtn" class="sessionBtn">Cancel</button>
         <button id="savePatternBtn" class="editor-save-btn">Save Pattern</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom Size Modal -->
+  <div id="customSizeModal" class="modal">
+    <div class="modal-content custom-size-modal">
+      <div class="modal-header">
+        <h3>Custom Size</h3>
+        <button id="closeCustomSizeBtn" class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="custom-size-warning">
+          <strong>Warning: Anti-aliasing Issues</strong>
+          <p>Using a custom size that isn't cleanly divisible by your pattern grid size may result in blurry or anti-aliased edges in your tileset.</p>
+          <p>For crisp pixel-perfect results, use one of the preset sizes (8, 16, 32, 64, 128, 256) which are designed to work seamlessly with the pattern grid sizes (8, 16, 32).</p>
+        </div>
+        <div class="custom-size-input-row">
+          <label for="customSizeValue">Enter custom size:</label>
+          <input type="number" id="customSizeValue" min="1" max="512" value="64">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="cancelCustomSizeBtn" class="sessionBtn">Cancel</button>
+        <button id="applyCustomSizeBtn" class="editor-save-btn">Apply</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom Pattern Size Modal -->
+  <div id="customPatternSizeModal" class="modal">
+    <div class="modal-content custom-size-modal">
+      <div class="modal-header">
+        <h3>Custom Grid Size</h3>
+        <button id="closeCustomPatternSizeBtn" class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="custom-size-warning">
+          <strong>Warning: Anti-aliasing Issues</strong>
+          <p>Using a custom grid size that doesn't divide evenly into your tile size may result in blurry or anti-aliased edges when the pattern is rendered.</p>
+          <p>For crisp pixel-perfect results, use one of the preset grid sizes (8, 16, 32) which are designed to divide cleanly into tile sizes.</p>
+        </div>
+        <div class="custom-size-input-row">
+          <label for="customPatternSizeValue">Enter custom grid size:</label>
+          <input type="number" id="customPatternSizeValue" min="2" max="64" value="8">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="cancelCustomPatternSizeBtn" class="sessionBtn">Cancel</button>
+        <button id="applyCustomPatternSizeBtn" class="editor-save-btn">Apply</button>
       </div>
     </div>
   </div>
@@ -291,6 +352,7 @@
   <script src="scripts/shapes.js"></script>
   <script src="scripts/patterns.js"></script>
   <script src="scripts/canvas.js"></script>
+  <script src="scripts/sizeControls.js"></script>
   <script src="scripts/colors.js"></script>
   <script src="scripts/utils.js"></script>
 

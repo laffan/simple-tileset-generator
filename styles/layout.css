@@ -22,10 +22,48 @@ header h1 {
   color: #666;
 }
 
-.header-tile-size input {
-  width: 70px;
-  padding: 5px 8px;
-  font-size: 14px;
+/* Tile size preset buttons */
+.tile-size-buttons {
+  display: flex;
+  gap: 4px;
+}
+
+.tile-size-btn {
+  padding: 6px 12px;
+  border: 1px solid #ccc;
+  background: #fff;
+  cursor: pointer;
+  font-size: 13px;
+  border-radius: 4px;
+  min-width: 40px;
+  text-align: center;
+  transition: all 0.15s ease;
+}
+
+.tile-size-btn:hover {
+  background: #f0f0f0;
+  border-color: #999;
+}
+
+.tile-size-btn.active {
+  background: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.tile-size-btn.tile-size-custom {
+  min-width: 60px;
+}
+
+.tile-size-btn.tile-size-custom.has-value {
+  background: #6c757d;
+  color: white;
+  border-color: #6c757d;
+}
+
+.tile-size-btn.tile-size-custom.has-value.active {
+  background: #007bff;
+  border-color: #007bff;
 }
 
 .Columns {

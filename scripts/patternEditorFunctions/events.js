@@ -35,27 +35,7 @@ function setupPatternEditorEvents() {
     });
   }
 
-  // Size controls
-  const sizeDecrement = document.getElementById('patternSizeDecrement');
-  const sizeIncrement = document.getElementById('patternSizeIncrement');
-  const sizeInput = document.getElementById('patternSizeInput');
-
-  if (sizeDecrement) {
-    sizeDecrement.addEventListener('click', () => changePatternSize(-1));
-  }
-  if (sizeIncrement) {
-    sizeIncrement.addEventListener('click', () => changePatternSize(1));
-  }
-  if (sizeInput) {
-    sizeInput.addEventListener('change', function(e) {
-      const newSize = parseInt(e.target.value);
-      if (newSize >= state.MIN_PATTERN_SIZE && newSize <= state.MAX_PATTERN_SIZE) {
-        resizePatternGrid(newSize);
-      } else {
-        e.target.value = state.patternSize;
-      }
-    });
-  }
+  // Note: Pattern size buttons are handled by sizeControls.js
 
   // Toolbar buttons
   const invertBtn = document.getElementById('patternInvertBtn');
@@ -148,14 +128,7 @@ function updatePreviewZoomDisplay() {
   }
 }
 
-function changePatternSize(delta) {
-  const state = PatternEditorState;
-  const newSize = state.patternSize + delta;
-
-  if (newSize >= state.MIN_PATTERN_SIZE && newSize <= state.MAX_PATTERN_SIZE) {
-    resizePatternGrid(newSize);
-  }
-}
+// Note: changePatternSize() removed - pattern size is now controlled by sizeControls.js
 
 function resizePatternGrid(newSize) {
   const state = PatternEditorState;

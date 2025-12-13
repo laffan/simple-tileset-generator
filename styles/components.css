@@ -906,37 +906,45 @@
   align-items: center;
 }
 
-.pattern-size-buttons {
+/* Pattern size button group */
+.pattern-size-btn-group {
   display: flex;
-  align-items: center;
-  gap: 2px;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
 }
 
-.pattern-step-btn {
-  width: 24px;
-  height: 24px;
+.pattern-size-btn {
+  padding: 6px 8px;
   border: 1px solid #ccc;
   background: #fff;
   cursor: pointer;
+  font-size: 11px;
   border-radius: 4px;
-  font-size: 14px;
-  font-weight: bold;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.pattern-step-btn:hover {
-  background: #e5e5e5;
-}
-
-#patternSizeInput {
-  width: 40px;
-  height: 24px;
   text-align: center;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 12px;
+  transition: all 0.15s ease;
+}
+
+.pattern-size-btn:hover {
+  background: #f0f0f0;
+  border-color: #999;
+}
+
+.pattern-size-btn.active {
+  background: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.pattern-size-custom-btn.has-value {
+  background: #6c757d;
+  color: white;
+  border-color: #6c757d;
+}
+
+.pattern-size-custom-btn.has-value.active {
+  background: #007bff;
+  border-color: #007bff;
 }
 
 .pattern-toolbar-divider {
@@ -1075,4 +1083,64 @@
   display: block;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
+}
+
+/* =============================================
+   CUSTOM SIZE MODAL STYLES
+   ============================================= */
+
+.custom-size-modal {
+  max-width: 450px;
+}
+
+.custom-size-warning {
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 6px;
+  padding: 15px;
+  margin-bottom: 20px;
+}
+
+.custom-size-warning strong {
+  color: #856404;
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.custom-size-warning p {
+  margin: 0 0 8px 0;
+  font-size: 13px;
+  color: #856404;
+  line-height: 1.5;
+}
+
+.custom-size-warning p:last-child {
+  margin-bottom: 0;
+}
+
+.custom-size-input-row {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.custom-size-input-row label {
+  font-size: 14px;
+  color: #333;
+}
+
+.custom-size-input-row input {
+  width: 80px;
+  padding: 8px 12px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.custom-size-input-row input:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
 }

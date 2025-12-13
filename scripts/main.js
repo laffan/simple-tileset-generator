@@ -2,7 +2,7 @@
 
 function generateTileset() {
   const colorInput = document.getElementById('colorInput').value;
-  const sizeInput = parseInt(document.getElementById('sizeInput').value, 10) || 50;
+  const sizeInput = parseInt(document.getElementById('sizeInput').value, 10) || 64;
   // Split by comma, then filter out empty strings and strings that only contain whitespace
   const colors = colorInput.split(',')
     .map(color => color.trim()) // Remove whitespace from both ends of each color string
@@ -102,6 +102,12 @@ window.onload = function () {
   // Initialize shape toolbar
   setupShapeToolbar();
 
+  // Initialize tile size controls and custom size modals
+  setupTileSizeControls();
+  setupCustomSizeModal();
+  setupPatternSizeButtons();
+  setupCustomPatternSizeModal();
+
   // Initialize color wheel (with safeguard)
   if (typeof initColorWheel === 'function') {
     initColorWheel();
@@ -115,10 +121,7 @@ document.getElementById('colorInput').addEventListener('input', () => {
   generateTileset();
 });
 
-document.getElementById('sizeInput').addEventListener('input', () => {
-  updateColorsPreview();
-  generateTileset();
-});
+// Note: sizeInput is now controlled by tile size buttons in sizeControls.js
 
 // Fit preview checkbox
 document.getElementById('fitPreview').addEventListener('change', function() {

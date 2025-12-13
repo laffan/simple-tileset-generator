@@ -26,10 +26,15 @@ function openPatternEditor(patternIndex) {
   state.previewCanvas = document.getElementById('patternPreviewCanvas');
   state.previewCtx = state.previewCanvas.getContext('2d');
 
-  // Update size input
+  // Update size input and buttons
   const sizeInput = document.getElementById('patternSizeInput');
   if (sizeInput) {
     sizeInput.value = state.patternSize;
+  }
+
+  // Sync size buttons with current pattern size
+  if (typeof updatePatternSizeButtonsForEditor === 'function') {
+    updatePatternSizeButtonsForEditor(state.patternSize);
   }
 
   // Update zoom sliders
