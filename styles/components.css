@@ -110,9 +110,9 @@
   cursor: grabbing;
 }
 
-/* Drag states */
+/* Drag states - hide original during drag so drop doesn't cause visual resorting */
 .shapeItem.dragging {
-  opacity: 0.3;
+  display: none;
 }
 
 /* Drop zone placeholder - fills full grid cell */
