@@ -330,10 +330,16 @@ function generateCustomShapeId() {
   return 'custom_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 }
 
+// Dedicated storage for custom shapes (separate from built-in shapes)
+const customShapeRegistry = {};
+
 // Register a custom shape with its path data
 function registerCustomShape(shapeId, pathData) {
+  // Store in dedicated custom shape registry
+  customShapeRegistry[shapeId] = pathData;
+  // Also add to main shape path data for editor access
   shapePathData[shapeId] = pathData;
-  // Also register a renderer for this custom shape
+  // Register a renderer for this custom shape
   shapeRenderers[shapeId] = function(x, y, size, ctx) {
     drawShapeFromPath(x, y, size, ctx, pathData);
   };
@@ -414,10 +420,12 @@ function drawShapeFromPath(x, y, size, ctx, pathData) {
 
 // Get all custom shape data for session saving
 function getCustomShapeData() {
+  // Return a deep copy of the custom shape registry
   const customData = {};
-  for (const key in shapePathData) {
-    if (isCustomShape(key)) {
-      customData[key] = shapePathData[key];
+  for (const key in customShapeRegistry) {
+    if (customShapeRegistry.hasOwnProperty(key)) {
+      // Deep copy the path data to ensure it's serializable
+      customData[key] = JSON.parse(JSON.stringify(customShapeRegistry[key]));
     }
   }
   return customData;
@@ -427,6 +435,8 @@ function getCustomShapeData() {
 function loadCustomShapeData(customData) {
   if (!customData) return;
   for (const key in customData) {
-    registerCustomShape(key, customData[key]);
+    if (customData.hasOwnProperty(key)) {
+      registerCustomShape(key, customData[key]);
+    }
   }
 }
