@@ -56,7 +56,7 @@ function createShapeListItem(shape, index) {
 
   const editBtn = document.createElement('button');
   editBtn.className = 'shapeBtn shapeEditBtn';
-  editBtn.textContent = '✎';
+  editBtn.innerHTML = '&#9998;'; // Pencil icon
   editBtn.title = 'Edit shape';
   editBtn.type = 'button';
 
