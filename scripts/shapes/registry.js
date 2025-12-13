@@ -1,7 +1,8 @@
 /* Shape registry - collects all shape render functions and path data */
 
-const shapeRenderers = {};
-const shapePathData = {};
+// Use var to make these globally accessible across script files
+var shapeRenderers = {};
+var shapePathData = {};
 
 // Bezier circle approximation constant (used for curved shapes)
-const BEZIER_CIRCLE = 0.552284749831;
+var BEZIER_CIRCLE = 0.552284749831;
