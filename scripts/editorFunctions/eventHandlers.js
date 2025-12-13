@@ -104,10 +104,8 @@ function setupEditorEvents() {
     }
 
     // Shift+click on paths for multi-path selection (check BEFORE anchors)
-    console.log('Checking shift+click, shiftKey:', e.shiftKey);
     if (e.shiftKey) {
       const pathHit = findPathAtPosition(x, y);
-      console.log('Shift held, pathHit:', pathHit);
       if (pathHit) {
         togglePathSelection(pathHit.pathIndex);
         return;
@@ -155,20 +153,14 @@ function setupEditorEvents() {
 
     // If no anchor hit, check if clicking on any path shape
     const pathHit = findPathAtPosition(x, y);
-    console.log('pathHit:', pathHit);
-    console.log('selectedPathIndices:', EditorState.selectedPathIndices);
     if (pathHit) {
-      // Check if clicked path is part of multi-selection
-      const isPartOfMultiSelect = EditorState.selectedPathIndices &&
-        EditorState.selectedPathIndices.length > 1 &&
+      const isInSelection = EditorState.selectedPathIndices &&
         EditorState.selectedPathIndices.includes(pathHit.pathIndex);
-      console.log('isPartOfMultiSelect:', isPartOfMultiSelect,
-        'length:', EditorState.selectedPathIndices?.length,
-        'includes:', EditorState.selectedPathIndices?.includes(pathHit.pathIndex));
+      const hasMultiSelection = EditorState.selectedPathIndices &&
+        EditorState.selectedPathIndices.length > 1;
 
-      if (isPartOfMultiSelect) {
+      if (hasMultiSelection && isInSelection) {
         // Drag all selected paths together
-        console.log('Starting multiPath drag');
         dragTarget = { type: 'multiPath', pathIndex: pathHit.pathIndex };
         EditorState.isDragging = true;
         clearAnchorSelection();
@@ -176,9 +168,10 @@ function setupEditorEvents() {
         return;
       }
 
-      // Not part of multi-selection - clear selection and handle normally
-      console.log('Clearing path selection - not part of multi-select');
-      clearPathSelection();
+      // If clicking on a path NOT in selection, clear selection
+      if (!isInSelection) {
+        clearPathSelection();
+      }
 
       // If clicked on a different path, select it first
       if (pathHit.pathIndex !== EditorState.currentPathIndex) {

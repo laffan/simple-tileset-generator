@@ -85,15 +85,12 @@ function getSelectedPaths() {
 
 // Toggle path selection (for shift+click)
 function togglePathSelection(pathIndex) {
-  console.log('togglePathSelection called with:', pathIndex);
-  console.log('Before:', EditorState.selectedPathIndices.slice());
   const idx = EditorState.selectedPathIndices.indexOf(pathIndex);
   if (idx >= 0) {
     EditorState.selectedPathIndices.splice(idx, 1);
   } else {
     EditorState.selectedPathIndices.push(pathIndex);
   }
-  console.log('After:', EditorState.selectedPathIndices.slice());
   updatePathSelectionVisuals();
 }
 
