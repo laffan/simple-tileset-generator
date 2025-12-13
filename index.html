@@ -122,7 +122,37 @@
         <button id="closeEditorBtn" class="modal-close">&times;</button>
       </div>
       <div class="modal-body">
-        <div id="shapeEditorCanvas"></div>
+        <div class="editor-workspace">
+          <div class="shape-toolbar">
+            <div class="toolbar-tool" data-tool="reflect">
+              <span class="tool-icon">↔</span>
+              <span class="tool-label">Reflect</span>
+              <div class="tool-submenu">
+                <button class="tool-action" data-action="reflect-horizontal">Horizontal</button>
+                <button class="tool-action" data-action="reflect-vertical">Vertical</button>
+              </div>
+            </div>
+            <div class="toolbar-tool" data-tool="align">
+              <span class="tool-icon">⊞</span>
+              <span class="tool-label">Align</span>
+              <div class="tool-submenu">
+                <button class="tool-action" data-action="align-center">Center</button>
+                <button class="tool-action" data-action="align-top">Top</button>
+                <button class="tool-action" data-action="align-bottom">Bottom</button>
+                <button class="tool-action" data-action="align-left">Left</button>
+                <button class="tool-action" data-action="align-right">Right</button>
+              </div>
+            </div>
+            <div class="toolbar-tool" data-tool="cut">
+              <span class="tool-icon">✂</span>
+              <span class="tool-label">Cut</span>
+              <div class="tool-submenu">
+                <button class="tool-action" data-action="boolean-cut">Boolean Cut</button>
+              </div>
+            </div>
+          </div>
+          <div id="shapeEditorCanvas"></div>
+        </div>
         <div class="editor-instructions">
           <small>CMD shows resize/rotate handles. Shift+drag constrains axis. Shift+resize locks aspect ratio. Shift+rotate snaps 45°. Option+drag duplicates. Shift+click multi-select. Click edge to add point.</small>
         </div>
@@ -185,6 +215,7 @@
   <script src="scripts/editorFunctions/pointOperations.js"></script>
   <script src="scripts/editorFunctions/pathNavigation.js"></script>
   <script src="scripts/editorFunctions/eventHandlers.js"></script>
+  <script src="scripts/editorFunctions/shapeToolbar.js"></script>
   <script src="scripts/editorFunctions/modalManager.js"></script>
   <script src="scripts/editor.js"></script>
 

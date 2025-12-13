@@ -500,7 +500,7 @@
   background: white;
   border-radius: 8px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-  max-width: 500px;
+  max-width: 550px;
   width: 90%;
 }
 
@@ -613,4 +613,99 @@
 
 .editor-save-btn:hover {
   background-color: #218838;
+}
+
+/* Editor workspace with toolbar */
+.editor-workspace {
+  display: flex;
+  gap: 0;
+}
+
+/* Shape toolbar - left edge */
+.shape-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 5px;
+  background: #f5f5f5;
+  border-right: 1px solid #ddd;
+  width: 60px;
+  flex-shrink: 0;
+}
+
+.toolbar-tool {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 4px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.15s ease;
+}
+
+.toolbar-tool:hover {
+  background: #e5e5e5;
+}
+
+.toolbar-tool.active {
+  background: #17a2b8;
+  color: white;
+}
+
+.tool-icon {
+  font-size: 18px;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+
+.tool-label {
+  font-size: 10px;
+  text-align: center;
+  line-height: 1.2;
+}
+
+/* Submenu - appears on click */
+.tool-submenu {
+  display: none;
+  position: absolute;
+  left: 100%;
+  top: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  min-width: 100px;
+  z-index: 100;
+  padding: 4px 0;
+}
+
+.toolbar-tool.active .tool-submenu {
+  display: block;
+}
+
+.tool-action {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  font-size: 13px;
+  color: #333;
+  white-space: nowrap;
+}
+
+.tool-action:hover {
+  background: #f0f0f0;
+}
+
+.tool-action:disabled {
+  color: #999;
+  cursor: not-allowed;
+}
+
+.tool-action:disabled:hover {
+  background: transparent;
 }

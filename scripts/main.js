@@ -80,6 +80,9 @@ window.onload = function () {
   // Initialize editor buttons
   setupEditorButtons();
 
+  // Initialize shape toolbar
+  setupShapeToolbar();
+
   // Initialize color wheel (with safeguard)
   if (typeof initColorWheel === 'function') {
     initColorWheel();
