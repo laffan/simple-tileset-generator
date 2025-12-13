@@ -54,9 +54,15 @@ function createShapeListItem(shape, index) {
   duplicateBtn.title = 'Duplicate shape';
   duplicateBtn.type = 'button';
 
+  const editBtn = document.createElement('button');
+  editBtn.className = 'shapeBtn shapeEditBtn';
+  editBtn.textContent = '✎';
+  editBtn.title = 'Edit shape';
+  editBtn.type = 'button';
+
   const deleteBtn = document.createElement('button');
   deleteBtn.className = 'shapeBtn shapeDeleteBtn';
-  deleteBtn.textContent = '−';
+  deleteBtn.textContent = '-';
   deleteBtn.title = 'Delete shape';
   deleteBtn.type = 'button';
 
@@ -66,6 +72,7 @@ function createShapeListItem(shape, index) {
   dragHandle.title = 'Drag to reorder';
 
   hoverButtons.appendChild(duplicateBtn);
+  hoverButtons.appendChild(editBtn);
   hoverButtons.appendChild(deleteBtn);
   hoverButtons.appendChild(dragHandle);
 

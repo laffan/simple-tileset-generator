@@ -35,20 +35,18 @@
   cursor: pointer;
 }
 
-/* Hover buttons overlay */
+/* Hover buttons overlay - 2x2 grid centered over shape */
 .shapeHoverButtons {
   position: absolute;
-  bottom: 2px;
-  left: 0;
-  right: 0;
-  display: flex;
-  justify-content: center;
-  gap: 2px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   opacity: 0;
   transition: opacity 0.15s ease;
   pointer-events: none;
-  background: rgba(255, 255, 255, 0.85);
-  padding: 2px 0;
+  background: rgba(255, 255, 255, 0.9);
   border-radius: 3px;
 }
 
@@ -59,47 +57,42 @@
 
 /* Individual buttons */
 .shapeBtn {
-  width: 16px;
-  height: 16px;
-  font-size: 12px;
+  width: 18px;
+  height: 18px;
+  font-size: 14px;
   line-height: 1;
   padding: 0;
-  border: 1px solid #ccc;
-  background: #fff;
+  border: none;
+  background: none;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 2px;
   color: #666;
 }
 
 .shapeBtn:hover {
-  background: #eee;
-  border-color: #999;
   color: #333;
 }
 
 .shapeDuplicateBtn:hover {
-  background: #d4edda;
-  border-color: #28a745;
   color: #28a745;
 }
 
+.shapeEditBtn:hover {
+  color: #6f42c1;
+}
+
 .shapeDeleteBtn:hover {
-  background: #f8d7da;
-  border-color: #dc3545;
   color: #dc3545;
 }
 
 .shapeDragHandle {
   cursor: grab;
-  font-size: 10px;
+  font-size: 12px;
 }
 
 .shapeDragHandle:hover {
-  background: #d1ecf1;
-  border-color: #17a2b8;
   color: #17a2b8;
 }
 
