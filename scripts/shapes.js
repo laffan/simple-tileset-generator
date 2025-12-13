@@ -253,9 +253,10 @@ let draggedItem = null;
 let draggedIndex = null;
 let dropPlaceholder = null;
 let currentDropTarget = null;
+let insertBeforeTarget = false;
 
-// Global mouseup handler to reset draggable (added once)
-let dragMouseUpHandlerAdded = false;
+// Global handlers (added once)
+let dragHandlersAdded = false;
 
 function createDropPlaceholder() {
   const placeholder = document.createElement('li');
@@ -271,21 +272,66 @@ function removeDropPlaceholder() {
   currentDropTarget = null;
 }
 
+function performDrop() {
+  if (!draggedItem || !currentDropTarget) return;
+
+  let targetIndex = parseInt(currentDropTarget.dataset.index);
+
+  // Adjust target index based on cursor position and drag direction
+  if (!insertBeforeTarget && draggedIndex > targetIndex) {
+    targetIndex += 1;
+  } else if (insertBeforeTarget && draggedIndex < targetIndex) {
+    targetIndex -= 1;
+  }
+
+  removeDropPlaceholder();
+
+  // Reorder the shapeOrder array
+  const [movedShape] = shapeOrder.splice(draggedIndex, 1);
+  shapeOrder.splice(targetIndex, 0, movedShape);
+
+  draggedItem.classList.remove('dragging');
+  draggedItem = null;
+  draggedIndex = null;
+
+  // Rebuild the list
+  rebuildShapeList();
+  generateTileset();
+}
+
 function setupDragAndDrop() {
   const shapeItems = document.querySelectorAll('.shapeItem');
 
-  // Add global mouseup handler only once
-  if (!dragMouseUpHandlerAdded) {
+  // Add global handlers only once
+  if (!dragHandlersAdded) {
     document.addEventListener('mouseup', function() {
       document.querySelectorAll('.shapeItem').forEach(item => {
         item.draggable = false;
       });
     });
-    dragMouseUpHandlerAdded = true;
+
+    // Handle dragover on placeholder
+    document.addEventListener('dragover', function(e) {
+      if (dropPlaceholder && (e.target === dropPlaceholder || dropPlaceholder.contains(e.target))) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+      }
+    });
+
+    // Handle drop on placeholder
+    document.addEventListener('drop', function(e) {
+      if (dropPlaceholder && (e.target === dropPlaceholder || dropPlaceholder.contains(e.target))) {
+        e.preventDefault();
+        performDrop();
+      }
+    });
+
+    dragHandlersAdded = true;
   }
 
   shapeItems.forEach(item => {
     const handle = item.querySelector('.shapeDragHandle');
+    const preview = item.querySelector('.shapePreview canvas');
 
     // Enable dragging only when mousedown on handle
     handle.addEventListener('mousedown', function(e) {
@@ -297,8 +343,12 @@ function setupDragAndDrop() {
       draggedIndex = parseInt(this.dataset.index);
       this.classList.add('dragging');
       e.dataTransfer.effectAllowed = 'move';
-      // Set drag data (required for Firefox)
       e.dataTransfer.setData('text/plain', '');
+
+      // Set custom drag image to just the shape preview (no checkbox)
+      if (preview) {
+        e.dataTransfer.setDragImage(preview, 20, 20);
+      }
     });
 
     item.addEventListener('dragend', function() {
@@ -321,13 +371,12 @@ function setupDragAndDrop() {
       const isLeftHalf = cursorX < rect.width / 2;
 
       // Check if we need to update placeholder position
-      const insertBefore = isLeftHalf;
-      if (currentDropTarget === this && currentDropTarget.dataset.insertBefore === String(insertBefore)) {
+      if (currentDropTarget === this && insertBeforeTarget === isLeftHalf) {
         return; // Already showing placeholder in correct position
       }
 
       currentDropTarget = this;
-      currentDropTarget.dataset.insertBefore = String(insertBefore);
+      insertBeforeTarget = isLeftHalf;
 
       // Remove existing placeholder
       if (dropPlaceholder && dropPlaceholder.parentNode) {
@@ -337,7 +386,7 @@ function setupDragAndDrop() {
       // Create and insert placeholder based on cursor position
       dropPlaceholder = createDropPlaceholder();
 
-      if (insertBefore) {
+      if (insertBeforeTarget) {
         this.parentNode.insertBefore(dropPlaceholder, this);
       } else {
         this.parentNode.insertBefore(dropPlaceholder, this.nextSibling);
@@ -345,80 +394,16 @@ function setupDragAndDrop() {
     });
 
     item.addEventListener('dragleave', function(e) {
-      // Only remove if we're actually leaving this item (not entering a child)
-      if (!this.contains(e.relatedTarget) && e.relatedTarget !== dropPlaceholder) {
-        if (currentDropTarget === this) {
-          // Don't remove placeholder immediately - let dragover on next item handle it
-        }
-      }
+      // Don't remove placeholder - let dragover on next item handle it
     });
 
     item.addEventListener('drop', function(e) {
       e.preventDefault();
-
       if (this === draggedItem) {
         removeDropPlaceholder();
         return;
       }
-
-      let targetIndex = parseInt(this.dataset.index);
-      const insertBefore = this.dataset.insertBefore === 'true';
-
-      removeDropPlaceholder();
-
-      // Adjust target index based on cursor position and drag direction
-      if (!insertBefore && draggedIndex > targetIndex) {
-        targetIndex += 1;
-      } else if (insertBefore && draggedIndex < targetIndex) {
-        targetIndex -= 1;
-      }
-
-      // Reorder the shapeOrder array
-      const [movedShape] = shapeOrder.splice(draggedIndex, 1);
-      shapeOrder.splice(targetIndex, 0, movedShape);
-
-      // Rebuild the list
-      rebuildShapeList();
-      generateTileset();
+      performDrop();
     });
-  });
-
-  // Also handle drop on the placeholder itself
-  document.addEventListener('dragover', function(e) {
-    if (dropPlaceholder && e.target === dropPlaceholder) {
-      e.preventDefault();
-      e.dataTransfer.dropEffect = 'move';
-    }
-  });
-
-  document.addEventListener('drop', function(e) {
-    if (dropPlaceholder && e.target === dropPlaceholder && currentDropTarget) {
-      e.preventDefault();
-      let targetIndex = parseInt(currentDropTarget.dataset.index);
-      const insertBefore = currentDropTarget.dataset.insertBefore === 'true';
-
-      removeDropPlaceholder();
-
-      if (draggedItem) {
-        // Adjust target index based on cursor position and drag direction
-        if (!insertBefore && draggedIndex > targetIndex) {
-          targetIndex += 1;
-        } else if (insertBefore && draggedIndex < targetIndex) {
-          targetIndex -= 1;
-        }
-
-        // Reorder the shapeOrder array
-        const [movedShape] = shapeOrder.splice(draggedIndex, 1);
-        shapeOrder.splice(targetIndex, 0, movedShape);
-
-        draggedItem.classList.remove('dragging');
-        draggedItem = null;
-        draggedIndex = null;
-
-        // Rebuild the list
-        rebuildShapeList();
-        generateTileset();
-      }
-    }
   });
 }

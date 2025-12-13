@@ -109,12 +109,12 @@
   opacity: 0.3;
 }
 
-/* Drop zone placeholder */
+/* Drop zone placeholder - fills full grid cell */
 .dropZonePlaceholder {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 60px;
+  width: 100%;
   height: 40px;
   border: 3px dashed #17a2b8;
   border-radius: 4px;
