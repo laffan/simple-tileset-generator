@@ -59,15 +59,18 @@ function initColorField() {
   const canvas = document.getElementById('colorFieldCanvas');
   if (!canvas) return;
 
-  const ctx = canvas.getContext('2d');
-  const rect = canvas.getBoundingClientRect();
+  // Use requestAnimationFrame to ensure element is rendered
+  requestAnimationFrame(() => {
+    const rect = canvas.getBoundingClientRect();
 
-  // Set canvas size to match display size
-  canvas.width = rect.width;
-  canvas.height = rect.height;
+    // Set canvas size to match display size (with fallback)
+    canvas.width = rect.width || 300;
+    canvas.height = rect.height || 150;
 
-  drawColorField();
-  updateWheelPreview();
+    drawColorField();
+    updateWheelPreview();
+    updateColorFieldCursor();
+  });
 }
 
 // Draw the saturation/lightness color field
