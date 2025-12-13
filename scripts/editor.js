@@ -59,36 +59,65 @@ function drawEditorGrid() {
   gridGroup.add(centerH);
 }
 
-// Create a default shape (square) for editing
-function createDefaultPath() {
-  const margin = 40;
-  const size = EDITOR_SIZE - margin * 2;
+// Editor margin and scale settings
+const EDITOR_MARGIN = 40;
+const EDITOR_SHAPE_SIZE = EDITOR_SIZE - EDITOR_MARGIN * 2;
 
-  // Create a simple square path with bezier anchors
-  const anchors = [
-    new Two.Anchor(margin, margin, 0, 0, 0, 0, Two.Commands.move),
-    new Two.Anchor(margin + size, margin, 0, 0, 0, 0, Two.Commands.line),
-    new Two.Anchor(margin + size, margin + size, 0, 0, 0, 0, Two.Commands.line),
-    new Two.Anchor(margin, margin + size, 0, 0, 0, 0, Two.Commands.line)
-  ];
+// Convert normalized (0-1) coordinate to editor coordinate
+function normalizedToEditor(value) {
+  return EDITOR_MARGIN + value * EDITOR_SHAPE_SIZE;
+}
 
+// Convert normalized control point offset to editor scale
+function normalizedControlToEditor(value) {
+  return value * EDITOR_SHAPE_SIZE;
+}
+
+// Load an existing shape into the editor
+function loadShapeIntoEditor(shapeName) {
+  // Get shape data from registry
+  const shapeData = getShapePathData(shapeName);
+
+  if (!shapeData || !shapeData.vertices || shapeData.vertices.length === 0) {
+    console.warn('No shape data found for:', shapeName);
+    return;
+  }
+
+  // Convert normalized coordinates to editor coordinates
+  const anchors = shapeData.vertices.map((v, index) => {
+    const x = normalizedToEditor(v.x);
+    const y = normalizedToEditor(v.y);
+
+    // Control points (bezier handles)
+    let ctrlLeftX = 0, ctrlLeftY = 0, ctrlRightX = 0, ctrlRightY = 0;
+    let command = index === 0 ? Two.Commands.move : Two.Commands.line;
+
+    if (v.ctrlLeft) {
+      ctrlLeftX = normalizedControlToEditor(v.ctrlLeft.x);
+      ctrlLeftY = normalizedControlToEditor(v.ctrlLeft.y);
+      command = Two.Commands.curve;
+    }
+
+    if (v.ctrlRight) {
+      ctrlRightX = normalizedControlToEditor(v.ctrlRight.x);
+      ctrlRightY = normalizedControlToEditor(v.ctrlRight.y);
+      command = Two.Commands.curve;
+    }
+
+    return new Two.Anchor(x, y, ctrlLeftX, ctrlLeftY, ctrlRightX, ctrlRightY, command);
+  });
+
+  // Create the path
   editorPath = editorTwo.makePath(anchors);
   editorPath.fill = 'rgba(0, 0, 0, 0.8)';
   editorPath.stroke = '#333';
   editorPath.linewidth = 2;
-  editorPath.closed = true;
+  editorPath.closed = shapeData.closed !== false;
 
   // Create visual anchor points
   createAnchorVisuals();
 
   editorTwo.update();
-}
-
-// Load an existing shape into the editor
-function loadShapeIntoEditor(shapeName) {
-  // For now, create a default path
-  // In the future, this would load the actual shape data
-  createDefaultPath();
 }
 
 // Create visual representations of anchor points
