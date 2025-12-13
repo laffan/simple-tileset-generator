@@ -14,3 +14,20 @@ shapeRenderers.waves = function(x, y, size, ctx) {
   ctx.closePath();
   ctx.fill();
 };
+
+// Wavy band across the middle
+shapePathData.waves = {
+  vertices: [
+    { x: 0, y: 0.3, ctrlRight: { x: 0.1, y: 0 } },
+    { x: 0.25, y: 0.5, ctrlLeft: { x: -0.1, y: 0 }, ctrlRight: { x: 0.1, y: 0 } },
+    { x: 0.5, y: 0.3, ctrlLeft: { x: -0.1, y: 0 }, ctrlRight: { x: 0.1, y: 0 } },
+    { x: 0.75, y: 0.5, ctrlLeft: { x: -0.1, y: 0 }, ctrlRight: { x: 0.1, y: 0 } },
+    { x: 1, y: 0.3, ctrlLeft: { x: -0.1, y: 0 } },
+    { x: 1, y: 0.7, ctrlRight: { x: -0.1, y: 0 } },
+    { x: 0.75, y: 0.5, ctrlLeft: { x: 0.1, y: 0 }, ctrlRight: { x: -0.1, y: 0 } },
+    { x: 0.5, y: 0.7, ctrlLeft: { x: 0.1, y: 0 }, ctrlRight: { x: -0.1, y: 0 } },
+    { x: 0.25, y: 0.5, ctrlLeft: { x: 0.1, y: 0 }, ctrlRight: { x: -0.1, y: 0 } },
+    { x: 0, y: 0.7, ctrlLeft: { x: 0.1, y: 0 } }
+  ],
+  closed: true
+};

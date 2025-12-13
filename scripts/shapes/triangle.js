@@ -8,3 +8,12 @@ shapeRenderers.triangle = function(x, y, size, ctx) {
   ctx.closePath();
   ctx.fill();
 };
+
+shapePathData.triangle = {
+  vertices: [
+    { x: 0.5, y: 0 },
+    { x: 1, y: 1 },
+    { x: 0, y: 1 }
+  ],
+  closed: true
+};

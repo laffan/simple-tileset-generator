@@ -8,3 +8,12 @@ shapeRenderers.angleTopRight = function(x, y, size, ctx) {
   ctx.closePath();
   ctx.fill();
 };
+
+shapePathData.angleTopRight = {
+  vertices: [
+    { x: 0, y: 0 },
+    { x: 1, y: 0 },
+    { x: 1, y: 1 }
+  ],
+  closed: true
+};

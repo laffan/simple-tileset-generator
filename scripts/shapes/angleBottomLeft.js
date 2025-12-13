@@ -8,3 +8,12 @@ shapeRenderers.angleBottomLeft = function(x, y, size, ctx) {
   ctx.closePath();
   ctx.fill();
 };
+
+shapePathData.angleBottomLeft = {
+  vertices: [
+    { x: 0, y: 0 },
+    { x: 1, y: 1 },
+    { x: 0, y: 1 }
+  ],
+  closed: true
+};
