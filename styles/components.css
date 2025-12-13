@@ -4,7 +4,6 @@
 .shapePreview {
   display: inline-block;
   vertical-align: middle;
-  margin-left: 5px;
 }
 
 .shapeToggle {
@@ -25,7 +24,6 @@
 
 /* Shape item with hover buttons */
 .shapeItem {
-  position: relative;
   display: inline-block;
 }
 
@@ -33,6 +31,13 @@
   display: flex;
   align-items: center;
   cursor: pointer;
+}
+
+/* Preview wrapper - contains preview and hover buttons */
+.shapePreviewWrapper {
+  position: relative;
+  display: inline-block;
+  margin-left: 5px;
 }
 
 /* Hover buttons overlay - 2x2 grid centered over shape */
@@ -51,7 +56,8 @@
   border-radius: 0;
 }
 
-.shapeItem:hover .shapeHoverButtons {
+/* Only show hover buttons when hovering over the preview area */
+.shapePreviewWrapper:hover .shapeHoverButtons {
   opacity: 1;
   pointer-events: auto;
 }

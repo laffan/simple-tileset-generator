@@ -32,19 +32,20 @@ function createShapeListItem(shape, index) {
   li.dataset.index = index;
 
   const checkbox = document.createElement('input');
-  const preview = document.createElement('span');
   checkbox.type = 'checkbox';
   checkbox.className = 'shapeCheckbox';
   checkbox.id = `shape-${index}`;
   checkbox.dataset.shape = shape;
   checkbox.checked = shape === 'square'; // Check 'square' by default
+
+  // Create preview wrapper that will contain both preview and hover buttons
+  const previewWrapper = document.createElement('span');
+  previewWrapper.className = 'shapePreviewWrapper';
+
+  const preview = document.createElement('span');
   preview.className = 'shapePreview';
 
-  const label = document.createElement('label');
-  label.appendChild(checkbox);
-  label.appendChild(preview);
-
-  // Create hover buttons overlay
+  // Create hover buttons overlay (inside preview wrapper)
   const hoverButtons = document.createElement('div');
   hoverButtons.className = 'shapeHoverButtons';
 
@@ -76,8 +77,14 @@ function createShapeListItem(shape, index) {
   hoverButtons.appendChild(deleteBtn);
   hoverButtons.appendChild(dragHandle);
 
+  previewWrapper.appendChild(preview);
+  previewWrapper.appendChild(hoverButtons);
+
+  const label = document.createElement('label');
+  label.appendChild(checkbox);
+  label.appendChild(previewWrapper);
+
   li.appendChild(label);
-  li.appendChild(hoverButtons);
 
   return li;
 }
@@ -161,7 +168,9 @@ function addShapeCheckboxesListeners() {
 function addShapePreviews() {
   const shapePreviewContainers = document.querySelectorAll('.shapePreview');
   shapePreviewContainers.forEach((container) => {
-    const checkbox = container.parentElement.querySelector('input');
+    // Go up to label to find the checkbox (preview -> wrapper -> label)
+    const label = container.closest('label');
+    const checkbox = label.querySelector('input');
     const shape = checkbox.dataset.shape;
     container.innerHTML = ''; // Clear existing preview
     const previewCanvas = createShapePreview(shape);
@@ -331,7 +340,7 @@ function setupDragAndDrop() {
 
   shapeItems.forEach(item => {
     const handle = item.querySelector('.shapeDragHandle');
-    const preview = item.querySelector('.shapePreview canvas');
+    const preview = item.querySelector('.shapePreviewWrapper .shapePreview canvas');
 
     // Enable dragging only when mousedown on handle
     handle.addEventListener('mousedown', function(e) {
