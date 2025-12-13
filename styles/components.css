@@ -153,8 +153,237 @@
 }
 
 .complexity_slider_wrapper {
-  /* text-align: center; */
   margin-bottom: 10px;
+}
+
+/* Complexity slider - fix fill direction */
+.complexity-slider {
+  width: 100%;
+  height: 8px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: linear-gradient(to right, #007bff var(--slider-fill, 23%), #ddd var(--slider-fill, 23%));
+  border-radius: 4px;
+  outline: none;
+}
+
+.complexity-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #007bff;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.complexity-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #007bff;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.complexity-slider::-moz-range-track {
+  background: #ddd;
+  height: 8px;
+  border-radius: 4px;
+}
+
+.complexity-slider::-moz-range-progress {
+  background: #007bff;
+  height: 8px;
+  border-radius: 4px;
+}
+
+/* Color tabs */
+.color-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 10px;
+  border-bottom: 1px solid #ddd;
+}
+
+.color-tab {
+  padding: 8px 16px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 14px;
+  color: #666;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+.color-tab:hover {
+  color: #333;
+}
+
+.color-tab.active {
+  color: #007bff;
+  border-bottom-color: #007bff;
+}
+
+.color-tab-content {
+  display: none;
+}
+
+.color-tab-content.active {
+  display: block;
+}
+
+/* Color wheel tab */
+.color-wheel-container {
+  padding: 10px 0;
+}
+
+.wheel-sliders {
+  margin-bottom: 15px;
+}
+
+.wheel-slider-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.wheel-slider-row label {
+  width: 60px;
+  font-size: 13px;
+  color: #666;
+}
+
+.hue-slider {
+  flex: 1;
+  height: 8px;
+  -webkit-appearance: none;
+  appearance: none;
+  border-radius: 4px;
+  outline: none;
+  background: linear-gradient(to right,
+    hsl(0, 100%, 50%),
+    hsl(60, 100%, 50%),
+    hsl(120, 100%, 50%),
+    hsl(180, 100%, 50%),
+    hsl(240, 100%, 50%),
+    hsl(300, 100%, 50%),
+    hsl(360, 100%, 50%)
+  );
+}
+
+.hue-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: white;
+  border: 2px solid #333;
+  cursor: pointer;
+}
+
+.hue-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: white;
+  border: 2px solid #333;
+  cursor: pointer;
+}
+
+.opacity-slider {
+  flex: 1;
+  height: 8px;
+  -webkit-appearance: none;
+  appearance: none;
+  border-radius: 4px;
+  outline: none;
+  background: linear-gradient(to right, transparent, currentColor);
+}
+
+.opacity-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: white;
+  border: 2px solid #333;
+  cursor: pointer;
+}
+
+.opacity-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: white;
+  border: 2px solid #333;
+  cursor: pointer;
+}
+
+.color-field-wrapper {
+  position: relative;
+  display: inline-block;
+  margin-bottom: 15px;
+}
+
+#colorFieldCanvas {
+  border: 1px solid #ddd;
+  cursor: crosshair;
+  display: block;
+  width: 100%;
+  height: 150px;
+}
+
+.color-field-cursor {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border: 2px solid white;
+  border-radius: 50%;
+  box-shadow: 0 0 2px rgba(0,0,0,0.5);
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  top: 50%;
+  left: 50%;
+}
+
+.wheel-preview-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.wheel-color-preview {
+  width: 40px;
+  height: 40px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: #ff0000;
+}
+
+.wheel-add-btn {
+  padding: 8px 16px;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.wheel-add-btn:hover {
+  background: #0056b3;
+}
+
+/* Selected colors section */
+.selected-colors-section {
+  margin-bottom: 20px;
 }
 
 /* Color preview */

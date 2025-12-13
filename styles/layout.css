@@ -1,5 +1,33 @@
 /* Layout styles - grid, columns, containers */
 
+header {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  margin-bottom: 10px;
+}
+
+header h1 {
+  margin: 0;
+}
+
+.header-tile-size {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.header-tile-size label {
+  font-size: 14px;
+  color: #666;
+}
+
+.header-tile-size input {
+  width: 70px;
+  padding: 5px 8px;
+  font-size: 14px;
+}
+
 .Columns {
   display: grid;
   grid-template-columns: 400px 1fr;

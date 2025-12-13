@@ -41,9 +41,22 @@ window.onload = function () {
   drawShapes(defaultColors, defaultSize);
   generateColorPalette(parseInt(complexitySlider.value));
 
+  // Function to update slider fill
+  function updateSliderFill(slider) {
+    const min = slider.min || 0;
+    const max = slider.max || 100;
+    const value = slider.value;
+    const percentage = ((value - min) / (max - min)) * 100;
+    slider.style.setProperty('--slider-fill', percentage + '%');
+  }
+
+  // Initialize slider fill
+  updateSliderFill(complexitySlider);
+
   // Add listener to the complexity slider to regenerate palette on change
   complexitySlider.addEventListener('input', function () {
     generateColorPalette(parseInt(this.value));
+    updateSliderFill(this);
   });
   addShapeCheckboxesListeners();
   // Update colors preview initially
@@ -57,6 +70,9 @@ window.onload = function () {
 
   // Initialize editor buttons
   setupEditorButtons();
+
+  // Initialize color wheel
+  initColorWheel();
 };
 
 
