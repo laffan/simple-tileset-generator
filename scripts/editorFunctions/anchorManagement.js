@@ -288,3 +288,186 @@ function findPathAtPosition(x, y) {
   }
   return null;
 }
+
+// Show ghost point preview at position
+function showGhostPoint(x, y) {
+  hideGhostPoint();  // Remove existing ghost point
+
+  const circle = EditorState.two.makeCircle(x, y, ANCHOR_RADIUS);
+  circle.fill = 'rgba(23, 162, 184, 0.4)';  // Semi-transparent anchor color
+  circle.stroke = 'rgba(255, 255, 255, 0.6)';
+  circle.linewidth = 2;
+
+  EditorState.ghostPoint = circle;
+  EditorState.two.update();
+}
+
+// Hide ghost point preview
+function hideGhostPoint() {
+  if (EditorState.ghostPoint) {
+    EditorState.two.remove(EditorState.ghostPoint);
+    EditorState.ghostPoint = null;
+    EditorState.two.update();
+  }
+}
+
+// Calculate bounding box for the current path
+function getPathBoundingBox(path) {
+  if (!path || !path.vertices || path.vertices.length === 0) return null;
+
+  let minX = Infinity, minY = Infinity;
+  let maxX = -Infinity, maxY = -Infinity;
+
+  path.vertices.forEach(vertex => {
+    const absPos = getAbsolutePosition(vertex);
+    minX = Math.min(minX, absPos.x);
+    minY = Math.min(minY, absPos.y);
+    maxX = Math.max(maxX, absPos.x);
+    maxY = Math.max(maxY, absPos.y);
+  });
+
+  return {
+    x: minX,
+    y: minY,
+    width: maxX - minX,
+    height: maxY - minY,
+    centerX: (minX + maxX) / 2,
+    centerY: (minY + maxY) / 2
+  };
+}
+
+// Create bounding box visuals for the current path
+function createBoundingBox() {
+  clearBoundingBox();
+
+  const currentPath = getCurrentPath();
+  if (!currentPath) return;
+
+  const bbox = getPathBoundingBox(currentPath);
+  if (!bbox || bbox.width === 0 || bbox.height === 0) return;
+
+  const padding = 10;  // Padding around the shape
+  const x = bbox.x - padding;
+  const y = bbox.y - padding;
+  const w = bbox.width + padding * 2;
+  const h = bbox.height + padding * 2;
+
+  const bb = {
+    bounds: bbox
+  };
+
+  // Dashed border rectangle
+  const border = EditorState.two.makeRectangle(x + w/2, y + h/2, w, h);
+  border.fill = 'transparent';
+  border.stroke = '#666';
+  border.linewidth = 1;
+  border.dashes = [4, 4];
+  bb.border = border;
+
+  // Corner handles (for resize)
+  const corners = [
+    { id: 'nw', x: x, y: y, cursor: 'nwse-resize' },
+    { id: 'ne', x: x + w, y: y, cursor: 'nesw-resize' },
+    { id: 'se', x: x + w, y: y + h, cursor: 'nwse-resize' },
+    { id: 'sw', x: x, y: y + h, cursor: 'nesw-resize' }
+  ];
+
+  bb.handles = [];
+  corners.forEach(corner => {
+    const handle = EditorState.two.makeRectangle(corner.x, corner.y, HANDLE_SIZE * 2, HANDLE_SIZE * 2);
+    handle.fill = '#fff';
+    handle.stroke = '#666';
+    handle.linewidth = 1;
+    handle._handleId = corner.id;
+    handle._cursor = corner.cursor;
+    bb.handles.push(handle);
+  });
+
+  // Edge handles (for resize in one direction)
+  const edges = [
+    { id: 'n', x: x + w/2, y: y, cursor: 'ns-resize' },
+    { id: 'e', x: x + w, y: y + h/2, cursor: 'ew-resize' },
+    { id: 's', x: x + w/2, y: y + h, cursor: 'ns-resize' },
+    { id: 'w', x: x, y: y + h/2, cursor: 'ew-resize' }
+  ];
+
+  edges.forEach(edge => {
+    const handle = EditorState.two.makeRectangle(edge.x, edge.y, HANDLE_SIZE * 1.5, HANDLE_SIZE * 1.5);
+    handle.fill = '#fff';
+    handle.stroke = '#666';
+    handle.linewidth = 1;
+    handle._handleId = edge.id;
+    handle._cursor = edge.cursor;
+    bb.handles.push(handle);
+  });
+
+  // Rotation handle (at top)
+  const rotateHandle = EditorState.two.makeCircle(x + w/2, y - 20, HANDLE_SIZE);
+  rotateHandle.fill = '#fff';
+  rotateHandle.stroke = '#666';
+  rotateHandle.linewidth = 1;
+  rotateHandle._handleId = 'rotate';
+  rotateHandle._cursor = 'crosshair';
+  bb.rotateHandle = rotateHandle;
+
+  // Line connecting rotation handle to box
+  const rotateLine = EditorState.two.makeLine(x + w/2, y, x + w/2, y - 20);
+  rotateLine.stroke = '#666';
+  rotateLine.linewidth = 1;
+  rotateLine.dashes = [2, 2];
+  bb.rotateLine = rotateLine;
+
+  EditorState.boundingBox = bb;
+  EditorState.two.update();
+}
+
+// Update bounding box position (call after moving/resizing)
+function updateBoundingBox() {
+  if (EditorState.boundingBox) {
+    createBoundingBox();  // Recreate with new positions
+  }
+}
+
+// Clear bounding box visuals
+function clearBoundingBox() {
+  if (EditorState.boundingBox) {
+    const bb = EditorState.boundingBox;
+    if (bb.border) EditorState.two.remove(bb.border);
+    if (bb.handles) {
+      bb.handles.forEach(h => EditorState.two.remove(h));
+    }
+    if (bb.rotateHandle) EditorState.two.remove(bb.rotateHandle);
+    if (bb.rotateLine) EditorState.two.remove(bb.rotateLine);
+    EditorState.boundingBox = null;
+  }
+}
+
+// Find if clicking on a bounding box handle
+function findBoundingBoxHandle(x, y) {
+  if (!EditorState.boundingBox) return null;
+
+  const bb = EditorState.boundingBox;
+
+  // Check rotation handle first
+  if (bb.rotateHandle) {
+    const pos = bb.rotateHandle.position;
+    const dist = Math.sqrt((x - pos.x) ** 2 + (y - pos.y) ** 2);
+    if (dist <= HANDLE_SIZE + 4) {
+      return { type: 'rotate', handle: bb.rotateHandle };
+    }
+  }
+
+  // Check corner and edge handles
+  if (bb.handles) {
+    for (const handle of bb.handles) {
+      const pos = handle.position;
+      const halfSize = HANDLE_SIZE + 2;
+      if (x >= pos.x - halfSize && x <= pos.x + halfSize &&
+          y >= pos.y - halfSize && y <= pos.y + halfSize) {
+        return { type: 'resize', handleId: handle._handleId, handle: handle };
+      }
+    }
+  }
+
+  return null;
+}

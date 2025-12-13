@@ -78,8 +78,8 @@ function loadShapeIntoEditor(shapeName) {
   // Create visual anchor points for current path
   createAnchorVisuals();
 
-  // Update path navigation indicator
-  updatePathIndicator();
+  // Create bounding box for resize/rotate
+  createBoundingBox();
 
   EditorState.two.update();
 }
@@ -104,6 +104,7 @@ function selectPath(index) {
     EditorState.currentPathIndex = index;
     updatePathStyles();
     createAnchorVisuals();
+    createBoundingBox();
   }
 }
 
@@ -150,7 +151,7 @@ function duplicateCurrentPath() {
   EditorState.currentPathIndex = EditorState.paths.length - 1;
   updatePathStyles();
   createAnchorVisuals();
-  updatePathIndicator();
+  createBoundingBox();
 
   return newPath;
 }

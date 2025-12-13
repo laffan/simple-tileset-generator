@@ -170,7 +170,7 @@ function createNewShapeFromPoints() {
   EditorState.currentPathIndex = EditorState.paths.length - 1;
   updatePathStyles();
   createAnchorVisuals();
-  updatePathIndicator();
+  createBoundingBox();
 
   // Clear the temporary points
   EditorState.newShapePoints = [];

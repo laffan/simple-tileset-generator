@@ -8,7 +8,9 @@ const EditorState = {
   currentEditingShapeIndex: null,
   currentPathIndex: 0,  // Currently selected path in multi-path shapes
   isDragging: false,
-  newShapePoints: []  // Points being created for a new shape
+  newShapePoints: [],  // Points being created for a new shape
+  ghostPoint: null,  // Preview point shown when hovering over edges
+  boundingBox: null  // Bounding box visuals for selected path
 };
 
 // Constants
@@ -17,6 +19,7 @@ const ANCHOR_RADIUS = 8;
 const CONTROL_RADIUS = 6;
 const EDITOR_MARGIN = 40;
 const EDITOR_SHAPE_SIZE = EDITOR_SIZE - EDITOR_MARGIN * 2;
+const HANDLE_SIZE = 8;  // Size of bounding box handles
 
 // Get currently selected path
 function getCurrentPath() {
@@ -32,4 +35,6 @@ function resetEditorState() {
   EditorState.currentEditingShapeIndex = null;
   EditorState.isDragging = false;
   EditorState.newShapePoints = [];
+  EditorState.ghostPoint = null;
+  EditorState.boundingBox = null;
 }

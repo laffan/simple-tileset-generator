@@ -1,16 +1,9 @@
 /* Editor Path Navigation - Multi-path navigation functions */
 
-// Update path indicator display
+// Update path indicator display (no longer used - kept for compatibility)
 function updatePathIndicator() {
-  const indicator = document.getElementById('pathIndicator');
-  if (indicator) {
-    // Only show indicator when there are multiple paths
-    if (EditorState.paths.length > 1) {
-      indicator.textContent = `Path ${EditorState.currentPathIndex + 1} of ${EditorState.paths.length}`;
-    } else {
-      indicator.textContent = '';
-    }
-  }
+  // Path indicator has been removed from UI
+  // Paths are now selected by clicking on them directly
 }
 
 // Navigate to previous path
