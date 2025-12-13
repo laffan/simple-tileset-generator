@@ -170,7 +170,6 @@ function createNewShapeFromPoints() {
   EditorState.currentPathIndex = EditorState.paths.length - 1;
   updatePathStyles();
   createAnchorVisuals();
-  createBoundingBox();
 
   // Clear the temporary points
   EditorState.newShapePoints = [];
@@ -180,6 +179,17 @@ function createNewShapeFromPoints() {
 function cancelNewShape() {
   clearNewShapeVisuals();
   EditorState.newShapePoints = [];
+}
+
+// Undo last point in new shape creation
+function undoLastNewShapePoint() {
+  if (EditorState.newShapePoints.length === 0) return;
+
+  // Remove the last point
+  EditorState.newShapePoints.pop();
+
+  // Update visuals
+  updateNewShapeVisuals();
 }
 
 // Convert selected points to/from bezier curves

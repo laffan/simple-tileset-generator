@@ -129,9 +129,6 @@ function setupEditorEvents() {
       // If clicked on a different path, select it first
       if (pathHit.pathIndex !== EditorState.currentPathIndex) {
         selectPath(pathHit.pathIndex);
-        if (e.metaKey || e.ctrlKey) {
-          createBoundingBox();
-        }
       }
 
       // Option+drag duplicates the current path
@@ -140,9 +137,6 @@ function setupEditorEvents() {
         if (newPath) {
           // The duplicated path is now selected, drag that instead
           dragTarget = { type: 'path', path: newPath, pathIndex: EditorState.currentPathIndex };
-          if (e.metaKey || e.ctrlKey) {
-            createBoundingBox();
-          }
         } else {
           dragTarget = pathHit;
         }
@@ -161,14 +155,17 @@ function setupEditorEvents() {
     const edgeHit = findClosestEdge(x, y);
     if (edgeHit) {
       insertPointAtEdge(edgeHit, edgeHit.point.x, edgeHit.point.y);
-      if (e.metaKey || e.ctrlKey) {
-        updateBoundingBox();
-      }
       return;
     }
 
-    // Clicked on empty space - add point for new shape
-    clearAnchorSelection();
+    // Clicked on empty space
+    // If anything is selected, deselect first
+    if (EditorState.selectedAnchors.length > 0) {
+      clearAnchorSelection();
+      return;
+    }
+
+    // Nothing selected - add point for new shape
     addNewShapePoint(x, y);
   });
 
@@ -467,10 +464,10 @@ function setupKeyboardEvents() {
       deleteSelectedPoints();
     }
 
-    // Escape to cancel new shape creation
+    // Escape to undo last point in new shape creation
     if (e.key === 'Escape') {
       if (EditorState.newShapePoints.length > 0) {
-        cancelNewShape();
+        undoLastNewShapePoint();
       }
     }
   });
