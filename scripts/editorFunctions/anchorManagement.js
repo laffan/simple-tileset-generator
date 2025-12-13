@@ -156,3 +156,25 @@ function findAnchorAtPosition(x, y) {
   }
   return null;
 }
+
+// Check if a point is inside a path using SVG's native hit testing
+function isPointInPath(path, x, y) {
+  if (!path || !path._renderer || !path._renderer.elem) return false;
+
+  const svgPath = path._renderer.elem;
+  const point = svgPath.ownerSVGElement.createSVGPoint();
+  point.x = x;
+  point.y = y;
+
+  // Check if point is in fill or on stroke
+  return svgPath.isPointInFill(point) || svgPath.isPointInStroke(point);
+}
+
+// Find if click is on a path shape (not on anchors/controls)
+function findPathAtPosition(x, y) {
+  const currentPath = getCurrentPath();
+  if (currentPath && isPointInPath(currentPath, x, y)) {
+    return { type: 'path', path: currentPath, pathIndex: EditorState.currentPathIndex };
+  }
+  return null;
+}
