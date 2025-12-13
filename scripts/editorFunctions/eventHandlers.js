@@ -153,14 +153,20 @@ function setupEditorEvents() {
 
     // If no anchor hit, check if clicking on any path shape
     const pathHit = findPathAtPosition(x, y);
+    console.log('pathHit:', pathHit);
+    console.log('selectedPathIndices:', EditorState.selectedPathIndices);
     if (pathHit) {
       // Check if clicked path is part of multi-selection
       const isPartOfMultiSelect = EditorState.selectedPathIndices &&
         EditorState.selectedPathIndices.length > 1 &&
         EditorState.selectedPathIndices.includes(pathHit.pathIndex);
+      console.log('isPartOfMultiSelect:', isPartOfMultiSelect,
+        'length:', EditorState.selectedPathIndices?.length,
+        'includes:', EditorState.selectedPathIndices?.includes(pathHit.pathIndex));
 
       if (isPartOfMultiSelect) {
         // Drag all selected paths together
+        console.log('Starting multiPath drag');
         dragTarget = { type: 'multiPath', pathIndex: pathHit.pathIndex };
         EditorState.isDragging = true;
         clearAnchorSelection();
@@ -169,6 +175,7 @@ function setupEditorEvents() {
       }
 
       // Not part of multi-selection - clear selection and handle normally
+      console.log('Clearing path selection - not part of multi-select');
       clearPathSelection();
 
       // If clicked on a different path, select it first
