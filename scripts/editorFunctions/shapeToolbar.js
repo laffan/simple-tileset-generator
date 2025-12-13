@@ -87,8 +87,13 @@ function getSelectedPaths() {
 function togglePathSelection(pathIndex) {
   const idx = EditorState.selectedPathIndices.indexOf(pathIndex);
   if (idx >= 0) {
+    // Removing from selection
     EditorState.selectedPathIndices.splice(idx, 1);
   } else {
+    // Adding to selection - also add current path if not already selected
+    if (!EditorState.selectedPathIndices.includes(EditorState.currentPathIndex)) {
+      EditorState.selectedPathIndices.push(EditorState.currentPathIndex);
+    }
     EditorState.selectedPathIndices.push(pathIndex);
   }
   updatePathSelectionVisuals();

@@ -217,6 +217,12 @@ function setupEditorEvents() {
       return;
     }
 
+    // If paths are multi-selected, deselect them first
+    if (EditorState.selectedPathIndices.length > 0) {
+      clearPathSelection();
+      return;
+    }
+
     // Nothing selected - add point for new shape
     addNewShapePoint(x, y);
   });
