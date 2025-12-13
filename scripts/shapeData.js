@@ -275,15 +275,35 @@ shapePathData.bigDots = {
   closed: true
 };
 
-// Small Dots (simple representation)
+// Small Dots - 3x3 grid of circles (multi-path shape)
+// Helper to create a circle path at a given center with radius
+function createCirclePath(cx, cy, r) {
+  const bc = BEZIER_CIRCLE * r;
+  return {
+    vertices: [
+      { x: cx, y: cy - r, ctrlLeft: { x: -bc, y: 0 }, ctrlRight: { x: bc, y: 0 } },
+      { x: cx + r, y: cy, ctrlLeft: { x: 0, y: -bc }, ctrlRight: { x: 0, y: bc } },
+      { x: cx, y: cy + r, ctrlLeft: { x: bc, y: 0 }, ctrlRight: { x: -bc, y: 0 } },
+      { x: cx - r, y: cy, ctrlLeft: { x: 0, y: bc }, ctrlRight: { x: 0, y: -bc } }
+    ],
+    closed: true
+  };
+}
+
+// Generate 9 dots in a 3x3 grid
 shapePathData.smallDots = {
-  vertices: [
-    { x: 0.25, y: 0.15, ctrlLeft: { x: -BEZIER_CIRCLE * 0.1, y: 0 }, ctrlRight: { x: BEZIER_CIRCLE * 0.1, y: 0 } },
-    { x: 0.35, y: 0.25, ctrlLeft: { x: 0, y: -BEZIER_CIRCLE * 0.1 }, ctrlRight: { x: 0, y: BEZIER_CIRCLE * 0.1 } },
-    { x: 0.25, y: 0.35, ctrlLeft: { x: BEZIER_CIRCLE * 0.1, y: 0 }, ctrlRight: { x: -BEZIER_CIRCLE * 0.1, y: 0 } },
-    { x: 0.15, y: 0.25, ctrlLeft: { x: 0, y: BEZIER_CIRCLE * 0.1 }, ctrlRight: { x: 0, y: -BEZIER_CIRCLE * 0.1 } }
-  ],
-  closed: true
+  paths: (function() {
+    const paths = [];
+    const dotRadius = 1/6;  // Each dot has radius of 1/6 of tile
+    for (let row = 0; row < 3; row++) {
+      for (let col = 0; col < 3; col++) {
+        const cx = col / 3 + 1/6;  // Center x
+        const cy = row / 3 + 1/6;  // Center y
+        paths.push(createCirclePath(cx, cy, dotRadius * 0.8));  // Slightly smaller for spacing
+      }
+    }
+    return paths;
+  })()
 };
 
 // Waves
@@ -345,15 +365,15 @@ function registerCustomShape(shapeId, pathData) {
   };
 }
 
-// Draw a shape from path data using Canvas 2D API
-function drawShapeFromPath(x, y, size, ctx, pathData) {
-  if (!pathData || !pathData.vertices || pathData.vertices.length === 0) {
+// Draw a single path (helper function)
+function drawSinglePath(x, y, size, ctx, singlePath) {
+  if (!singlePath || !singlePath.vertices || singlePath.vertices.length === 0) {
     return;
   }
 
   ctx.beginPath();
 
-  const vertices = pathData.vertices;
+  const vertices = singlePath.vertices;
 
   for (let i = 0; i < vertices.length; i++) {
     const v = vertices[i];
@@ -391,7 +411,7 @@ function drawShapeFromPath(x, y, size, ctx, pathData) {
   }
 
   // Close the path if needed (handle curve from last to first vertex)
-  if (pathData.closed !== false) {
+  if (singlePath.closed !== false) {
     const lastV = vertices[vertices.length - 1];
     const firstV = vertices[0];
 
@@ -416,6 +436,23 @@ function drawShapeFromPath(x, y, size, ctx, pathData) {
   }
 
   ctx.fill();
+}
+
+// Draw a shape from path data using Canvas 2D API
+// Supports both single-path shapes (vertices array) and multi-path shapes (paths array)
+function drawShapeFromPath(x, y, size, ctx, pathData) {
+  if (!pathData) return;
+
+  // Check if this is a multi-path shape
+  if (pathData.paths && Array.isArray(pathData.paths)) {
+    // Draw each path separately
+    pathData.paths.forEach(singlePath => {
+      drawSinglePath(x, y, size, ctx, singlePath);
+    });
+  } else if (pathData.vertices) {
+    // Single path shape (backward compatible)
+    drawSinglePath(x, y, size, ctx, pathData);
+  }
 }
 
 // Get all custom shape data for session saving

@@ -1,15 +1,21 @@
 /* Shape Editor using Two.js */
 
 let editorTwo = null;
-let editorPath = null;
+let editorPaths = [];  // Array of Two.Path objects for multi-path shapes
 let editorAnchors = [];
 let selectedAnchor = null;
 let currentEditingShapeIndex = null;
+let currentPathIndex = 0;  // Currently selected path in multi-path shapes
 let isDragging = false;
 
 const EDITOR_SIZE = 400;
 const ANCHOR_RADIUS = 8;
 const CONTROL_RADIUS = 6;
+
+// Get currently selected path
+function getCurrentPath() {
+  return editorPaths[currentPathIndex] || null;
+}
 
 // Initialize the editor
 function initEditor() {
@@ -86,18 +92,9 @@ function normalizedControlToEditor(value) {
   return value * EDITOR_SHAPE_SIZE;
 }
 
-// Load an existing shape into the editor
-function loadShapeIntoEditor(shapeName) {
-  // Get shape data from registry
-  const shapeData = getShapePathData(shapeName);
-
-  if (!shapeData || !shapeData.vertices || shapeData.vertices.length === 0) {
-    console.warn('No shape data found for:', shapeName);
-    return;
-  }
-
-  // Convert normalized coordinates to editor coordinates and create anchors
-  const anchors = shapeData.vertices.map((v, index) => {
+// Create a Two.Path from single path data
+function createPathFromData(singlePathData, isSelected) {
+  const anchors = singlePathData.vertices.map((v, index) => {
     const x = normalizedToEditor(v.x);
     const y = normalizedToEditor(v.y);
 
@@ -127,29 +124,88 @@ function loadShapeIntoEditor(shapeName) {
     return new Two.Anchor(x, y, ctrlLeftX, ctrlLeftY, ctrlRightX, ctrlRightY, command);
   });
 
-  // Create path using Two.Path constructor directly (not makePath)
-  // This is required to preserve custom control points per GitHub issue #294
-  editorPath = new Two.Path(anchors);
-  editorPath.automatic = false;  // MUST be false to use custom control points
-  editorPath.fill = 'rgba(0, 0, 0, 0.8)';
-  editorPath.stroke = '#333';
-  editorPath.linewidth = 2;
-  editorPath.closed = shapeData.closed !== false;
+  // Create path using Two.Path constructor directly
+  const path = new Two.Path(anchors);
+  path.automatic = false;
+  path.fill = isSelected ? 'rgba(0, 0, 0, 0.8)' : 'rgba(0, 0, 0, 0.4)';
+  path.stroke = isSelected ? '#333' : '#666';
+  path.linewidth = 2;
+  path.closed = singlePathData.closed !== false;
 
-  // Add path to the Two.js scene
-  editorTwo.add(editorPath);
+  return path;
+}
 
-  // Create visual anchor points
+// Load an existing shape into the editor
+function loadShapeIntoEditor(shapeName) {
+  // Get shape data from registry
+  const shapeData = getShapePathData(shapeName);
+
+  if (!shapeData) {
+    console.warn('No shape data found for:', shapeName);
+    return;
+  }
+
+  // Clear existing paths
+  editorPaths = [];
+  currentPathIndex = 0;
+
+  // Check if this is a multi-path shape
+  if (shapeData.paths && Array.isArray(shapeData.paths)) {
+    // Multi-path shape
+    shapeData.paths.forEach((singlePathData, index) => {
+      const path = createPathFromData(singlePathData, index === currentPathIndex);
+      editorPaths.push(path);
+      editorTwo.add(path);
+    });
+  } else if (shapeData.vertices && shapeData.vertices.length > 0) {
+    // Single path shape
+    const path = createPathFromData(shapeData, true);
+    editorPaths.push(path);
+    editorTwo.add(path);
+  } else {
+    console.warn('Invalid shape data:', shapeName);
+    return;
+  }
+
+  // Create visual anchor points for current path
   createAnchorVisuals();
+
+  // Update path navigation indicator
+  updatePathIndicator();
 
   editorTwo.update();
 }
 
+// Update path visual styles based on selection
+function updatePathStyles() {
+  editorPaths.forEach((path, index) => {
+    if (index === currentPathIndex) {
+      path.fill = 'rgba(0, 0, 0, 0.8)';
+      path.stroke = '#333';
+    } else {
+      path.fill = 'rgba(0, 0, 0, 0.4)';
+      path.stroke = '#666';
+    }
+  });
+  editorTwo.update();
+}
+
+// Select a path by index
+function selectPath(index) {
+  if (index >= 0 && index < editorPaths.length) {
+    currentPathIndex = index;
+    updatePathStyles();
+    createAnchorVisuals();
+  }
+}
+
 // Get absolute position of a vertex (accounting for path translation)
 function getAbsolutePosition(vertex) {
+  const currentPath = getCurrentPath();
+  if (!currentPath) return { x: vertex.x, y: vertex.y };
   return {
-    x: vertex.x + editorPath.translation.x,
-    y: vertex.y + editorPath.translation.y
+    x: vertex.x + currentPath.translation.x,
+    y: vertex.y + currentPath.translation.y
   };
 }
 
@@ -165,9 +221,10 @@ function createAnchorVisuals() {
   });
   editorAnchors = [];
 
-  if (!editorPath) return;
+  const currentPath = getCurrentPath();
+  if (!currentPath) return;
 
-  editorPath.vertices.forEach((vertex, index) => {
+  currentPath.vertices.forEach((vertex, index) => {
     const anchorData = {
       vertex: vertex,
       index: index
@@ -340,11 +397,12 @@ function setupEditorEvents() {
     const y = e.clientY - rect.top;
 
     const vertex = dragTarget.data.vertex;
+    const currentPath = getCurrentPath();
 
     if (dragTarget.type === 'anchor') {
       // Convert mouse position to relative vertex position (subtract path translation)
-      vertex.x = x - editorPath.translation.x;
-      vertex.y = y - editorPath.translation.y;
+      vertex.x = x - currentPath.translation.x;
+      vertex.y = y - currentPath.translation.y;
     } else if (dragTarget.type === 'controlIn') {
       // Control points are relative to the absolute vertex position
       const absPos = getAbsolutePosition(vertex);
@@ -370,14 +428,15 @@ function setupEditorEvents() {
   });
 }
 
-// Add a new point to the path
+// Add a new point to the current path
 function addPointToPath() {
-  if (!editorPath) return;
+  const currentPath = getCurrentPath();
+  if (!currentPath) return;
 
   // Add a point at the center, user can then drag it
   // Convert center position to relative vertex position
-  const centerX = EDITOR_SIZE / 2 - editorPath.translation.x;
-  const centerY = EDITOR_SIZE / 2 - editorPath.translation.y;
+  const centerX = EDITOR_SIZE / 2 - currentPath.translation.x;
+  const centerY = EDITOR_SIZE / 2 - currentPath.translation.y;
 
   const newAnchor = new Two.Anchor(
     centerX,
@@ -387,20 +446,21 @@ function addPointToPath() {
     Two.Commands.curve
   );
 
-  editorPath.vertices.push(newAnchor);
+  currentPath.vertices.push(newAnchor);
   createAnchorVisuals();
 }
 
-// Delete the selected point
+// Delete the selected point from the current path
 function deleteSelectedPoint() {
-  if (!selectedAnchor || !editorPath) return;
-  if (editorPath.vertices.length <= 3) {
+  const currentPath = getCurrentPath();
+  if (!selectedAnchor || !currentPath) return;
+  if (currentPath.vertices.length <= 3) {
     alert('Cannot delete: path must have at least 3 points');
     return;
   }
 
   const index = selectedAnchor.index;
-  editorPath.vertices.splice(index, 1);
+  currentPath.vertices.splice(index, 1);
   selectedAnchor = null;
   createAnchorVisuals();
 }
@@ -454,7 +514,8 @@ function closeShapeEditor() {
     editorTwo.clear();
     editorTwo = null;
   }
-  editorPath = null;
+  editorPaths = [];
+  currentPathIndex = 0;
   editorAnchors = [];
   selectedAnchor = null;
   currentEditingShapeIndex = null;
@@ -470,20 +531,14 @@ function editorControlToNormalized(value) {
   return value / EDITOR_SHAPE_SIZE;
 }
 
-// Save the edited shape
-function saveEditedShape() {
-  if (!editorPath || currentEditingShapeIndex === null) {
-    closeShapeEditor();
-    return;
-  }
-
-  // Convert editor path to normalized path data
+// Convert a single path to normalized path data
+function pathToNormalizedData(path) {
   const vertices = [];
 
-  editorPath.vertices.forEach(vertex => {
+  path.vertices.forEach(vertex => {
     // Get absolute position
-    const absX = vertex.x + editorPath.translation.x;
-    const absY = vertex.y + editorPath.translation.y;
+    const absX = vertex.x + path.translation.x;
+    const absY = vertex.y + path.translation.y;
 
     // Convert to normalized coordinates
     const v = {
@@ -510,10 +565,31 @@ function saveEditedShape() {
     vertices.push(v);
   });
 
-  const pathData = {
+  return {
     vertices: vertices,
-    closed: editorPath.closed
+    closed: path.closed
   };
+}
+
+// Save the edited shape
+function saveEditedShape() {
+  if (editorPaths.length === 0 || currentEditingShapeIndex === null) {
+    closeShapeEditor();
+    return;
+  }
+
+  // Convert editor paths to normalized path data
+  let pathData;
+
+  if (editorPaths.length === 1) {
+    // Single path shape
+    pathData = pathToNormalizedData(editorPaths[0]);
+  } else {
+    // Multi-path shape
+    pathData = {
+      paths: editorPaths.map(path => pathToNormalizedData(path))
+    };
+  }
 
   // Get the current shape name
   const currentShapeName = shapeOrder[currentEditingShapeIndex];
@@ -542,6 +618,42 @@ function saveEditedShape() {
   generateTileset();
 }
 
+// Update path indicator display
+function updatePathIndicator() {
+  const indicator = document.getElementById('pathIndicator');
+  if (indicator) {
+    indicator.textContent = `${currentPathIndex + 1}/${editorPaths.length}`;
+  }
+  // Enable/disable nav buttons based on path count
+  const prevBtn = document.getElementById('prevPathBtn');
+  const nextBtn = document.getElementById('nextPathBtn');
+  if (prevBtn && nextBtn) {
+    const multiPath = editorPaths.length > 1;
+    prevBtn.disabled = !multiPath;
+    nextBtn.disabled = !multiPath;
+  }
+}
+
+// Navigate to previous path
+function prevPath() {
+  if (editorPaths.length > 1) {
+    currentPathIndex = (currentPathIndex - 1 + editorPaths.length) % editorPaths.length;
+    updatePathStyles();
+    createAnchorVisuals();
+    updatePathIndicator();
+  }
+}
+
+// Navigate to next path
+function nextPath() {
+  if (editorPaths.length > 1) {
+    currentPathIndex = (currentPathIndex + 1) % editorPaths.length;
+    updatePathStyles();
+    createAnchorVisuals();
+    updatePathIndicator();
+  }
+}
+
 // Set up editor button event listeners
 function setupEditorButtons() {
   document.getElementById('closeEditorBtn').addEventListener('click', closeShapeEditor);
@@ -549,6 +661,8 @@ function setupEditorButtons() {
   document.getElementById('saveShapeBtn').addEventListener('click', saveEditedShape);
   document.getElementById('addPointBtn').addEventListener('click', addPointToPath);
   document.getElementById('deletePointBtn').addEventListener('click', deleteSelectedPoint);
+  document.getElementById('prevPathBtn').addEventListener('click', prevPath);
+  document.getElementById('nextPathBtn').addEventListener('click', nextPath);
 
   // Close modal when clicking outside
   document.getElementById('shapeEditorModal').addEventListener('click', (e) => {
