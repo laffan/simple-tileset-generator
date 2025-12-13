@@ -56,17 +56,25 @@ function saveEditedShape() {
     return;
   }
 
+  // Check if cropping is enabled
+  const shouldCrop = isCropEnabled();
+
   // Convert editor paths to normalized path data
   let pathData;
 
   if (EditorState.paths.length === 1) {
     // Single path shape
     pathData = pathToNormalizedData(EditorState.paths[0]);
+    if (shouldCrop) {
+      pathData = clipPathDataToBounds(pathData);
+    }
   } else {
     // Multi-path shape
-    pathData = {
-      paths: EditorState.paths.map(path => pathToNormalizedData(path))
-    };
+    let paths = EditorState.paths.map(path => pathToNormalizedData(path));
+    if (shouldCrop) {
+      paths = paths.map(p => clipPathDataToBounds(p));
+    }
+    pathData = { paths };
   }
 
   // Get the current shape name

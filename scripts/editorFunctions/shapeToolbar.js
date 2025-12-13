@@ -676,3 +676,102 @@ function updatePathFromPolygon(path, polygon) {
   path.closed = true;
   path.automatic = false;
 }
+
+// ============================================
+// CROP TO BOUNDS (Sutherland-Hodgman clipping)
+// ============================================
+
+// Check if crop checkbox is enabled
+function isCropEnabled() {
+  const checkbox = document.getElementById('cropToBoundsCheckbox');
+  return checkbox && checkbox.checked;
+}
+
+// Clip normalized path data to 0-1 bounds
+function clipPathDataToBounds(pathData) {
+  if (!pathData.vertices || pathData.vertices.length < 3) {
+    return pathData;
+  }
+
+  // Convert vertices to simple polygon points
+  const polygon = pathData.vertices.map(v => ({ x: v.x, y: v.y }));
+
+  // Clip against unit square using Sutherland-Hodgman algorithm
+  const clipped = sutherlandHodgmanClip(polygon, [
+    { x: 0, y: 0 }, { x: 1, y: 0 }, { x: 1, y: 1 }, { x: 0, y: 1 }
+  ]);
+
+  if (clipped.length < 3) {
+    return pathData; // Keep original if clipping eliminates shape
+  }
+
+  // Convert back to pathData format (note: control points are lost at clip boundaries)
+  return {
+    vertices: clipped.map(p => ({ x: p.x, y: p.y })),
+    closed: pathData.closed
+  };
+}
+
+// Sutherland-Hodgman polygon clipping algorithm
+function sutherlandHodgmanClip(polygon, clipPolygon) {
+  let output = [...polygon];
+
+  for (let i = 0; i < clipPolygon.length; i++) {
+    if (output.length === 0) break;
+
+    const input = output;
+    output = [];
+
+    const edgeStart = clipPolygon[i];
+    const edgeEnd = clipPolygon[(i + 1) % clipPolygon.length];
+
+    for (let j = 0; j < input.length; j++) {
+      const current = input[j];
+      const previous = input[(j + input.length - 1) % input.length];
+
+      const currentInside = isInsideEdge(current, edgeStart, edgeEnd);
+      const previousInside = isInsideEdge(previous, edgeStart, edgeEnd);
+
+      if (currentInside) {
+        if (!previousInside) {
+          // Entering - add intersection point
+          const intersection = lineIntersection(previous, current, edgeStart, edgeEnd);
+          if (intersection) output.push(intersection);
+        }
+        output.push(current);
+      } else if (previousInside) {
+        // Leaving - add intersection point
+        const intersection = lineIntersection(previous, current, edgeStart, edgeEnd);
+        if (intersection) output.push(intersection);
+      }
+    }
+  }
+
+  return output;
+}
+
+// Check if point is inside (to the left of) the edge
+function isInsideEdge(point, edgeStart, edgeEnd) {
+  return (edgeEnd.x - edgeStart.x) * (point.y - edgeStart.y) -
+         (edgeEnd.y - edgeStart.y) * (point.x - edgeStart.x) >= 0;
+}
+
+// Line intersection helper for clipping
+function lineIntersection(p1, p2, p3, p4) {
+  const d1x = p2.x - p1.x;
+  const d1y = p2.y - p1.y;
+  const d2x = p4.x - p3.x;
+  const d2y = p4.y - p3.y;
+
+  const cross = d1x * d2y - d1y * d2x;
+  if (Math.abs(cross) < 1e-10) return null;
+
+  const dx = p3.x - p1.x;
+  const dy = p3.y - p1.y;
+  const t = (dx * d2y - dy * d2x) / cross;
+
+  return {
+    x: p1.x + t * d1x,
+    y: p1.y + t * d1y
+  };
+}

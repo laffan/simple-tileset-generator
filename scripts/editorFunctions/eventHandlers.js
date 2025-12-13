@@ -162,6 +162,15 @@ function setupEditorEvents() {
         EditorState.selectedPathIndices.length > 1;
 
       if (hasMultiSelection && isInSelection) {
+        // Option+drag duplicates all selected paths
+        if (e.altKey) {
+          const newIndices = duplicateSelectedPaths();
+          if (newIndices.length > 0) {
+            // Update selection to the new duplicated paths
+            EditorState.selectedPathIndices = newIndices;
+            updatePathSelectionVisuals();
+          }
+        }
         // Drag all selected paths together
         dragTarget = { type: 'multiPath', pathIndex: pathHit.pathIndex };
         EditorState.isDragging = true;
