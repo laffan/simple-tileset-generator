@@ -183,8 +183,18 @@ function duplicateShape(index) {
   const shape = shapeOrder[index];
   const wasChecked = document.querySelector(`.shapeCheckbox[data-shape="${shape}"]`)?.checked || false;
 
+  // For custom shapes, create an independent copy with new ID
+  let duplicatedShape = shape;
+  if (isCustomShape(shape)) {
+    const originalData = getShapePathData(shape);
+    // Deep copy the path data
+    const copiedData = JSON.parse(JSON.stringify(originalData));
+    duplicatedShape = generateCustomShapeId();
+    registerCustomShape(duplicatedShape, copiedData);
+  }
+
   // Insert duplicate after current position
-  shapeOrder.splice(index + 1, 0, shape);
+  shapeOrder.splice(index + 1, 0, duplicatedShape);
 
   // Rebuild the UI
   rebuildShapeList();

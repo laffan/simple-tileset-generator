@@ -319,3 +319,114 @@ shapePathData.spikes = {
 function getShapePathData(shapeName) {
   return shapePathData[shapeName] || shapePathData.square;
 }
+
+// Check if a shape name is a custom shape
+function isCustomShape(shapeName) {
+  return shapeName && shapeName.startsWith('custom_');
+}
+
+// Generate a unique ID for a custom shape
+function generateCustomShapeId() {
+  return 'custom_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+}
+
+// Register a custom shape with its path data
+function registerCustomShape(shapeId, pathData) {
+  shapePathData[shapeId] = pathData;
+  // Also register a renderer for this custom shape
+  shapeRenderers[shapeId] = function(x, y, size, ctx) {
+    drawShapeFromPath(x, y, size, ctx, pathData);
+  };
+}
+
+// Draw a shape from path data using Canvas 2D API
+function drawShapeFromPath(x, y, size, ctx, pathData) {
+  if (!pathData || !pathData.vertices || pathData.vertices.length === 0) {
+    return;
+  }
+
+  ctx.beginPath();
+
+  const vertices = pathData.vertices;
+
+  for (let i = 0; i < vertices.length; i++) {
+    const v = vertices[i];
+    const px = x + v.x * size;
+    const py = y + v.y * size;
+
+    if (i === 0) {
+      ctx.moveTo(px, py);
+    } else {
+      const prevV = vertices[i - 1];
+
+      // Check if this segment uses bezier curves
+      const hasCtrlOut = prevV.ctrlRight && (prevV.ctrlRight.x !== 0 || prevV.ctrlRight.y !== 0);
+      const hasCtrlIn = v.ctrlLeft && (v.ctrlLeft.x !== 0 || v.ctrlLeft.y !== 0);
+
+      if (hasCtrlOut || hasCtrlIn) {
+        // Bezier curve
+        const prevPx = x + prevV.x * size;
+        const prevPy = y + prevV.y * size;
+
+        // Control point 1 (from previous vertex's right control)
+        const cp1x = hasCtrlOut ? prevPx + prevV.ctrlRight.x * size : prevPx;
+        const cp1y = hasCtrlOut ? prevPy + prevV.ctrlRight.y * size : prevPy;
+
+        // Control point 2 (from current vertex's left control)
+        const cp2x = hasCtrlIn ? px + v.ctrlLeft.x * size : px;
+        const cp2y = hasCtrlIn ? py + v.ctrlLeft.y * size : py;
+
+        ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, px, py);
+      } else {
+        // Straight line
+        ctx.lineTo(px, py);
+      }
+    }
+  }
+
+  // Close the path if needed (handle curve from last to first vertex)
+  if (pathData.closed !== false) {
+    const lastV = vertices[vertices.length - 1];
+    const firstV = vertices[0];
+
+    const hasCtrlOut = lastV.ctrlRight && (lastV.ctrlRight.x !== 0 || lastV.ctrlRight.y !== 0);
+    const hasCtrlIn = firstV.ctrlLeft && (firstV.ctrlLeft.x !== 0 || firstV.ctrlLeft.y !== 0);
+
+    if (hasCtrlOut || hasCtrlIn) {
+      const lastPx = x + lastV.x * size;
+      const lastPy = y + lastV.y * size;
+      const firstPx = x + firstV.x * size;
+      const firstPy = y + firstV.y * size;
+
+      const cp1x = hasCtrlOut ? lastPx + lastV.ctrlRight.x * size : lastPx;
+      const cp1y = hasCtrlOut ? lastPy + lastV.ctrlRight.y * size : lastPy;
+      const cp2x = hasCtrlIn ? firstPx + firstV.ctrlLeft.x * size : firstPx;
+      const cp2y = hasCtrlIn ? firstPy + firstV.ctrlLeft.y * size : firstPy;
+
+      ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, firstPx, firstPy);
+    }
+
+    ctx.closePath();
+  }
+
+  ctx.fill();
+}
+
+// Get all custom shape data for session saving
+function getCustomShapeData() {
+  const customData = {};
+  for (const key in shapePathData) {
+    if (isCustomShape(key)) {
+      customData[key] = shapePathData[key];
+    }
+  }
+  return customData;
+}
+
+// Load custom shape data from session
+function loadCustomShapeData(customData) {
+  if (!customData) return;
+  for (const key in customData) {
+    registerCustomShape(key, customData[key]);
+  }
+}

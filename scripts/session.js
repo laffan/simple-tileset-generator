@@ -18,13 +18,14 @@ function getSessionData() {
   const fitPreview = document.getElementById('fitPreview').checked;
 
   return {
-    version: 2,
+    version: 3,
     colors: colorInput,
     tileSize: sizeInput,
     paletteComplexity: paletteComplexity,
-    shapeOrder: [...shapeOrder], // Save full shape order (with duplicates)
+    shapeOrder: [...shapeOrder], // Save full shape order (with duplicates and custom shapes)
     selectedIndices: selectedIndices, // Save which indices are selected
-    fitPreview: fitPreview
+    fitPreview: fitPreview,
+    customShapes: getCustomShapeData() // Save custom shape path data
   };
 }
 
@@ -45,9 +46,14 @@ function applySessionData(data) {
     generateColorPalette(parseInt(data.paletteComplexity));
   }
 
+  // Load custom shapes first (before rebuilding UI)
+  if (data.customShapes) {
+    loadCustomShapeData(data.customShapes);
+  }
+
   // Handle shape order and selection
   if (data.version >= 2 && data.shapeOrder !== undefined) {
-    // Version 2+: Restore full shape order (with duplicates/deletions)
+    // Version 2+: Restore full shape order (with duplicates/deletions/custom shapes)
     shapeOrder = [...data.shapeOrder];
 
     // Rebuild the UI with new shape order

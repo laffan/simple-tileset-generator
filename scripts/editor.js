@@ -448,12 +448,86 @@ function closeShapeEditor() {
   currentEditingShapeIndex = null;
 }
 
+// Convert editor coordinate back to normalized (0-1) value
+function editorToNormalized(value) {
+  return (value - EDITOR_MARGIN) / EDITOR_SHAPE_SIZE;
+}
+
+// Convert editor control point offset back to normalized scale
+function editorControlToNormalized(value) {
+  return value / EDITOR_SHAPE_SIZE;
+}
+
 // Save the edited shape
 function saveEditedShape() {
-  // For now, just close the modal
-  // In the future, this would save the shape data and update the preview
-  console.log('Shape saved (not yet implemented)');
+  if (!editorPath || currentEditingShapeIndex === null) {
+    closeShapeEditor();
+    return;
+  }
+
+  // Convert editor path to normalized path data
+  const vertices = [];
+
+  editorPath.vertices.forEach(vertex => {
+    // Get absolute position
+    const absX = vertex.x + editorPath.translation.x;
+    const absY = vertex.y + editorPath.translation.y;
+
+    // Convert to normalized coordinates
+    const v = {
+      x: editorToNormalized(absX),
+      y: editorToNormalized(absY)
+    };
+
+    // Add control points if they exist and are non-zero
+    if (vertex.controls) {
+      if (vertex.controls.left.x !== 0 || vertex.controls.left.y !== 0) {
+        v.ctrlLeft = {
+          x: editorControlToNormalized(vertex.controls.left.x),
+          y: editorControlToNormalized(vertex.controls.left.y)
+        };
+      }
+      if (vertex.controls.right.x !== 0 || vertex.controls.right.y !== 0) {
+        v.ctrlRight = {
+          x: editorControlToNormalized(vertex.controls.right.x),
+          y: editorControlToNormalized(vertex.controls.right.y)
+        };
+      }
+    }
+
+    vertices.push(v);
+  });
+
+  const pathData = {
+    vertices: vertices,
+    closed: editorPath.closed
+  };
+
+  // Get the current shape name
+  const currentShapeName = shapeOrder[currentEditingShapeIndex];
+
+  // Generate a new custom shape ID (or reuse if already custom)
+  let customId;
+  if (isCustomShape(currentShapeName)) {
+    // Update existing custom shape
+    customId = currentShapeName;
+  } else {
+    // Create new custom shape
+    customId = generateCustomShapeId();
+  }
+
+  // Register the custom shape (updates both shapePathData and shapeRenderers)
+  registerCustomShape(customId, pathData);
+
+  // Update shapeOrder to use the custom shape ID
+  shapeOrder[currentEditingShapeIndex] = customId;
+
+  // Close the editor
   closeShapeEditor();
+
+  // Rebuild the shape list and regenerate tileset
+  rebuildShapeList();
+  generateTileset();
 }
 
 // Set up editor button event listeners
