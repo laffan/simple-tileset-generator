@@ -4,10 +4,11 @@ const EditorState = {
   two: null,
   paths: [],  // Array of Two.Path objects for multi-path shapes
   anchors: [],
-  selectedAnchor: null,
+  selectedAnchors: [],  // Array of selected anchor data objects
   currentEditingShapeIndex: null,
   currentPathIndex: 0,  // Currently selected path in multi-path shapes
-  isDragging: false
+  isDragging: false,
+  newShapePoints: []  // Points being created for a new shape
 };
 
 // Constants
@@ -27,7 +28,8 @@ function resetEditorState() {
   EditorState.paths = [];
   EditorState.currentPathIndex = 0;
   EditorState.anchors = [];
-  EditorState.selectedAnchor = null;
+  EditorState.selectedAnchors = [];
   EditorState.currentEditingShapeIndex = null;
   EditorState.isDragging = false;
+  EditorState.newShapePoints = [];
 }

@@ -104,9 +104,9 @@ function updateAnchorVisuals() {
   EditorState.two.update();
 }
 
-// Highlight selected anchor
-function highlightAnchor(anchorData) {
-  // Reset all anchors
+// Update visual highlighting based on selectedAnchors array
+function updateAnchorHighlights() {
+  // Reset all anchors to default style
   EditorState.anchors.forEach(a => {
     if (a.circle) {
       a.circle.fill = '#17a2b8';
@@ -114,14 +114,59 @@ function highlightAnchor(anchorData) {
     }
   });
 
-  // Highlight selected
-  if (anchorData && anchorData.circle) {
-    anchorData.circle.fill = '#dc3545';
-    anchorData.circle.radius = ANCHOR_RADIUS + 2;
-  }
+  // Highlight all selected anchors
+  EditorState.selectedAnchors.forEach(anchorData => {
+    if (anchorData && anchorData.circle) {
+      anchorData.circle.fill = '#dc3545';
+      anchorData.circle.radius = ANCHOR_RADIUS + 2;
+    }
+  });
 
-  EditorState.selectedAnchor = anchorData;
   EditorState.two.update();
+}
+
+// Check if an anchor is currently selected
+function isAnchorSelected(anchorData) {
+  return EditorState.selectedAnchors.some(a => a.vertex === anchorData.vertex);
+}
+
+// Select a single anchor (clears other selections)
+function selectAnchor(anchorData) {
+  EditorState.selectedAnchors = anchorData ? [anchorData] : [];
+  updateAnchorHighlights();
+}
+
+// Toggle anchor selection (for shift+click)
+function toggleAnchorSelection(anchorData) {
+  if (!anchorData) return;
+
+  const index = EditorState.selectedAnchors.findIndex(a => a.vertex === anchorData.vertex);
+  if (index >= 0) {
+    // Already selected, remove it
+    EditorState.selectedAnchors.splice(index, 1);
+  } else {
+    // Not selected, add it
+    EditorState.selectedAnchors.push(anchorData);
+  }
+  updateAnchorHighlights();
+}
+
+// Add anchor to selection (without removing others)
+function addToSelection(anchorData) {
+  if (!anchorData || isAnchorSelected(anchorData)) return;
+  EditorState.selectedAnchors.push(anchorData);
+  updateAnchorHighlights();
+}
+
+// Clear all anchor selections
+function clearAnchorSelection() {
+  EditorState.selectedAnchors = [];
+  updateAnchorHighlights();
+}
+
+// Legacy function for compatibility - now uses multi-select
+function highlightAnchor(anchorData) {
+  selectAnchor(anchorData);
 }
 
 // Find anchor at position
@@ -168,6 +213,60 @@ function isPointInPath(path, x, y) {
 
   // Check if point is in fill or on stroke
   return svgPath.isPointInFill(point) || svgPath.isPointInStroke(point);
+}
+
+// Find the closest edge of the current path to a point
+// Returns { segmentIndex, t, distance, point } or null
+function findClosestEdge(x, y, maxDistance = 15) {
+  const currentPath = getCurrentPath();
+  if (!currentPath || currentPath.vertices.length < 2) return null;
+
+  let closest = null;
+  let minDist = maxDistance;
+
+  const vertices = currentPath.vertices;
+  const numSegments = currentPath.closed ? vertices.length : vertices.length - 1;
+
+  for (let i = 0; i < numSegments; i++) {
+    const v1 = vertices[i];
+    const v2 = vertices[(i + 1) % vertices.length];
+
+    const p1 = getAbsolutePosition(v1);
+    const p2 = getAbsolutePosition(v2);
+
+    // Find closest point on line segment
+    const result = closestPointOnSegment(x, y, p1.x, p1.y, p2.x, p2.y);
+
+    if (result.distance < minDist) {
+      minDist = result.distance;
+      closest = {
+        segmentIndex: i,
+        t: result.t,
+        distance: result.distance,
+        point: { x: result.x, y: result.y }
+      };
+    }
+  }
+
+  return closest;
+}
+
+// Helper: find closest point on a line segment
+function closestPointOnSegment(px, py, x1, y1, x2, y2) {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const lengthSq = dx * dx + dy * dy;
+
+  let t = 0;
+  if (lengthSq > 0) {
+    t = Math.max(0, Math.min(1, ((px - x1) * dx + (py - y1) * dy) / lengthSq));
+  }
+
+  const closestX = x1 + t * dx;
+  const closestY = y1 + t * dy;
+  const distance = Math.sqrt((px - closestX) ** 2 + (py - closestY) ** 2);
+
+  return { x: closestX, y: closestY, t, distance };
 }
 
 // Find if click is on a path shape (not on anchors/controls)

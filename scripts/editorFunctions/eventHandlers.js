@@ -8,6 +8,7 @@ function setupEditorEvents() {
 
   let dragTarget = null;
   let lastMousePos = { x: 0, y: 0 };
+  let isDraggingMultiple = false;
 
   svg.addEventListener('mousedown', (e) => {
     const rect = svg.getBoundingClientRect();
@@ -16,12 +17,49 @@ function setupEditorEvents() {
 
     lastMousePos = { x, y };
 
+    // Cancel any new shape creation if we're clicking on something
+    if (EditorState.newShapePoints.length > 0) {
+      const anchorHit = findAnchorAtPosition(x, y);
+      const pathHit = findPathAtPosition(x, y);
+      if (anchorHit || pathHit) {
+        cancelNewShape();
+      }
+    }
+
     // First check for anchor/control point hits (higher priority)
     const anchorHit = findAnchorAtPosition(x, y);
     if (anchorHit) {
       EditorState.isDragging = true;
-      dragTarget = anchorHit;
-      highlightAnchor(anchorHit.data);
+
+      if (anchorHit.type === 'anchor') {
+        // Handle shift+click for multi-select
+        if (e.shiftKey) {
+          toggleAnchorSelection(anchorHit.data);
+          // If anchor is now selected, prepare for drag
+          if (isAnchorSelected(anchorHit.data)) {
+            isDraggingMultiple = true;
+            dragTarget = { type: 'multiAnchor' };
+          } else {
+            EditorState.isDragging = false;
+            dragTarget = null;
+          }
+        } else {
+          // Normal click - if clicking on already selected anchor, drag all selected
+          if (isAnchorSelected(anchorHit.data) && EditorState.selectedAnchors.length > 1) {
+            isDraggingMultiple = true;
+            dragTarget = { type: 'multiAnchor' };
+          } else {
+            // Select only this anchor
+            selectAnchor(anchorHit.data);
+            isDraggingMultiple = false;
+            dragTarget = anchorHit;
+          }
+        }
+      } else {
+        // Control point hit - single drag only
+        dragTarget = anchorHit;
+        isDraggingMultiple = false;
+      }
       return;
     }
 
@@ -48,13 +86,22 @@ function setupEditorEvents() {
       }
 
       EditorState.isDragging = true;
-      highlightAnchor(null);  // Deselect any anchor when grabbing path
+      isDraggingMultiple = false;
+      clearAnchorSelection();  // Deselect anchors when grabbing path
       svg.style.cursor = 'grabbing';
       return;
     }
 
-    // Clicked on empty space
-    highlightAnchor(null);
+    // Check if clicking near an edge of the current path (to insert a point)
+    const edgeHit = findClosestEdge(x, y);
+    if (edgeHit) {
+      insertPointAtEdge(edgeHit, edgeHit.point.x, edgeHit.point.y);
+      return;
+    }
+
+    // Clicked on empty space - add point for new shape
+    clearAnchorSelection();
+    addNewShapePoint(x, y);
   });
 
   svg.addEventListener('mousemove', (e) => {
@@ -69,15 +116,28 @@ function setupEditorEvents() {
         svg.style.cursor = 'pointer';
       } else {
         const pathHit = findPathAtPosition(x, y);
-        svg.style.cursor = pathHit ? 'grab' : 'default';
+        if (pathHit) {
+          svg.style.cursor = 'grab';
+        } else {
+          const edgeHit = findClosestEdge(x, y);
+          svg.style.cursor = edgeHit ? 'cell' : 'crosshair';
+        }
       }
     }
 
     if (!EditorState.isDragging || !dragTarget) return;
 
     const currentPath = getCurrentPath();
+    const deltaX = x - lastMousePos.x;
+    const deltaY = y - lastMousePos.y;
 
-    if (dragTarget.type === 'anchor') {
+    if (dragTarget.type === 'multiAnchor' || (dragTarget.type === 'anchor' && isDraggingMultiple)) {
+      // Move all selected anchors together
+      EditorState.selectedAnchors.forEach(anchorData => {
+        anchorData.vertex.x += deltaX;
+        anchorData.vertex.y += deltaY;
+      });
+    } else if (dragTarget.type === 'anchor') {
       const vertex = dragTarget.data.vertex;
       // Convert mouse position to relative vertex position (subtract path translation)
       vertex.x = x - currentPath.translation.x;
@@ -95,9 +155,6 @@ function setupEditorEvents() {
       vertex.controls.right.y = y - absPos.y;
     } else if (dragTarget.type === 'path') {
       // Move entire path by shifting all vertices
-      const deltaX = x - lastMousePos.x;
-      const deltaY = y - lastMousePos.y;
-
       currentPath.vertices.forEach(vertex => {
         vertex.x += deltaX;
         vertex.y += deltaY;
@@ -111,13 +168,43 @@ function setupEditorEvents() {
   svg.addEventListener('mouseup', () => {
     EditorState.isDragging = false;
     dragTarget = null;
+    isDraggingMultiple = false;
     svg.style.cursor = 'default';
   });
 
   svg.addEventListener('mouseleave', () => {
     EditorState.isDragging = false;
     dragTarget = null;
+    isDraggingMultiple = false;
     svg.style.cursor = 'default';
+  });
+
+  // Keyboard event handler for Delete key
+  setupKeyboardEvents();
+}
+
+// Set up keyboard event handlers
+function setupKeyboardEvents() {
+  document.addEventListener('keydown', (e) => {
+    // Only handle if the editor modal is visible
+    const modal = document.getElementById('shapeEditorModal');
+    if (!modal || modal.style.display === 'none') return;
+
+    // Delete or Backspace to delete selected points
+    if (e.key === 'Delete' || e.key === 'Backspace') {
+      // Prevent browser back navigation on Backspace
+      if (e.key === 'Backspace') {
+        e.preventDefault();
+      }
+      deleteSelectedPoints();
+    }
+
+    // Escape to cancel new shape creation
+    if (e.key === 'Escape') {
+      if (EditorState.newShapePoints.length > 0) {
+        cancelNewShape();
+      }
+    }
   });
 }
 
@@ -126,8 +213,6 @@ function setupEditorButtons() {
   document.getElementById('closeEditorBtn').addEventListener('click', closeShapeEditor);
   document.getElementById('cancelEditorBtn').addEventListener('click', closeShapeEditor);
   document.getElementById('saveShapeBtn').addEventListener('click', saveEditedShape);
-  document.getElementById('addPointBtn').addEventListener('click', addPointToPath);
-  document.getElementById('deletePointBtn').addEventListener('click', deleteSelectedPoint);
 
   // Close modal when clicking outside
   document.getElementById('shapeEditorModal').addEventListener('click', (e) => {
