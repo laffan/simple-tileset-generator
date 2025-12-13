@@ -107,6 +107,54 @@ function selectPath(index) {
   }
 }
 
+// Duplicate the current path and select the duplicate
+function duplicateCurrentPath() {
+  const currentPath = getCurrentPath();
+  if (!currentPath) return null;
+
+  // Clone the vertices with their control points
+  const clonedAnchors = currentPath.vertices.map((vertex, index) => {
+    const ctrlLeftX = vertex.controls ? vertex.controls.left.x : 0;
+    const ctrlLeftY = vertex.controls ? vertex.controls.left.y : 0;
+    const ctrlRightX = vertex.controls ? vertex.controls.right.x : 0;
+    const ctrlRightY = vertex.controls ? vertex.controls.right.y : 0;
+
+    // Use same command type as original
+    const command = vertex.command || (index === 0 ? Two.Commands.move : Two.Commands.line);
+
+    return new Two.Anchor(
+      vertex.x,
+      vertex.y,
+      ctrlLeftX, ctrlLeftY,
+      ctrlRightX, ctrlRightY,
+      command
+    );
+  });
+
+  // Create new path from cloned anchors
+  const newPath = new Two.Path(clonedAnchors);
+  newPath.automatic = false;
+  newPath.fill = 'rgba(0, 0, 0, 0.8)';
+  newPath.stroke = '#333';
+  newPath.linewidth = 2;
+  newPath.closed = currentPath.closed;
+
+  // Copy the translation from original path
+  newPath.translation.set(currentPath.translation.x, currentPath.translation.y);
+
+  // Add to paths array and Two.js scene
+  EditorState.paths.push(newPath);
+  EditorState.two.add(newPath);
+
+  // Select the new path
+  EditorState.currentPathIndex = EditorState.paths.length - 1;
+  updatePathStyles();
+  createAnchorVisuals();
+  updatePathIndicator();
+
+  return newPath;
+}
+
 // Convert a single path to normalized path data
 function pathToNormalizedData(path) {
   const vertices = [];

@@ -25,11 +25,29 @@ function setupEditorEvents() {
       return;
     }
 
-    // If no anchor hit, check if clicking on the path shape itself
+    // If no anchor hit, check if clicking on any path shape
     const pathHit = findPathAtPosition(x, y);
     if (pathHit) {
+      // If clicked on a different path, select it first
+      if (pathHit.pathIndex !== EditorState.currentPathIndex) {
+        selectPath(pathHit.pathIndex);
+        updatePathIndicator();
+      }
+
+      // Option+drag duplicates the current path
+      if (e.altKey) {
+        const newPath = duplicateCurrentPath();
+        if (newPath) {
+          // The duplicated path is now selected, drag that instead
+          dragTarget = { type: 'path', path: newPath, pathIndex: EditorState.currentPathIndex };
+        } else {
+          dragTarget = pathHit;
+        }
+      } else {
+        dragTarget = pathHit;
+      }
+
       EditorState.isDragging = true;
-      dragTarget = pathHit;
       highlightAnchor(null);  // Deselect any anchor when grabbing path
       svg.style.cursor = 'grabbing';
       return;
@@ -110,8 +128,6 @@ function setupEditorButtons() {
   document.getElementById('saveShapeBtn').addEventListener('click', saveEditedShape);
   document.getElementById('addPointBtn').addEventListener('click', addPointToPath);
   document.getElementById('deletePointBtn').addEventListener('click', deleteSelectedPoint);
-  document.getElementById('prevPathBtn').addEventListener('click', prevPath);
-  document.getElementById('nextPathBtn').addEventListener('click', nextPath);
 
   // Close modal when clicking outside
   document.getElementById('shapeEditorModal').addEventListener('click', (e) => {

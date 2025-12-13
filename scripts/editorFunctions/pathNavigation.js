@@ -4,15 +4,12 @@
 function updatePathIndicator() {
   const indicator = document.getElementById('pathIndicator');
   if (indicator) {
-    indicator.textContent = `${EditorState.currentPathIndex + 1}/${EditorState.paths.length}`;
-  }
-  // Enable/disable nav buttons based on path count
-  const prevBtn = document.getElementById('prevPathBtn');
-  const nextBtn = document.getElementById('nextPathBtn');
-  if (prevBtn && nextBtn) {
-    const multiPath = EditorState.paths.length > 1;
-    prevBtn.disabled = !multiPath;
-    nextBtn.disabled = !multiPath;
+    // Only show indicator when there are multiple paths
+    if (EditorState.paths.length > 1) {
+      indicator.textContent = `Path ${EditorState.currentPathIndex + 1} of ${EditorState.paths.length}`;
+    } else {
+      indicator.textContent = '';
+    }
   }
 }
 

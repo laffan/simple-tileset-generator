@@ -171,10 +171,21 @@ function isPointInPath(path, x, y) {
 }
 
 // Find if click is on a path shape (not on anchors/controls)
+// Checks all paths and returns the clicked one (prioritizing current path)
 function findPathAtPosition(x, y) {
+  // First check the current path (give it priority)
   const currentPath = getCurrentPath();
   if (currentPath && isPointInPath(currentPath, x, y)) {
     return { type: 'path', path: currentPath, pathIndex: EditorState.currentPathIndex };
+  }
+
+  // Then check all other paths
+  for (let i = 0; i < EditorState.paths.length; i++) {
+    if (i === EditorState.currentPathIndex) continue; // Already checked
+    const path = EditorState.paths[i];
+    if (isPointInPath(path, x, y)) {
+      return { type: 'path', path: path, pathIndex: i };
+    }
   }
   return null;
 }
