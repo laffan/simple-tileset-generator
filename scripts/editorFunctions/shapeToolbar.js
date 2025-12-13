@@ -1,5 +1,8 @@
 /* Shape Toolbar - Tools for reflecting, aligning, and boolean operations */
 
+// Track selected paths for multi-path operations
+let selectedPathIndices = [];
+
 // Set up toolbar event listeners
 function setupShapeToolbar() {
   const toolbar = document.querySelector('.shape-toolbar');
@@ -46,9 +49,6 @@ function closeAllSubmenus() {
 
 // Execute a tool action
 function executeToolAction(actionType) {
-  const currentPath = getCurrentPath();
-  if (!currentPath) return;
-
   switch (actionType) {
     case 'reflect-horizontal':
       reflectPath('horizontal');
@@ -57,24 +57,78 @@ function executeToolAction(actionType) {
       reflectPath('vertical');
       break;
     case 'align-center':
-      alignPath('center');
+      alignPaths('center');
       break;
     case 'align-top':
-      alignPath('top');
+      alignPaths('top');
       break;
     case 'align-bottom':
-      alignPath('bottom');
+      alignPaths('bottom');
       break;
     case 'align-left':
-      alignPath('left');
+      alignPaths('left');
       break;
     case 'align-right':
-      alignPath('right');
+      alignPaths('right');
       break;
     case 'boolean-cut':
       booleanCut();
       break;
   }
+}
+
+// Get list of paths to operate on (selected paths or current path)
+function getSelectedPaths() {
+  if (selectedPathIndices.length > 0) {
+    return selectedPathIndices.map(i => EditorState.paths[i]).filter(p => p);
+  }
+  const current = getCurrentPath();
+  return current ? [current] : [];
+}
+
+// Toggle path selection (for shift+click)
+function togglePathSelection(pathIndex) {
+  const idx = selectedPathIndices.indexOf(pathIndex);
+  if (idx >= 0) {
+    selectedPathIndices.splice(idx, 1);
+  } else {
+    selectedPathIndices.push(pathIndex);
+  }
+  updatePathSelectionVisuals();
+}
+
+// Add path to selection
+function addPathToSelection(pathIndex) {
+  if (!selectedPathIndices.includes(pathIndex)) {
+    selectedPathIndices.push(pathIndex);
+    updatePathSelectionVisuals();
+  }
+}
+
+// Clear path selection
+function clearPathSelection() {
+  selectedPathIndices = [];
+  updatePathSelectionVisuals();
+}
+
+// Update visual indication of selected paths
+function updatePathSelectionVisuals() {
+  EditorState.paths.forEach((path, index) => {
+    const isSelected = selectedPathIndices.includes(index);
+    const isCurrent = index === EditorState.currentPathIndex;
+
+    if (isSelected) {
+      path.stroke = '#e83e8c'; // Pink for multi-selected
+      path.linewidth = 3;
+    } else if (isCurrent) {
+      path.stroke = '#333';
+      path.linewidth = 2;
+    } else {
+      path.stroke = '#666';
+      path.linewidth = 2;
+    }
+  });
+  EditorState.two.update();
 }
 
 // Reflect the current path horizontally or vertically
@@ -86,42 +140,53 @@ function reflectPath(direction) {
   const bbox = getPathBoundingBox(currentPath);
   if (!bbox) return;
 
-  currentPath.vertices.forEach(vertex => {
-    const absPos = getAbsolutePosition(vertex);
+  // Store new positions first, then apply
+  const newPositions = currentPath.vertices.map(vertex => {
+    const absX = vertex.x + currentPath.translation.x;
+    const absY = vertex.y + currentPath.translation.y;
+
+    let newX = absX;
+    let newY = absY;
+    let newCtrlLeft = vertex.controls ? { x: vertex.controls.left.x, y: vertex.controls.left.y } : null;
+    let newCtrlRight = vertex.controls ? { x: vertex.controls.right.x, y: vertex.controls.right.y } : null;
 
     if (direction === 'horizontal') {
-      // Reflect around vertical center axis
-      const newX = bbox.centerX - (absPos.x - bbox.centerX);
-      vertex.x = newX - currentPath.translation.x;
+      // Reflect x around vertical center axis
+      newX = 2 * bbox.centerX - absX;
 
-      // Also flip control points horizontally
+      // Flip and swap control points
       if (vertex.controls) {
-        const tempLeftX = vertex.controls.left.x;
-        vertex.controls.left.x = -vertex.controls.right.x;
-        vertex.controls.right.x = -tempLeftX;
+        newCtrlLeft = { x: -vertex.controls.right.x, y: vertex.controls.right.y };
+        newCtrlRight = { x: -vertex.controls.left.x, y: vertex.controls.left.y };
       }
     } else if (direction === 'vertical') {
-      // Reflect around horizontal center axis
-      const newY = bbox.centerY - (absPos.y - bbox.centerY);
-      vertex.y = newY - currentPath.translation.y;
+      // Reflect y around horizontal center axis
+      newY = 2 * bbox.centerY - absY;
 
-      // Also flip control points vertically
+      // Flip and swap control points
       if (vertex.controls) {
-        const tempLeftY = vertex.controls.left.y;
-        vertex.controls.left.y = -vertex.controls.right.y;
-        vertex.controls.right.y = -tempLeftY;
+        newCtrlLeft = { x: vertex.controls.right.x, y: -vertex.controls.right.y };
+        newCtrlRight = { x: vertex.controls.left.x, y: -vertex.controls.left.y };
       }
     }
+
+    return {
+      x: newX - currentPath.translation.x,
+      y: newY - currentPath.translation.y,
+      ctrlLeft: newCtrlLeft,
+      ctrlRight: newCtrlRight
+    };
   });
 
-  // Reverse vertex order to maintain correct winding
-  const reversedVertices = [...currentPath.vertices].reverse();
-  // Update vertex positions
-  reversedVertices.forEach((v, i) => {
-    currentPath.vertices[i].x = v.x;
-    currentPath.vertices[i].y = v.y;
-    if (v.controls) {
-      currentPath.vertices[i].controls = v.controls;
+  // Apply new positions
+  newPositions.forEach((pos, i) => {
+    currentPath.vertices[i].x = pos.x;
+    currentPath.vertices[i].y = pos.y;
+    if (pos.ctrlLeft && currentPath.vertices[i].controls) {
+      currentPath.vertices[i].controls.left.x = pos.ctrlLeft.x;
+      currentPath.vertices[i].controls.left.y = pos.ctrlLeft.y;
+      currentPath.vertices[i].controls.right.x = pos.ctrlRight.x;
+      currentPath.vertices[i].controls.right.y = pos.ctrlRight.y;
     }
   });
 
@@ -129,16 +194,28 @@ function reflectPath(direction) {
   updateBoundingBox();
 }
 
-// Align the current path to the editor workspace
-function alignPath(alignment) {
-  const currentPath = getCurrentPath();
-  if (!currentPath) return;
+// Align paths - if multiple selected, align to each other; otherwise align to workspace
+function alignPaths(alignment) {
+  const paths = getSelectedPaths();
+  if (paths.length === 0) return;
 
-  // Get bounding box of current path
-  const bbox = getPathBoundingBox(currentPath);
+  if (paths.length === 1 || selectedPathIndices.length <= 1) {
+    // Single path - align to workspace
+    alignPathToWorkspace(paths[0], alignment);
+  } else {
+    // Multiple paths - align to each other
+    alignPathsToEachOther(alignment);
+  }
+
+  updateAnchorVisuals();
+  updateBoundingBox();
+}
+
+// Align a single path to workspace bounds
+function alignPathToWorkspace(path, alignment) {
+  const bbox = getPathBoundingBox(path);
   if (!bbox) return;
 
-  // Editor workspace bounds (with margin)
   const workspaceMin = EDITOR_MARGIN;
   const workspaceMax = EDITOR_SIZE - EDITOR_MARGIN;
   const workspaceCenter = EDITOR_SIZE / 2;
@@ -165,15 +242,72 @@ function alignPath(alignment) {
       break;
   }
 
-  // Apply delta to all vertices
-  currentPath.vertices.forEach(vertex => {
+  path.vertices.forEach(vertex => {
     vertex.x += deltaX;
     vertex.y += deltaY;
   });
-
-  updateAnchorVisuals();
-  updateBoundingBox();
 }
+
+// Align multiple paths to each other
+function alignPathsToEachOther(alignment) {
+  const paths = selectedPathIndices.map(i => EditorState.paths[i]).filter(p => p);
+  if (paths.length < 2) return;
+
+  // Get bounding boxes for all selected paths
+  const bboxes = paths.map(p => getPathBoundingBox(p));
+
+  // Calculate the combined bounding box
+  let combinedMinX = Infinity, combinedMinY = Infinity;
+  let combinedMaxX = -Infinity, combinedMaxY = -Infinity;
+
+  bboxes.forEach(bbox => {
+    if (!bbox) return;
+    combinedMinX = Math.min(combinedMinX, bbox.x);
+    combinedMinY = Math.min(combinedMinY, bbox.y);
+    combinedMaxX = Math.max(combinedMaxX, bbox.x + bbox.width);
+    combinedMaxY = Math.max(combinedMaxY, bbox.y + bbox.height);
+  });
+
+  const combinedCenterX = (combinedMinX + combinedMaxX) / 2;
+  const combinedCenterY = (combinedMinY + combinedMaxY) / 2;
+
+  // Align each path
+  paths.forEach((path, i) => {
+    const bbox = bboxes[i];
+    if (!bbox) return;
+
+    let deltaX = 0;
+    let deltaY = 0;
+
+    switch (alignment) {
+      case 'center':
+        deltaX = combinedCenterX - bbox.centerX;
+        deltaY = combinedCenterY - bbox.centerY;
+        break;
+      case 'top':
+        deltaY = combinedMinY - bbox.y;
+        break;
+      case 'bottom':
+        deltaY = combinedMaxY - (bbox.y + bbox.height);
+        break;
+      case 'left':
+        deltaX = combinedMinX - bbox.x;
+        break;
+      case 'right':
+        deltaX = combinedMaxX - (bbox.x + bbox.width);
+        break;
+    }
+
+    path.vertices.forEach(vertex => {
+      vertex.x += deltaX;
+      vertex.y += deltaY;
+    });
+  });
+}
+
+// ============================================
+// BOOLEAN CUT OPERATION
+// ============================================
 
 // Boolean cut operation - subtract current path from overlapping paths
 function booleanCut() {
@@ -189,7 +323,7 @@ function booleanCut() {
   const cuttingPolygon = getPathPolygon(currentPath);
   if (cuttingPolygon.length < 3) return;
 
-  // Check each other path for overlap
+  // Process each other path
   for (let i = 0; i < EditorState.paths.length; i++) {
     if (i === currentIndex) continue;
 
@@ -199,28 +333,26 @@ function booleanCut() {
 
     // Check if polygons overlap
     if (polygonsOverlap(cuttingPolygon, targetPolygon)) {
-      // Perform boolean subtraction
-      const result = subtractPolygon(targetPolygon, cuttingPolygon);
+      // Perform boolean subtraction using Weiler-Atherton algorithm
+      const result = weilerAthertonDifference(targetPolygon, cuttingPolygon);
       if (result && result.length >= 3) {
-        // Update target path with result
         updatePathFromPolygon(targetPath, result);
       }
     }
   }
 
-  updateAnchorVisuals();
+  createAnchorVisuals();
   EditorState.two.update();
 }
 
-// Get polygon points from a path (ignores bezier curves, uses anchor points)
+// Get polygon points from a path
 function getPathPolygon(path) {
   const points = [];
   path.vertices.forEach(vertex => {
-    const absPos = {
+    points.push({
       x: vertex.x + path.translation.x,
       y: vertex.y + path.translation.y
-    };
-    points.push(absPos);
+    });
   });
   return points;
 }
@@ -242,13 +374,13 @@ function polygonsOverlap(poly1, poly2) {
     for (let j = 0; j < poly2.length; j++) {
       const b1 = poly2[j];
       const b2 = poly2[(j + 1) % poly2.length];
-      if (segmentsIntersect(a1, a2, b1, b2)) return true;
+      if (getLineIntersection(a1, a2, b1, b2)) return true;
     }
   }
   return false;
 }
 
-// Check if a point is inside a polygon (ray casting algorithm)
+// Point in polygon test (ray casting)
 function pointInPolygon(point, polygon) {
   let inside = false;
   const n = polygon.length;
@@ -264,189 +396,221 @@ function pointInPolygon(point, polygon) {
   return inside;
 }
 
-// Check if two line segments intersect
-function segmentsIntersect(a1, a2, b1, b2) {
-  const d1 = direction(b1, b2, a1);
-  const d2 = direction(b1, b2, a2);
-  const d3 = direction(a1, a2, b1);
-  const d4 = direction(a1, a2, b2);
-
-  if (((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) &&
-      ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0))) {
-    return true;
-  }
-  return false;
-}
-
-// Cross product direction helper
-function direction(p1, p2, p3) {
-  return (p3.x - p1.x) * (p2.y - p1.y) - (p2.x - p1.x) * (p3.y - p1.y);
-}
-
 // Get intersection point of two line segments
-function getSegmentIntersection(a1, a2, b1, b2) {
-  const denom = (b2.y - b1.y) * (a2.x - a1.x) - (b2.x - b1.x) * (a2.y - a1.y);
-  if (Math.abs(denom) < 1e-10) return null;
+function getLineIntersection(p1, p2, p3, p4) {
+  const d1x = p2.x - p1.x;
+  const d1y = p2.y - p1.y;
+  const d2x = p4.x - p3.x;
+  const d2y = p4.y - p3.y;
 
-  const ua = ((b2.x - b1.x) * (a1.y - b1.y) - (b2.y - b1.y) * (a1.x - b1.x)) / denom;
-  const ub = ((a2.x - a1.x) * (a1.y - b1.y) - (a2.y - a1.y) * (a1.x - b1.x)) / denom;
+  const cross = d1x * d2y - d1y * d2x;
+  if (Math.abs(cross) < 1e-10) return null;
 
-  if (ua >= 0 && ua <= 1 && ub >= 0 && ub <= 1) {
+  const dx = p3.x - p1.x;
+  const dy = p3.y - p1.y;
+
+  const t1 = (dx * d2y - dy * d2x) / cross;
+  const t2 = (dx * d1y - dy * d1x) / cross;
+
+  if (t1 >= 0 && t1 <= 1 && t2 >= 0 && t2 <= 1) {
     return {
-      x: a1.x + ua * (a2.x - a1.x),
-      y: a1.y + ua * (a2.y - a1.y)
+      x: p1.x + t1 * d1x,
+      y: p1.y + t1 * d1y,
+      t1: t1,
+      t2: t2
     };
   }
   return null;
 }
 
-// Subtract polygon B from polygon A (Sutherland-Hodgman style clipping)
-// This creates a new polygon that is A with the overlapping part of B removed
-function subtractPolygon(subjectPoly, clipPoly) {
-  // Find all intersection points and build the result polygon
-  const result = [];
-  const intersections = [];
+// Weiler-Atherton polygon difference (subject - clip)
+function weilerAthertonDifference(subject, clip) {
+  // Build vertex lists with intersection points
+  const subjectList = buildVertexList(subject, clip, true);
+  const clipList = buildVertexList(clip, subject, false);
 
-  // Find all intersection points between the polygons
-  for (let i = 0; i < subjectPoly.length; i++) {
-    const a1 = subjectPoly[i];
-    const a2 = subjectPoly[(i + 1) % subjectPoly.length];
-
-    for (let j = 0; j < clipPoly.length; j++) {
-      const b1 = clipPoly[j];
-      const b2 = clipPoly[(j + 1) % clipPoly.length];
-
-      const intersection = getSegmentIntersection(a1, a2, b1, b2);
-      if (intersection) {
-        intersections.push({
-          point: intersection,
-          subjectEdge: i,
-          clipEdge: j,
-          t: getParameterOnSegment(a1, a2, intersection)
-        });
-      }
+  if (subjectList.intersections === 0) {
+    // No intersections - check containment
+    if (pointInPolygon(subject[0], clip)) {
+      return []; // Subject entirely inside clip - nothing left
     }
+    return subject; // No overlap
   }
 
-  if (intersections.length < 2) {
-    // No intersection or only touching - return original or empty
-    // Check if subject is entirely inside clip
-    if (pointInPolygon(subjectPoly[0], clipPoly)) {
-      return []; // Completely inside, return empty
-    }
-    return subjectPoly; // No overlap, return original
-  }
+  // Trace the result polygon
+  const result = traceResultPolygon(subjectList.vertices, clipList.vertices, clip);
 
-  // Build result by walking around subject polygon, switching at intersections
-  // This is a simplified approach - walk the subject, add intersection points, skip parts inside clip
-  const sortedIntersections = [...intersections].sort((a, b) => {
-    if (a.subjectEdge !== b.subjectEdge) return a.subjectEdge - b.subjectEdge;
-    return a.t - b.t;
-  });
-
-  let resultPoints = [];
-  let currentIntersectionIndex = 0;
-
-  for (let i = 0; i < subjectPoly.length; i++) {
-    const currentPoint = subjectPoly[i];
-    const nextPoint = subjectPoly[(i + 1) % subjectPoly.length];
-    const isCurrentInside = pointInPolygon(currentPoint, clipPoly);
-
-    // Add current point if outside clip polygon
-    if (!isCurrentInside) {
-      resultPoints.push({ ...currentPoint });
-    }
-
-    // Add any intersection points on this edge
-    while (currentIntersectionIndex < sortedIntersections.length &&
-           sortedIntersections[currentIntersectionIndex].subjectEdge === i) {
-      const intersection = sortedIntersections[currentIntersectionIndex];
-      resultPoints.push({ ...intersection.point });
-
-      // Walk along clip polygon edge in the direction that stays outside subject
-      const clipEdge = intersection.clipEdge;
-      const wasInside = isCurrentInside;
-
-      // If entering clip region, we need to walk along clip boundary
-      if (!wasInside) {
-        // Find the next intersection to know where to rejoin
-        let nextIntersection = null;
-        for (let k = currentIntersectionIndex + 1; k < sortedIntersections.length; k++) {
-          nextIntersection = sortedIntersections[k];
-          break;
-        }
-        if (!nextIntersection && sortedIntersections.length > currentIntersectionIndex + 1) {
-          nextIntersection = sortedIntersections[0];
-        }
-
-        if (nextIntersection) {
-          // Walk along clip polygon from current clip edge to next intersection's clip edge
-          let walkEdge = clipEdge;
-          const targetEdge = nextIntersection.clipEdge;
-          const clipLen = clipPoly.length;
-
-          // Determine direction to walk (clockwise or counter-clockwise)
-          // We want to walk along the boundary that's outside the subject
-          let stepsForward = (targetEdge - walkEdge + clipLen) % clipLen;
-          let stepsBackward = (walkEdge - targetEdge + clipLen) % clipLen;
-
-          if (stepsForward <= stepsBackward) {
-            // Walk forward
-            for (let step = 1; step < stepsForward; step++) {
-              const edgeIdx = (walkEdge + step) % clipLen;
-              const clipPoint = clipPoly[(edgeIdx + 1) % clipLen];
-              if (!pointInPolygon(clipPoint, subjectPoly)) {
-                resultPoints.push({ ...clipPoint });
-              }
-            }
-          } else {
-            // Walk backward
-            for (let step = 1; step < stepsBackward; step++) {
-              const edgeIdx = (walkEdge - step + clipLen) % clipLen;
-              const clipPoint = clipPoly[edgeIdx];
-              if (!pointInPolygon(clipPoint, subjectPoly)) {
-                resultPoints.push({ ...clipPoint });
-              }
-            }
-          }
-        }
-      }
-
-      currentIntersectionIndex++;
-    }
-  }
-
-  // Remove duplicate points
-  const finalResult = [];
-  for (const p of resultPoints) {
-    if (finalResult.length === 0 ||
-        Math.abs(p.x - finalResult[finalResult.length - 1].x) > 0.1 ||
-        Math.abs(p.y - finalResult[finalResult.length - 1].y) > 0.1) {
-      finalResult.push(p);
-    }
-  }
-
-  // Check if first and last are duplicates
-  if (finalResult.length > 1) {
-    const first = finalResult[0];
-    const last = finalResult[finalResult.length - 1];
-    if (Math.abs(first.x - last.x) < 0.1 && Math.abs(first.y - last.y) < 0.1) {
-      finalResult.pop();
-    }
-  }
-
-  return finalResult.length >= 3 ? finalResult : subjectPoly;
+  return result;
 }
 
-// Get parameter t (0-1) of a point on a segment
-function getParameterOnSegment(a, b, p) {
-  const dx = b.x - a.x;
-  const dy = b.y - a.y;
-  const len = Math.sqrt(dx * dx + dy * dy);
-  if (len < 1e-10) return 0;
-  const px = p.x - a.x;
-  const py = p.y - a.y;
-  return (px * dx + py * dy) / (len * len);
+// Build vertex list with intersection points inserted
+function buildVertexList(poly, otherPoly, isSubject) {
+  const vertices = [];
+  let intersectionCount = 0;
+
+  for (let i = 0; i < poly.length; i++) {
+    const p1 = poly[i];
+    const p2 = poly[(i + 1) % poly.length];
+
+    // Add current vertex
+    vertices.push({
+      x: p1.x,
+      y: p1.y,
+      isIntersection: false,
+      isEntering: false,
+      originalIndex: i,
+      processed: false
+    });
+
+    // Find intersections on this edge
+    const edgeIntersections = [];
+    for (let j = 0; j < otherPoly.length; j++) {
+      const q1 = otherPoly[j];
+      const q2 = otherPoly[(j + 1) % otherPoly.length];
+
+      const intersection = getLineIntersection(p1, p2, q1, q2);
+      if (intersection && intersection.t1 > 0.001 && intersection.t1 < 0.999) {
+        edgeIntersections.push({
+          x: intersection.x,
+          y: intersection.y,
+          t: intersection.t1,
+          otherEdge: j,
+          otherT: intersection.t2,
+          isIntersection: true,
+          processed: false
+        });
+        intersectionCount++;
+      }
+    }
+
+    // Sort intersections by t and add them
+    edgeIntersections.sort((a, b) => a.t - b.t);
+    for (const inter of edgeIntersections) {
+      // Determine if entering or leaving the other polygon
+      // For difference: we want to keep parts of subject that are OUTSIDE clip
+      const midPoint = {
+        x: inter.x + 0.001 * (p2.x - p1.x),
+        y: inter.y + 0.001 * (p2.y - p1.y)
+      };
+      inter.isEntering = isSubject ? pointInPolygon(midPoint, otherPoly) : !pointInPolygon(midPoint, otherPoly);
+      vertices.push(inter);
+    }
+  }
+
+  return { vertices, intersections: intersectionCount };
+}
+
+// Trace the result polygon for difference operation
+function traceResultPolygon(subjectVerts, clipVerts, clipPoly) {
+  const result = [];
+
+  // Find first vertex of subject that's outside clip
+  let startIdx = -1;
+  for (let i = 0; i < subjectVerts.length; i++) {
+    const v = subjectVerts[i];
+    if (!v.isIntersection && !pointInPolygon(v, clipPoly)) {
+      startIdx = i;
+      break;
+    }
+  }
+
+  if (startIdx === -1) {
+    // All subject vertices inside clip - find entry point
+    for (let i = 0; i < subjectVerts.length; i++) {
+      if (subjectVerts[i].isIntersection && !subjectVerts[i].isEntering) {
+        startIdx = i;
+        break;
+      }
+    }
+  }
+
+  if (startIdx === -1) return [];
+
+  // Trace the polygon
+  let currentList = subjectVerts;
+  let currentIdx = startIdx;
+  let onSubject = true;
+  let maxIterations = subjectVerts.length + clipVerts.length + 10;
+  let iterations = 0;
+
+  while (iterations < maxIterations) {
+    iterations++;
+    const v = currentList[currentIdx];
+
+    // Add vertex if not already at this position
+    if (result.length === 0 ||
+        Math.abs(v.x - result[result.length - 1].x) > 0.5 ||
+        Math.abs(v.y - result[result.length - 1].y) > 0.5) {
+      result.push({ x: v.x, y: v.y });
+    }
+
+    // Check if we've completed the loop
+    if (result.length > 2) {
+      const first = result[0];
+      if (Math.abs(v.x - first.x) < 1 && Math.abs(v.y - first.y) < 1) {
+        break;
+      }
+    }
+
+    // If this is an intersection, switch lists
+    if (v.isIntersection && !v.processed) {
+      v.processed = true;
+
+      if (onSubject && v.isEntering) {
+        // Entering clip - switch to walking clip boundary (backwards for difference)
+        onSubject = false;
+        currentList = clipVerts;
+        currentIdx = findMatchingIntersection(clipVerts, v);
+        if (currentIdx === -1) break;
+        // Walk backwards on clip
+        currentIdx = (currentIdx - 1 + clipVerts.length) % clipVerts.length;
+        continue;
+      } else if (!onSubject) {
+        // On clip, at intersection - switch back to subject
+        onSubject = true;
+        currentList = subjectVerts;
+        currentIdx = findMatchingIntersection(subjectVerts, v);
+        if (currentIdx === -1) break;
+      }
+    }
+
+    // Move to next vertex
+    if (onSubject) {
+      currentIdx = (currentIdx + 1) % subjectVerts.length;
+    } else {
+      // Walk backwards on clip for difference
+      currentIdx = (currentIdx - 1 + clipVerts.length) % clipVerts.length;
+    }
+
+    // Safety check
+    if (currentIdx === startIdx && onSubject && result.length > 2) {
+      break;
+    }
+  }
+
+  // Remove duplicate end point if present
+  if (result.length > 1) {
+    const first = result[0];
+    const last = result[result.length - 1];
+    if (Math.abs(first.x - last.x) < 1 && Math.abs(first.y - last.y) < 1) {
+      result.pop();
+    }
+  }
+
+  return result.length >= 3 ? result : [];
+}
+
+// Find matching intersection point in another vertex list
+function findMatchingIntersection(vertices, target) {
+  for (let i = 0; i < vertices.length; i++) {
+    const v = vertices[i];
+    if (v.isIntersection &&
+        Math.abs(v.x - target.x) < 1 &&
+        Math.abs(v.y - target.y) < 1) {
+      return i;
+    }
+  }
+  return -1;
 }
 
 // Update a Two.js path from polygon points

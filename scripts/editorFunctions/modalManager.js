@@ -46,6 +46,7 @@ function closeShapeEditor() {
     EditorState.two = null;
   }
   resetEditorState();
+  clearPathSelection();
 }
 
 // Save the edited shape

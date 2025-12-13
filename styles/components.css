@@ -709,3 +709,13 @@
 .tool-action:disabled:hover {
   background: transparent;
 }
+
+/* Submenu hint text */
+.submenu-hint {
+  display: block;
+  padding: 4px 12px 8px;
+  color: #888;
+  font-size: 11px;
+  border-bottom: 1px solid #eee;
+  margin-bottom: 4px;
+}

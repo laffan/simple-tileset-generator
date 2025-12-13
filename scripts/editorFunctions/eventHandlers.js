@@ -126,6 +126,16 @@ function setupEditorEvents() {
     // If no anchor hit, check if clicking on any path shape
     const pathHit = findPathAtPosition(x, y);
     if (pathHit) {
+      // Shift+click for multi-path selection (for align tool)
+      if (e.shiftKey) {
+        togglePathSelection(pathHit.pathIndex);
+        // Don't start drag when shift-clicking for selection
+        return;
+      }
+
+      // Clear multi-path selection on regular click
+      clearPathSelection();
+
       // If clicked on a different path, select it first
       if (pathHit.pathIndex !== EditorState.currentPathIndex) {
         selectPath(pathHit.pathIndex);
