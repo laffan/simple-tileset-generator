@@ -57,6 +57,19 @@ function drawEditorGrid() {
   centerH.stroke = '#ccc';
   centerH.linewidth = 2;
   gridGroup.add(centerH);
+
+  // Draw red boundary showing the save area
+  const boundary = editorTwo.makeRectangle(
+    EDITOR_SIZE / 2,  // center x
+    EDITOR_SIZE / 2,  // center y
+    EDITOR_SHAPE_SIZE,  // width
+    EDITOR_SHAPE_SIZE   // height
+  );
+  boundary.fill = 'transparent';
+  boundary.stroke = '#dc3545';
+  boundary.linewidth = 2;
+  boundary.dashes = [8, 4];
+  gridGroup.add(boundary);
 }
 
 // Editor margin and scale settings
@@ -120,6 +133,14 @@ function loadShapeIntoEditor(shapeName) {
   editorTwo.update();
 }
 
+// Get absolute position of a vertex (accounting for path translation)
+function getAbsolutePosition(vertex) {
+  return {
+    x: vertex.x + editorPath.translation.x,
+    y: vertex.y + editorPath.translation.y
+  };
+}
+
 // Create visual representations of anchor points
 function createAnchorVisuals() {
   // Clear existing anchors
@@ -140,8 +161,11 @@ function createAnchorVisuals() {
       index: index
     };
 
+    // Get absolute position (Two.js auto-centers paths, so vertices are relative to center)
+    const absPos = getAbsolutePosition(vertex);
+
     // Main anchor point
-    const circle = editorTwo.makeCircle(vertex.x, vertex.y, ANCHOR_RADIUS);
+    const circle = editorTwo.makeCircle(absPos.x, absPos.y, ANCHOR_RADIUS);
     circle.fill = '#17a2b8';
     circle.stroke = '#fff';
     circle.linewidth = 2;
@@ -149,10 +173,10 @@ function createAnchorVisuals() {
 
     // Control point handles (for bezier curves)
     if (vertex.controls && (vertex.controls.left.x !== 0 || vertex.controls.left.y !== 0)) {
-      const ctrlInX = vertex.x + vertex.controls.left.x;
-      const ctrlInY = vertex.y + vertex.controls.left.y;
+      const ctrlInX = absPos.x + vertex.controls.left.x;
+      const ctrlInY = absPos.y + vertex.controls.left.y;
 
-      const lineIn = editorTwo.makeLine(vertex.x, vertex.y, ctrlInX, ctrlInY);
+      const lineIn = editorTwo.makeLine(absPos.x, absPos.y, ctrlInX, ctrlInY);
       lineIn.stroke = '#999';
       lineIn.linewidth = 1;
       anchorData.lineIn = lineIn;
@@ -165,10 +189,10 @@ function createAnchorVisuals() {
     }
 
     if (vertex.controls && (vertex.controls.right.x !== 0 || vertex.controls.right.y !== 0)) {
-      const ctrlOutX = vertex.x + vertex.controls.right.x;
-      const ctrlOutY = vertex.y + vertex.controls.right.y;
+      const ctrlOutX = absPos.x + vertex.controls.right.x;
+      const ctrlOutY = absPos.y + vertex.controls.right.y;
 
-      const lineOut = editorTwo.makeLine(vertex.x, vertex.y, ctrlOutX, ctrlOutY);
+      const lineOut = editorTwo.makeLine(absPos.x, absPos.y, ctrlOutX, ctrlOutY);
       lineOut.stroke = '#999';
       lineOut.linewidth = 1;
       anchorData.lineOut = lineOut;
@@ -190,27 +214,28 @@ function createAnchorVisuals() {
 function updateAnchorVisuals() {
   editorAnchors.forEach(anchorData => {
     const vertex = anchorData.vertex;
+    const absPos = getAbsolutePosition(vertex);
 
     if (anchorData.circle) {
-      anchorData.circle.position.set(vertex.x, vertex.y);
+      anchorData.circle.position.set(absPos.x, absPos.y);
     }
 
     if (anchorData.controlIn) {
-      const ctrlInX = vertex.x + vertex.controls.left.x;
-      const ctrlInY = vertex.y + vertex.controls.left.y;
+      const ctrlInX = absPos.x + vertex.controls.left.x;
+      const ctrlInY = absPos.y + vertex.controls.left.y;
       anchorData.controlIn.position.set(ctrlInX, ctrlInY);
       if (anchorData.lineIn) {
-        anchorData.lineIn.vertices[0].set(vertex.x, vertex.y);
+        anchorData.lineIn.vertices[0].set(absPos.x, absPos.y);
         anchorData.lineIn.vertices[1].set(ctrlInX, ctrlInY);
       }
     }
 
     if (anchorData.controlOut) {
-      const ctrlOutX = vertex.x + vertex.controls.right.x;
-      const ctrlOutY = vertex.y + vertex.controls.right.y;
+      const ctrlOutX = absPos.x + vertex.controls.right.x;
+      const ctrlOutY = absPos.y + vertex.controls.right.y;
       anchorData.controlOut.position.set(ctrlOutX, ctrlOutY);
       if (anchorData.lineOut) {
-        anchorData.lineOut.vertices[0].set(vertex.x, vertex.y);
+        anchorData.lineOut.vertices[0].set(absPos.x, absPos.y);
         anchorData.lineOut.vertices[1].set(ctrlOutX, ctrlOutY);
       }
     }
@@ -244,15 +269,16 @@ function findAnchorAtPosition(x, y) {
   for (let i = editorAnchors.length - 1; i >= 0; i--) {
     const anchorData = editorAnchors[i];
     const vertex = anchorData.vertex;
-    const dist = Math.sqrt(Math.pow(x - vertex.x, 2) + Math.pow(y - vertex.y, 2));
+    const absPos = getAbsolutePosition(vertex);
+    const dist = Math.sqrt(Math.pow(x - absPos.x, 2) + Math.pow(y - absPos.y, 2));
     if (dist <= ANCHOR_RADIUS + 4) {
       return { type: 'anchor', data: anchorData };
     }
 
     // Check control points
     if (anchorData.controlIn) {
-      const ctrlInX = vertex.x + vertex.controls.left.x;
-      const ctrlInY = vertex.y + vertex.controls.left.y;
+      const ctrlInX = absPos.x + vertex.controls.left.x;
+      const ctrlInY = absPos.y + vertex.controls.left.y;
       const distIn = Math.sqrt(Math.pow(x - ctrlInX, 2) + Math.pow(y - ctrlInY, 2));
       if (distIn <= CONTROL_RADIUS + 4) {
         return { type: 'controlIn', data: anchorData };
@@ -260,8 +286,8 @@ function findAnchorAtPosition(x, y) {
     }
 
     if (anchorData.controlOut) {
-      const ctrlOutX = vertex.x + vertex.controls.right.x;
-      const ctrlOutY = vertex.y + vertex.controls.right.y;
+      const ctrlOutX = absPos.x + vertex.controls.right.x;
+      const ctrlOutY = absPos.y + vertex.controls.right.y;
       const distOut = Math.sqrt(Math.pow(x - ctrlOutX, 2) + Math.pow(y - ctrlOutY, 2));
       if (distOut <= CONTROL_RADIUS + 4) {
         return { type: 'controlOut', data: anchorData };
@@ -304,14 +330,18 @@ function setupEditorEvents() {
     const vertex = dragTarget.data.vertex;
 
     if (dragTarget.type === 'anchor') {
-      vertex.x = x;
-      vertex.y = y;
+      // Convert mouse position to relative vertex position (subtract path translation)
+      vertex.x = x - editorPath.translation.x;
+      vertex.y = y - editorPath.translation.y;
     } else if (dragTarget.type === 'controlIn') {
-      vertex.controls.left.x = x - vertex.x;
-      vertex.controls.left.y = y - vertex.y;
+      // Control points are relative to the absolute vertex position
+      const absPos = getAbsolutePosition(vertex);
+      vertex.controls.left.x = x - absPos.x;
+      vertex.controls.left.y = y - absPos.y;
     } else if (dragTarget.type === 'controlOut') {
-      vertex.controls.right.x = x - vertex.x;
-      vertex.controls.right.y = y - vertex.y;
+      const absPos = getAbsolutePosition(vertex);
+      vertex.controls.right.x = x - absPos.x;
+      vertex.controls.right.y = y - absPos.y;
     }
 
     updateAnchorVisuals();
@@ -333,9 +363,13 @@ function addPointToPath() {
   if (!editorPath) return;
 
   // Add a point at the center, user can then drag it
+  // Convert center position to relative vertex position
+  const centerX = EDITOR_SIZE / 2 - editorPath.translation.x;
+  const centerY = EDITOR_SIZE / 2 - editorPath.translation.y;
+
   const newAnchor = new Two.Anchor(
-    EDITOR_SIZE / 2,
-    EDITOR_SIZE / 2,
+    centerX,
+    centerY,
     -20, 0,  // control left
     20, 0,   // control right
     Two.Commands.curve
