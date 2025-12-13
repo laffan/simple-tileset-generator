@@ -24,7 +24,8 @@ function setupEditorEvents() {
   });
 
   document.addEventListener('keyup', (e) => {
-    if (!e.metaKey && !e.ctrlKey) {
+    // Check if the released key is Meta or Control
+    if (e.key === 'Meta' || e.key === 'Control') {
       // Only hide if not currently dragging a handle
       if (!dragTarget || (dragTarget.type !== 'resize' && dragTarget.type !== 'rotate')) {
         clearBoundingBox();
@@ -86,22 +87,23 @@ function setupEditorEvents() {
     // Check for anchor/control point hits
     const anchorHit = findAnchorAtPosition(x, y);
     if (anchorHit) {
-      EditorState.isDragging = true;
-
       if (anchorHit.type === 'anchor') {
-        // Handle shift+click for multi-select (but not if already dragging)
-        if (e.shiftKey && !EditorState.isDragging) {
+        // Handle shift+click for multi-select
+        if (e.shiftKey) {
           toggleAnchorSelection(anchorHit.data);
           // If anchor is now selected, prepare for drag
           if (isAnchorSelected(anchorHit.data)) {
+            EditorState.isDragging = true;
             isDraggingMultiple = true;
             dragTarget = { type: 'multiAnchor' };
           } else {
+            // Deselected - don't start drag
             EditorState.isDragging = false;
             dragTarget = null;
           }
         } else {
           // Normal click - if clicking on already selected anchor, drag all selected
+          EditorState.isDragging = true;
           if (isAnchorSelected(anchorHit.data) && EditorState.selectedAnchors.length > 1) {
             isDraggingMultiple = true;
             dragTarget = { type: 'multiAnchor' };
@@ -114,6 +116,7 @@ function setupEditorEvents() {
         }
       } else {
         // Control point hit - single drag only
+        EditorState.isDragging = true;
         dragTarget = anchorHit;
         isDraggingMultiple = false;
       }
