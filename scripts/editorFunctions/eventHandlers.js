@@ -84,6 +84,15 @@ function setupEditorEvents() {
       }
     }
 
+    // Shift+click on paths for multi-path selection (check BEFORE anchors)
+    if (e.shiftKey) {
+      const pathHit = findPathAtPosition(x, y);
+      if (pathHit) {
+        togglePathSelection(pathHit.pathIndex);
+        return;
+      }
+    }
+
     // Check for anchor/control point hits
     const anchorHit = findAnchorAtPosition(x, y);
     if (anchorHit) {
@@ -126,13 +135,6 @@ function setupEditorEvents() {
     // If no anchor hit, check if clicking on any path shape
     const pathHit = findPathAtPosition(x, y);
     if (pathHit) {
-      // Shift+click for multi-path selection (for align tool)
-      if (e.shiftKey) {
-        togglePathSelection(pathHit.pathIndex);
-        // Don't start drag when shift-clicking for selection
-        return;
-      }
-
       // Clear multi-path selection on regular click
       clearPathSelection();
 
