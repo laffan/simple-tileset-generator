@@ -88,13 +88,55 @@ function getSelectedPaths() {
 
 // Toggle path selection (for shift+click)
 function togglePathSelection(pathIndex) {
+  console.log('togglePathSelection called with index:', pathIndex);
   const idx = selectedPathIndices.indexOf(pathIndex);
   if (idx >= 0) {
     selectedPathIndices.splice(idx, 1);
+    console.log('Removed from selection, now:', selectedPathIndices);
   } else {
     selectedPathIndices.push(pathIndex);
+    console.log('Added to selection, now:', selectedPathIndices);
   }
   updatePathSelectionVisuals();
+}
+
+// Delete selected path (if not the last one)
+function deleteSelectedPath() {
+  // Need at least 2 paths to delete one
+  if (EditorState.paths.length < 2) {
+    console.log('Cannot delete - need at least one path remaining');
+    return false;
+  }
+
+  // Delete current path
+  const indexToDelete = EditorState.currentPathIndex;
+  const pathToDelete = EditorState.paths[indexToDelete];
+
+  // Remove from Two.js scene
+  EditorState.two.remove(pathToDelete);
+
+  // Remove from paths array
+  EditorState.paths.splice(indexToDelete, 1);
+
+  // Update current path index
+  if (EditorState.currentPathIndex >= EditorState.paths.length) {
+    EditorState.currentPathIndex = EditorState.paths.length - 1;
+  }
+
+  // Clear from selection if it was selected
+  const selIdx = selectedPathIndices.indexOf(indexToDelete);
+  if (selIdx >= 0) {
+    selectedPathIndices.splice(selIdx, 1);
+  }
+  // Adjust selection indices for paths after deleted one
+  selectedPathIndices = selectedPathIndices.map(i => i > indexToDelete ? i - 1 : i);
+
+  // Update visuals
+  updatePathStyles();
+  createAnchorVisuals();
+  updatePathSelectionVisuals();
+
+  return true;
 }
 
 // Add path to selection

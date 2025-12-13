@@ -86,8 +86,11 @@ function setupEditorEvents() {
 
     // Shift+click on paths for multi-path selection (check BEFORE anchors)
     if (e.shiftKey) {
+      console.log('Shift key detected, checking for path hit at', x, y);
       const pathHit = findPathAtPosition(x, y);
+      console.log('Path hit result:', pathHit);
       if (pathHit) {
+        console.log('Calling togglePathSelection with index:', pathHit.pathIndex);
         togglePathSelection(pathHit.pathIndex);
         return;
       }
@@ -465,15 +468,22 @@ function setupKeyboardEvents() {
   document.addEventListener('keydown', (e) => {
     // Only handle if the editor modal is visible
     const modal = document.getElementById('shapeEditorModal');
-    if (!modal || modal.style.display === 'none') return;
+    if (!modal || !modal.classList.contains('active')) return;
 
-    // Delete or Backspace to delete selected points
+    // Delete or Backspace to delete selected points or current path
     if (e.key === 'Delete' || e.key === 'Backspace') {
       // Prevent browser back navigation on Backspace
       if (e.key === 'Backspace') {
         e.preventDefault();
       }
-      deleteSelectedPoints();
+
+      // If anchors are selected, delete those points
+      if (EditorState.selectedAnchors && EditorState.selectedAnchors.length > 0) {
+        deleteSelectedPoints();
+      } else if (EditorState.paths.length > 1) {
+        // No anchors selected - delete current path (if more than one)
+        deleteSelectedPath();
+      }
     }
 
     // Escape to undo last point in new shape creation
