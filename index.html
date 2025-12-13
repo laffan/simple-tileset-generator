@@ -31,6 +31,18 @@
         </div>
       </div>
 
+      <div>
+
+        <h3>Patterns
+          <div class="patternToggle">
+            <a href="#" id="selectAllPatterns">all</a> | <a href="#" id="deselectAllPatterns">none</a>
+          </div>
+        </h3>
+
+        <div id="patternSelection">
+        </div>
+      </div>
+
       <br />
 
 
@@ -167,12 +179,72 @@
     </div>
   </div>
 
+  <!-- Pattern Editor Modal -->
+  <div id="patternEditorModal" class="modal">
+    <div class="modal-content pattern-editor-modal">
+      <div class="modal-header">
+        <h3>Edit Pattern</h3>
+        <button id="closePatternEditorBtn" class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="pattern-editor-workspace">
+          <!-- Left side: Toolbar -->
+          <div class="pattern-toolbar">
+            <div class="pattern-size-control">
+              <span class="pattern-toolbar-label">Size</span>
+              <div class="pattern-size-buttons">
+                <button id="patternSizeDecrement" class="pattern-step-btn">-</button>
+                <input type="number" id="patternSizeInput" value="8" min="4" max="32">
+                <button id="patternSizeIncrement" class="pattern-step-btn">+</button>
+              </div>
+            </div>
+            <div class="pattern-toolbar-divider"></div>
+            <button id="patternInvertBtn" class="pattern-tool-btn" title="Invert pattern">Invert</button>
+            <button id="patternUploadBtn" class="pattern-tool-btn" title="Upload image">Upload</button>
+            <button id="patternDownloadBtn" class="pattern-tool-btn" title="Download pattern">Download</button>
+            <input type="file" id="patternUploadInput" accept="image/*" style="display: none;">
+          </div>
+
+          <!-- Center: Editor canvas -->
+          <div class="pattern-editor-container">
+            <div class="pattern-editor-zoom">
+              <span id="patternEditorZoomDisplay">1:4</span>
+              <input type="range" id="patternEditorZoom" min="2" max="20" value="4">
+            </div>
+            <div class="pattern-canvas-wrapper">
+              <canvas id="patternEditorCanvas"></canvas>
+            </div>
+          </div>
+
+          <!-- Right side: Preview -->
+          <div class="pattern-preview-container">
+            <div class="pattern-preview-zoom">
+              <span id="patternPreviewZoomDisplay">1:4</span>
+              <input type="range" id="patternPreviewZoom" min="2" max="20" value="4">
+            </div>
+            <div class="pattern-preview-wrapper">
+              <canvas id="patternPreviewCanvas" width="200" height="200"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="editor-instructions">
+          <small>Click to toggle pixels. Hold and drag for line drawing.</small>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="cancelPatternEditorBtn" class="sessionBtn">Cancel</button>
+        <button id="savePatternBtn" class="editor-save-btn">Save Pattern</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Scripts loaded in dependency order -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/two.js/0.8.10/two.min.js"></script>
   <script src="scripts/config.js"></script>
 
   <!-- Shape registry and individual shape renderers -->
   <script src="scripts/shapes/registry.js"></script>
+
   <script src="scripts/shapes/square.js"></script>
   <script src="scripts/shapes/circle.js"></script>
   <script src="scripts/shapes/triangle.js"></script>
@@ -202,14 +274,27 @@
   <script src="scripts/shapes/waves.js"></script>
   <script src="scripts/shapes/spikes.js"></script>
 
+  <!-- Pattern registry and individual pattern renderers -->
+  <script src="scripts/patterns/registry.js"></script>
+  <script src="scripts/patterns/checkerboard.js"></script>
+  <script src="scripts/patterns/diagonalStripes.js"></script>
+  <script src="scripts/patterns/dots.js"></script>
+  <script src="scripts/patterns/horizontalStripes.js"></script>
+  <script src="scripts/patterns/verticalStripes.js"></script>
+  <script src="scripts/patterns/crosshatch.js"></script>
+  <script src="scripts/patterns/bricks.js"></script>
+  <script src="scripts/patterns/zigzag.js"></script>
+
   <!-- Core application scripts -->
   <script src="scripts/shapeData.js"></script>
+  <script src="scripts/patternData.js"></script>
   <script src="scripts/shapes.js"></script>
+  <script src="scripts/patterns.js"></script>
   <script src="scripts/canvas.js"></script>
   <script src="scripts/colors.js"></script>
   <script src="scripts/utils.js"></script>
 
-  <!-- Editor function modules (loaded in dependency order) -->
+  <!-- Shape Editor function modules (loaded in dependency order) -->
   <script src="scripts/editorFunctions/state.js"></script>
   <script src="scripts/editorFunctions/coordinates.js"></script>
   <script src="scripts/editorFunctions/grid.js"></script>
@@ -221,6 +306,13 @@
   <script src="scripts/editorFunctions/shapeToolbar.js"></script>
   <script src="scripts/editorFunctions/modalManager.js"></script>
   <script src="scripts/editor.js"></script>
+
+  <!-- Pattern Editor function modules -->
+  <script src="scripts/patternEditorFunctions/state.js"></script>
+  <script src="scripts/patternEditorFunctions/canvas.js"></script>
+  <script src="scripts/patternEditorFunctions/drawing.js"></script>
+  <script src="scripts/patternEditorFunctions/events.js"></script>
+  <script src="scripts/patternEditorFunctions/modalManager.js"></script>
 
   <script src="scripts/main.js"></script>
   <script src="scripts/session.js"></script>

@@ -7,10 +7,18 @@ function getSessionData() {
   const paletteComplexity = document.getElementById('paletteComplexity').value;
 
   // Get selected shape indices (to handle duplicates correctly)
-  const selectedIndices = [];
+  const selectedShapeIndices = [];
   document.querySelectorAll('.shapeCheckbox').forEach((cb, index) => {
     if (cb.checked) {
-      selectedIndices.push(index);
+      selectedShapeIndices.push(index);
+    }
+  });
+
+  // Get selected pattern indices
+  const selectedPatternIndices = [];
+  document.querySelectorAll('.patternCheckbox').forEach((cb, index) => {
+    if (cb.checked) {
+      selectedPatternIndices.push(index);
     }
   });
 
@@ -18,14 +26,17 @@ function getSessionData() {
   const fitPreview = document.getElementById('fitPreview').checked;
 
   return {
-    version: 3,
+    version: 4,
     colors: colorInput,
     tileSize: sizeInput,
     paletteComplexity: paletteComplexity,
     shapeOrder: [...shapeOrder], // Save full shape order (with duplicates and custom shapes)
-    selectedIndices: selectedIndices, // Save which indices are selected
+    selectedIndices: selectedShapeIndices, // Save which shape indices are selected (keep name for backwards compat)
+    patternOrder: [...patternOrder], // Save full pattern order
+    selectedPatternIndices: selectedPatternIndices, // Save which pattern indices are selected
     fitPreview: fitPreview,
-    customShapes: getCustomShapeData() // Save custom shape path data
+    customShapes: getCustomShapeData(), // Save custom shape path data
+    customPatterns: getCustomPatternData() // Save custom pattern pixel data
   };
 }
 
@@ -51,6 +62,11 @@ function applySessionData(data) {
     loadCustomShapeData(data.customShapes);
   }
 
+  // Load custom patterns first (before rebuilding UI)
+  if (data.customPatterns) {
+    loadCustomPatternData(data.customPatterns);
+  }
+
   // Handle shape order and selection
   if (data.version >= 2 && data.shapeOrder !== undefined) {
     // Version 2+: Restore full shape order (with duplicates/deletions/custom shapes)
@@ -72,6 +88,24 @@ function applySessionData(data) {
     // Version 1 (backwards compatibility): Just restore selected shapes
     document.querySelectorAll('.shapeCheckbox').forEach(cb => {
       cb.checked = data.selectedShapes.includes(cb.dataset.shape);
+    });
+  }
+
+  // Handle pattern order and selection (version 4+)
+  if (data.version >= 4 && data.patternOrder !== undefined) {
+    patternOrder = [...data.patternOrder];
+
+    // Rebuild the pattern UI
+    createPatternSelectionHTML();
+    addPatternPreviews();
+    addPatternCheckboxesListeners();
+    addPatternButtonListeners();
+    setupPatternDragAndDrop();
+
+    // Restore selected pattern indices
+    const patternCheckboxes = document.querySelectorAll('.patternCheckbox');
+    patternCheckboxes.forEach((cb, index) => {
+      cb.checked = data.selectedPatternIndices && data.selectedPatternIndices.includes(index);
     });
   }
 

@@ -1,23 +1,37 @@
 /* Canvas drawing functions */
 
-// Update the drawShapes function to accommodate multiple shapes in separate rows
+// Update the drawShapes function to accommodate multiple shapes and patterns in separate rows
 function drawShapes(colors, size) {
   const squaresPerRow = colors.length;  // Now depends on the number of colors
   const selectedShapes = getSelectedShapes();
-  const numRows = selectedShapes.length;  // A single row per selected shape
+  const selectedPatterns = getSelectedPatterns();
+  const numShapeRows = selectedShapes.length;
+  const numPatternRows = selectedPatterns.length;
+  const totalRows = numShapeRows + numPatternRows;
 
-  // Adjust canvas width and height based on the number of colors and selected shapes
+  // Adjust canvas width and height based on the number of colors and selected shapes/patterns
   canvas.width = squaresPerRow * size;
-  canvas.height = numRows * size;
+  canvas.height = totalRows * size;
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+  // Draw shapes
   selectedShapes.forEach((shape, shapeIndex) => {
     colors.forEach((color, index) => {
       const x = index * size;  // X position depends on color index
       const y = shapeIndex * size;  // Y position depends on shape index
       ctx.fillStyle = `#${color.trim()}`;
       drawShape(x, y, size, ctx, shape);  // Draw each shape in its respective row
+    });
+  });
+
+  // Draw patterns (after shapes)
+  selectedPatterns.forEach((pattern, patternIndex) => {
+    colors.forEach((color, index) => {
+      const x = index * size;
+      const y = (numShapeRows + patternIndex) * size;  // Offset by number of shape rows
+      ctx.fillStyle = `#${color.trim()}`;
+      drawPattern(x, y, size, ctx, pattern);
     });
   });
 }

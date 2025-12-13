@@ -11,9 +11,13 @@ function generateTileset() {
 }
 
 
-// Add event listeners to the "all" and "none" links
+// Add event listeners to the "all" and "none" links for shapes
 document.getElementById('selectAllShapes').addEventListener('click', selectAllShapes);
 document.getElementById('deselectAllShapes').addEventListener('click', deselectAllShapes);
+
+// Add event listeners to the "all" and "none" links for patterns
+document.getElementById('selectAllPatterns').addEventListener('click', selectAllPatterns);
+document.getElementById('deselectAllPatterns').addEventListener('click', deselectAllPatterns);
 
 
 // Function to trigger download
@@ -33,6 +37,11 @@ window.onload = function () {
   // Initialize shape order before creating HTML
   initializeShapeOrder();
   createShapeSelectionHTML();
+
+  // Initialize pattern order before creating HTML
+  initializePatternOrder();
+  createPatternSelectionHTML();
+
   const defaultColors = document.getElementById('colorInput').value.split(',');
   const defaultSize = parseInt(document.getElementById('sizeInput').value, 10);
   const complexitySlider = document.getElementById('paletteComplexity');
@@ -67,18 +76,28 @@ window.onload = function () {
     generateColorPalette(getInvertedComplexity(this));
     updateSliderFill(this);
   });
-  addShapeCheckboxesListeners();
-  // Update colors preview initially
-  updateColorsPreview();
-  addShapePreviews();
-  sanitizeColorInput();
 
-  // Initialize hover buttons and drag-and-drop
+  // Shape listeners and previews
+  addShapeCheckboxesListeners();
+  addShapePreviews();
   addShapeButtonListeners();
   setupDragAndDrop();
 
-  // Initialize editor buttons
+  // Pattern listeners and previews
+  addPatternCheckboxesListeners();
+  addPatternPreviews();
+  addPatternButtonListeners();
+  setupPatternDragAndDrop();
+
+  // Update colors preview initially
+  updateColorsPreview();
+  sanitizeColorInput();
+
+  // Initialize shape editor buttons
   setupEditorButtons();
+
+  // Initialize pattern editor buttons
+  setupPatternEditorButtons();
 
   // Initialize shape toolbar
   setupShapeToolbar();

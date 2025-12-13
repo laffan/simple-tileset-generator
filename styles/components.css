@@ -745,3 +745,334 @@
 .toolbar-checkbox span {
   font-weight: 500;
 }
+
+/* =============================================
+   PATTERN SELECTION STYLES
+   ============================================= */
+
+/* Pattern selection - matches shape selection */
+.patternPreview {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.patternToggle {
+  font-size: 12px;
+  display: inline;
+  margin-left: 10px;
+  opacity: .3;
+}
+
+.patternToggle a {
+  color: black;
+}
+
+#patternSelection ul {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+}
+
+/* Pattern item with hover buttons */
+.patternItem {
+  display: inline-block;
+}
+
+.patternItem label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+/* Preview wrapper - contains preview and hover buttons */
+.patternPreviewWrapper {
+  position: relative;
+  display: inline-block;
+  margin-left: 5px;
+}
+
+/* Hover buttons overlay - 2x2 grid filling full pattern area */
+.patternHoverButtons {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  pointer-events: none;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+/* Only show hover buttons when hovering over the preview area */
+.patternPreviewWrapper:hover .patternHoverButtons {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Individual buttons - fill grid cells */
+.patternBtn {
+  width: 100%;
+  height: 100%;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0;
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+  text-align: center;
+}
+
+.patternBtn:hover {
+  color: #333;
+}
+
+.patternDuplicateBtn:hover {
+  color: #28a745;
+}
+
+.patternEditBtn:hover {
+  color: #6f42c1;
+}
+
+.patternDeleteBtn:hover {
+  color: #dc3545;
+}
+
+.patternDragHandle {
+  cursor: grab;
+  font-size: 12px;
+}
+
+.patternDragHandle:hover {
+  color: #17a2b8;
+}
+
+.patternDragHandle:active {
+  cursor: grabbing;
+}
+
+/* Drag states - hide original during drag */
+.patternItem.dragging {
+  display: none;
+}
+
+/* =============================================
+   PATTERN EDITOR MODAL STYLES
+   ============================================= */
+
+/* Wider modal for pattern editor */
+.pattern-editor-modal {
+  max-width: 800px;
+}
+
+/* Pattern editor workspace - horizontal layout */
+.pattern-editor-workspace {
+  display: flex;
+  gap: 15px;
+}
+
+/* Pattern toolbar - left side */
+.pattern-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  background: #f5f5f5;
+  border-radius: 4px;
+  width: 90px;
+  flex-shrink: 0;
+}
+
+.pattern-toolbar-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #666;
+  text-align: center;
+}
+
+.pattern-size-control {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  align-items: center;
+}
+
+.pattern-size-buttons {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.pattern-step-btn {
+  width: 24px;
+  height: 24px;
+  border: 1px solid #ccc;
+  background: #fff;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pattern-step-btn:hover {
+  background: #e5e5e5;
+}
+
+#patternSizeInput {
+  width: 40px;
+  height: 24px;
+  text-align: center;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.pattern-toolbar-divider {
+  height: 1px;
+  background: #ddd;
+  margin: 5px 0;
+}
+
+.pattern-tool-btn {
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  background: #fff;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 11px;
+  text-align: center;
+}
+
+.pattern-tool-btn:hover {
+  background: #e5e5e5;
+}
+
+/* Pattern editor container - center */
+.pattern-editor-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pattern-editor-zoom {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: #666;
+}
+
+.pattern-editor-zoom input[type="range"] {
+  flex: 1;
+  height: 6px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: #ddd;
+  border-radius: 3px;
+  outline: none;
+}
+
+.pattern-editor-zoom input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #007bff;
+  cursor: pointer;
+}
+
+.pattern-editor-zoom input[type="range"]::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #007bff;
+  cursor: pointer;
+  border: none;
+}
+
+.pattern-canvas-wrapper {
+  border: 1px solid #ccc;
+  background: #fafafa;
+  overflow: hidden;
+  width: 300px;
+  height: 300px;
+  position: relative;
+}
+
+#patternEditorCanvas {
+  cursor: crosshair;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+/* Pattern preview container - right side */
+.pattern-preview-container {
+  width: 200px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pattern-preview-zoom {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: #666;
+}
+
+.pattern-preview-zoom input[type="range"] {
+  flex: 1;
+  height: 6px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: #ddd;
+  border-radius: 3px;
+  outline: none;
+}
+
+.pattern-preview-zoom input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #007bff;
+  cursor: pointer;
+}
+
+.pattern-preview-zoom input[type="range"]::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #007bff;
+  cursor: pointer;
+  border: none;
+}
+
+.pattern-preview-wrapper {
+  border: 1px solid #ccc;
+  background: #fafafa;
+  overflow: hidden;
+}
+
+#patternPreviewCanvas {
+  display: block;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
