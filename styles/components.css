@@ -40,20 +40,20 @@
   margin-left: 5px;
 }
 
-/* Hover buttons overlay - 2x2 grid centered over shape */
+/* Hover buttons overlay - 2x2 grid filling full shape area */
 .shapeHoverButtons {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, calc(-50% - 2px));
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  place-items: center;
+  grid-template-rows: repeat(2, 1fr);
   opacity: 0;
   transition: opacity 0.15s ease;
   pointer-events: none;
   background: rgba(255, 255, 255, 0.9);
-  border-radius: 0;
 }
 
 /* Only show hover buttons when hovering over the preview area */
@@ -62,10 +62,10 @@
   pointer-events: auto;
 }
 
-/* Individual buttons */
+/* Individual buttons - fill grid cells */
 .shapeBtn {
-  width: 18px;
-  height: 18px;
+  width: 100%;
+  height: 100%;
   font-size: 14px;
   line-height: 1;
   padding: 0;
