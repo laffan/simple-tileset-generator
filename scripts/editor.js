@@ -96,55 +96,48 @@ function loadShapeIntoEditor(shapeName) {
     return;
   }
 
-  // Convert normalized coordinates to editor coordinates
+  // Convert normalized coordinates to editor coordinates and create anchors
   const anchors = shapeData.vertices.map((v, index) => {
     const x = normalizedToEditor(v.x);
     const y = normalizedToEditor(v.y);
 
-    // Control points (bezier handles)
+    // Control points (bezier handles) - relative offsets from anchor
     let ctrlLeftX = 0, ctrlLeftY = 0, ctrlRightX = 0, ctrlRightY = 0;
-    let command = index === 0 ? Two.Commands.move : Two.Commands.line;
 
     if (v.ctrlLeft) {
       ctrlLeftX = normalizedControlToEditor(v.ctrlLeft.x);
       ctrlLeftY = normalizedControlToEditor(v.ctrlLeft.y);
-      command = Two.Commands.curve;
     }
 
     if (v.ctrlRight) {
       ctrlRightX = normalizedControlToEditor(v.ctrlRight.x);
       ctrlRightY = normalizedControlToEditor(v.ctrlRight.y);
+    }
+
+    // Determine command type - curve if has control points
+    let command;
+    if (index === 0) {
+      command = Two.Commands.move;
+    } else if (v.ctrlLeft || v.ctrlRight) {
       command = Two.Commands.curve;
+    } else {
+      command = Two.Commands.line;
     }
 
     return new Two.Anchor(x, y, ctrlLeftX, ctrlLeftY, ctrlRightX, ctrlRightY, command);
   });
 
-  // Create the path
-  editorPath = editorTwo.makePath(anchors);
+  // Create path using Two.Path constructor directly (not makePath)
+  // This is required to preserve custom control points per GitHub issue #294
+  editorPath = new Two.Path(anchors);
+  editorPath.automatic = false;  // MUST be false to use custom control points
   editorPath.fill = 'rgba(0, 0, 0, 0.8)';
   editorPath.stroke = '#333';
   editorPath.linewidth = 2;
   editorPath.closed = shapeData.closed !== false;
-  editorPath.automatic = false;  // Prevent Two.js from overwriting control points
 
-  // Manually ensure control points are set on the path vertices
-  // Two.js may not preserve them from the Anchor constructor
-  editorPath.vertices.forEach((vertex, index) => {
-    const v = shapeData.vertices[index];
-    if (v.ctrlLeft) {
-      vertex.controls.left.x = normalizedControlToEditor(v.ctrlLeft.x);
-      vertex.controls.left.y = normalizedControlToEditor(v.ctrlLeft.y);
-    }
-    if (v.ctrlRight) {
-      vertex.controls.right.x = normalizedControlToEditor(v.ctrlRight.x);
-      vertex.controls.right.y = normalizedControlToEditor(v.ctrlRight.y);
-    }
-    // Set command to curve if there are control points
-    if (v.ctrlLeft || v.ctrlRight) {
-      vertex.command = Two.Commands.curve;
-    }
-  });
+  // Add path to the Two.js scene
+  editorTwo.add(editorPath);
 
   // Create visual anchor points
   createAnchorVisuals();
