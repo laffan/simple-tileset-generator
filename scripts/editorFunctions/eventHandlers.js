@@ -103,10 +103,12 @@ function setupEditorEvents() {
       }
     }
 
-    // Shift+click on paths for multi-path selection (check BEFORE anchors)
+    // Shift+click on OTHER paths for multi-path selection (not current path)
+    // Current path anchors need shift+click for multi-anchor selection
     if (e.shiftKey) {
       const pathHit = findPathAtPosition(x, y);
-      if (pathHit) {
+      // Only do path selection if clicking on a DIFFERENT path (not current)
+      if (pathHit && pathHit.pathIndex !== EditorState.currentPathIndex) {
         togglePathSelection(pathHit.pathIndex);
         return;
       }
