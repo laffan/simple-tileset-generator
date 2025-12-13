@@ -104,8 +104,10 @@ function setupEditorEvents() {
     }
 
     // Shift+click on paths for multi-path selection (check BEFORE anchors)
+    console.log('Checking shift+click, shiftKey:', e.shiftKey);
     if (e.shiftKey) {
       const pathHit = findPathAtPosition(x, y);
+      console.log('Shift held, pathHit:', pathHit);
       if (pathHit) {
         togglePathSelection(pathHit.pathIndex);
         return;
