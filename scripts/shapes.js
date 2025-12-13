@@ -251,9 +251,25 @@ function addShapeButtonListeners() {
 // Setup drag and drop for reordering
 let draggedItem = null;
 let draggedIndex = null;
+let dropPlaceholder = null;
+let currentDropTarget = null;
 
 // Global mouseup handler to reset draggable (added once)
 let dragMouseUpHandlerAdded = false;
+
+function createDropPlaceholder() {
+  const placeholder = document.createElement('li');
+  placeholder.className = 'dropZonePlaceholder';
+  return placeholder;
+}
+
+function removeDropPlaceholder() {
+  if (dropPlaceholder && dropPlaceholder.parentNode) {
+    dropPlaceholder.parentNode.removeChild(dropPlaceholder);
+  }
+  dropPlaceholder = null;
+  currentDropTarget = null;
+}
 
 function setupDragAndDrop() {
   const shapeItems = document.querySelectorAll('.shapeItem');
@@ -290,11 +306,7 @@ function setupDragAndDrop() {
       this.draggable = false;
       draggedItem = null;
       draggedIndex = null;
-
-      // Remove all drag indicator classes
-      document.querySelectorAll('.shapeItem').forEach(item => {
-        item.classList.remove('drag-insert-before', 'drag-insert-after');
-      });
+      removeDropPlaceholder();
     });
 
     item.addEventListener('dragover', function(e) {
@@ -302,33 +314,39 @@ function setupDragAndDrop() {
       e.dataTransfer.dropEffect = 'move';
 
       if (this === draggedItem) return;
+      if (this === currentDropTarget) return; // Already showing placeholder here
 
       const targetIndex = parseInt(this.dataset.index);
+      currentDropTarget = this;
 
-      // Remove classes from all other items
-      document.querySelectorAll('.shapeItem').forEach(item => {
-        if (item !== this) {
-          item.classList.remove('drag-insert-before', 'drag-insert-after');
-        }
-      });
+      // Remove existing placeholder
+      removeDropPlaceholder();
 
-      // Show insertion indicator - push item in the direction the dragged item will come from
+      // Create and insert placeholder
+      dropPlaceholder = createDropPlaceholder();
+
+      // Insert before or after based on drag direction
       if (draggedIndex < targetIndex) {
-        this.classList.remove('drag-insert-before');
-        this.classList.add('drag-insert-after');
+        // Dragging forward - insert after target
+        this.parentNode.insertBefore(dropPlaceholder, this.nextSibling);
       } else {
-        this.classList.remove('drag-insert-after');
-        this.classList.add('drag-insert-before');
+        // Dragging backward - insert before target
+        this.parentNode.insertBefore(dropPlaceholder, this);
       }
     });
 
-    item.addEventListener('dragleave', function() {
-      this.classList.remove('drag-insert-before', 'drag-insert-after');
+    item.addEventListener('dragleave', function(e) {
+      // Only remove if we're actually leaving this item (not entering a child)
+      if (!this.contains(e.relatedTarget) && e.relatedTarget !== dropPlaceholder) {
+        if (currentDropTarget === this) {
+          // Don't remove placeholder immediately - let dragover on next item handle it
+        }
+      }
     });
 
     item.addEventListener('drop', function(e) {
       e.preventDefault();
-      this.classList.remove('drag-insert-before', 'drag-insert-after');
+      removeDropPlaceholder();
 
       if (this === draggedItem) return;
 
@@ -342,5 +360,35 @@ function setupDragAndDrop() {
       rebuildShapeList();
       generateTileset();
     });
+  });
+
+  // Also handle drop on the placeholder itself
+  document.addEventListener('dragover', function(e) {
+    if (dropPlaceholder && e.target === dropPlaceholder) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+    }
+  });
+
+  document.addEventListener('drop', function(e) {
+    if (dropPlaceholder && e.target === dropPlaceholder && currentDropTarget) {
+      e.preventDefault();
+      const targetIndex = parseInt(currentDropTarget.dataset.index);
+      removeDropPlaceholder();
+
+      if (draggedItem) {
+        // Reorder the shapeOrder array
+        const [movedShape] = shapeOrder.splice(draggedIndex, 1);
+        shapeOrder.splice(targetIndex, 0, movedShape);
+
+        draggedItem.classList.remove('dragging');
+        draggedItem = null;
+        draggedIndex = null;
+
+        // Rebuild the list
+        rebuildShapeList();
+        generateTileset();
+      }
+    }
   });
 }
