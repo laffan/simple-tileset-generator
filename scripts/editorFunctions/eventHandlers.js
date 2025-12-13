@@ -33,7 +33,10 @@ function setupEditorEvents() {
     }
   });
 
+  console.log('setupEditorEvents: attaching to SVG', svg);
+
   svg.addEventListener('mousedown', (e) => {
+    console.log('mousedown event fired, shiftKey:', e.shiftKey);
     const rect = svg.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
