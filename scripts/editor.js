@@ -126,6 +126,25 @@ function loadShapeIntoEditor(shapeName) {
   editorPath.stroke = '#333';
   editorPath.linewidth = 2;
   editorPath.closed = shapeData.closed !== false;
+  editorPath.automatic = false;  // Prevent Two.js from overwriting control points
+
+  // Manually ensure control points are set on the path vertices
+  // Two.js may not preserve them from the Anchor constructor
+  editorPath.vertices.forEach((vertex, index) => {
+    const v = shapeData.vertices[index];
+    if (v.ctrlLeft) {
+      vertex.controls.left.x = normalizedControlToEditor(v.ctrlLeft.x);
+      vertex.controls.left.y = normalizedControlToEditor(v.ctrlLeft.y);
+    }
+    if (v.ctrlRight) {
+      vertex.controls.right.x = normalizedControlToEditor(v.ctrlRight.x);
+      vertex.controls.right.y = normalizedControlToEditor(v.ctrlRight.y);
+    }
+    // Set command to curve if there are control points
+    if (v.ctrlLeft || v.ctrlRight) {
+      vertex.command = Two.Commands.curve;
+    }
+  });
 
   // Create visual anchor points
   createAnchorVisuals();
