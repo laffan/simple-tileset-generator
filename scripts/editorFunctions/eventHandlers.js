@@ -9,7 +9,7 @@ function setupEditorEvents() {
   let dragTarget = null;
   let lastMousePos = { x: 0, y: 0 };
   let isDraggingMultiple = false;
-  let resizeStartBounds = null;
+  let resizeStartData = null;  // Stores bounds AND original vertex positions
   let rotateStartAngle = 0;
 
   svg.addEventListener('mousedown', (e) => {
@@ -39,7 +39,21 @@ function setupEditorEvents() {
         rotateStartAngle = Math.atan2(y - bbox.centerY, x - bbox.centerX);
         dragTarget = { type: 'rotate', center: { x: bbox.centerX, y: bbox.centerY } };
       } else {
-        resizeStartBounds = { ...EditorState.boundingBox.bounds };
+        // Store bounds AND original vertex positions for resize
+        const currentPath = getCurrentPath();
+        const bounds = { ...EditorState.boundingBox.bounds };
+        const originalVertices = currentPath.vertices.map(v => {
+          const absPos = getAbsolutePosition(v);
+          return {
+            x: absPos.x,
+            y: absPos.y,
+            ctrlLeftX: v.controls ? v.controls.left.x : 0,
+            ctrlLeftY: v.controls ? v.controls.left.y : 0,
+            ctrlRightX: v.controls ? v.controls.right.x : 0,
+            ctrlRightY: v.controls ? v.controls.right.y : 0
+          };
+        });
+        resizeStartData = { bounds, originalVertices };
         dragTarget = { type: 'resize', handleId: handleHit.handleId };
       }
       return;
@@ -201,47 +215,56 @@ function setupEditorEvents() {
       });
       updateAnchorVisuals();
       updateBoundingBox();
-    } else if (dragTarget.type === 'resize') {
-      // Resize based on handle
+    } else if (dragTarget.type === 'resize' && resizeStartData) {
+      // Resize based on handle - use original positions
       const handleId = dragTarget.handleId;
-      const bounds = resizeStartBounds;
+      const bounds = resizeStartData.bounds;
       const center = { x: bounds.centerX, y: bounds.centerY };
+      const halfWidth = bounds.width / 2;
+      const halfHeight = bounds.height / 2;
 
       let scaleX = 1, scaleY = 1;
 
-      // Calculate scale based on which handle is being dragged
+      // Calculate scale based on mouse position relative to center and original bounds
       if (handleId === 'se') {
-        scaleX = (x - center.x) / (bounds.width / 2) || 1;
-        scaleY = (y - center.y) / (bounds.height / 2) || 1;
+        scaleX = halfWidth > 0 ? (x - center.x) / halfWidth : 1;
+        scaleY = halfHeight > 0 ? (y - center.y) / halfHeight : 1;
       } else if (handleId === 'nw') {
-        scaleX = (center.x - x) / (bounds.width / 2) || 1;
-        scaleY = (center.y - y) / (bounds.height / 2) || 1;
+        scaleX = halfWidth > 0 ? (center.x - x) / halfWidth : 1;
+        scaleY = halfHeight > 0 ? (center.y - y) / halfHeight : 1;
       } else if (handleId === 'ne') {
-        scaleX = (x - center.x) / (bounds.width / 2) || 1;
-        scaleY = (center.y - y) / (bounds.height / 2) || 1;
+        scaleX = halfWidth > 0 ? (x - center.x) / halfWidth : 1;
+        scaleY = halfHeight > 0 ? (center.y - y) / halfHeight : 1;
       } else if (handleId === 'sw') {
-        scaleX = (center.x - x) / (bounds.width / 2) || 1;
-        scaleY = (y - center.y) / (bounds.height / 2) || 1;
+        scaleX = halfWidth > 0 ? (center.x - x) / halfWidth : 1;
+        scaleY = halfHeight > 0 ? (y - center.y) / halfHeight : 1;
       } else if (handleId === 'n') {
-        scaleY = (center.y - y) / (bounds.height / 2) || 1;
+        scaleY = halfHeight > 0 ? (center.y - y) / halfHeight : 1;
       } else if (handleId === 's') {
-        scaleY = (y - center.y) / (bounds.height / 2) || 1;
+        scaleY = halfHeight > 0 ? (y - center.y) / halfHeight : 1;
       } else if (handleId === 'e') {
-        scaleX = (x - center.x) / (bounds.width / 2) || 1;
+        scaleX = halfWidth > 0 ? (x - center.x) / halfWidth : 1;
       } else if (handleId === 'w') {
-        scaleX = (center.x - x) / (bounds.width / 2) || 1;
+        scaleX = halfWidth > 0 ? (center.x - x) / halfWidth : 1;
       }
 
-      // Apply scale to vertices (relative to center)
-      const originalBounds = resizeStartBounds;
-      currentPath.vertices.forEach((vertex, i) => {
-        const absPos = getAbsolutePosition(vertex);
-        const relX = absPos.x - originalBounds.centerX;
-        const relY = absPos.y - originalBounds.centerY;
-        const newX = originalBounds.centerX + relX * scaleX;
-        const newY = originalBounds.centerY + relY * scaleY;
+      // Apply scale to ORIGINAL vertex positions
+      resizeStartData.originalVertices.forEach((orig, i) => {
+        const vertex = currentPath.vertices[i];
+        const relX = orig.x - center.x;
+        const relY = orig.y - center.y;
+        const newX = center.x + relX * scaleX;
+        const newY = center.y + relY * scaleY;
         vertex.x = newX - currentPath.translation.x;
         vertex.y = newY - currentPath.translation.y;
+
+        // Scale control points too
+        if (vertex.controls) {
+          vertex.controls.left.x = orig.ctrlLeftX * scaleX;
+          vertex.controls.left.y = orig.ctrlLeftY * scaleY;
+          vertex.controls.right.x = orig.ctrlRightX * scaleX;
+          vertex.controls.right.y = orig.ctrlRightY * scaleY;
+        }
       });
       updateAnchorVisuals();
       updateBoundingBox();
@@ -290,7 +313,7 @@ function setupEditorEvents() {
     EditorState.isDragging = false;
     dragTarget = null;
     isDraggingMultiple = false;
-    resizeStartBounds = null;
+    resizeStartData = null;
     svg.style.cursor = 'default';
   });
 
@@ -298,7 +321,7 @@ function setupEditorEvents() {
     EditorState.isDragging = false;
     dragTarget = null;
     isDraggingMultiple = false;
-    resizeStartBounds = null;
+    resizeStartData = null;
     svg.style.cursor = 'default';
     hideGhostPoint();
   });
