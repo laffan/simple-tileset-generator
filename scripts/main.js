@@ -54,6 +54,9 @@ window.onload = function () {
   // Initialize hover buttons and drag-and-drop
   addShapeButtonListeners();
   setupDragAndDrop();
+
+  // Initialize editor buttons
+  setupEditorButtons();
 };
 
 

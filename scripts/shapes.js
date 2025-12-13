@@ -232,7 +232,7 @@ function rebuildShapeList() {
   });
 }
 
-// Add event listeners for duplicate/delete buttons
+// Add event listeners for duplicate/delete/edit buttons
 function addShapeButtonListeners() {
   // Duplicate buttons
   document.querySelectorAll('.shapeDuplicateBtn').forEach(btn => {
@@ -253,6 +253,17 @@ function addShapeButtonListeners() {
       const li = this.closest('.shapeItem');
       const index = parseInt(li.dataset.index);
       deleteShape(index);
+    });
+  });
+
+  // Edit buttons
+  document.querySelectorAll('.shapeEditBtn').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      const li = this.closest('.shapeItem');
+      const index = parseInt(li.dataset.index);
+      openShapeEditor(index);
     });
   });
 }

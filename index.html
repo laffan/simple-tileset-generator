@@ -90,8 +90,32 @@
     </div>
   </footer>
 
+  <!-- Shape Editor Modal -->
+  <div id="shapeEditorModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Edit Shape</h3>
+        <button id="closeEditorBtn" class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="editor-toolbar">
+          <button id="addPointBtn" class="editor-tool-btn" title="Add Point">+ Point</button>
+          <button id="deletePointBtn" class="editor-tool-btn" title="Delete Selected Point">- Point</button>
+        </div>
+        <div id="shapeEditorCanvas"></div>
+        <div class="editor-instructions">
+          <small>Click and drag points to move them. Click on path to add points. Select a point and click "- Point" to remove it.</small>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="cancelEditorBtn" class="sessionBtn">Cancel</button>
+        <button id="saveShapeBtn" class="editor-save-btn">Save Shape</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Scripts loaded in dependency order -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/two.js/0.8.10/two.min.js"></script>
   <script src="scripts/config.js"></script>
 
   <!-- Shape registry and individual shape renderers -->
@@ -130,6 +154,7 @@
   <script src="scripts/canvas.js"></script>
   <script src="scripts/colors.js"></script>
   <script src="scripts/utils.js"></script>
+  <script src="scripts/editor.js"></script>
   <script src="scripts/main.js"></script>
   <script src="scripts/session.js"></script>
 
