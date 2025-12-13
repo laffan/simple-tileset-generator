@@ -8,9 +8,29 @@ function setupEditorEvents() {
 
   let dragTarget = null;
   let lastMousePos = { x: 0, y: 0 };
+  let dragStartPos = { x: 0, y: 0 };  // For axis constraint
   let isDraggingMultiple = false;
   let resizeStartData = null;  // Stores bounds AND original vertex positions
   let rotateStartAngle = 0;
+  let constrainedAxis = null;  // 'x' or 'y' for shift+drag
+
+  // Track CMD key for showing/hiding bounding box
+  document.addEventListener('keydown', (e) => {
+    if (e.metaKey || e.ctrlKey) {
+      if (EditorState.paths.length > 0 && !EditorState.boundingBox) {
+        createBoundingBox();
+      }
+    }
+  });
+
+  document.addEventListener('keyup', (e) => {
+    if (!e.metaKey && !e.ctrlKey) {
+      // Only hide if not currently dragging a handle
+      if (!dragTarget || (dragTarget.type !== 'resize' && dragTarget.type !== 'rotate')) {
+        clearBoundingBox();
+      }
+    }
+  });
 
   svg.addEventListener('mousedown', (e) => {
     const rect = svg.getBoundingClientRect();
@@ -18,6 +38,8 @@ function setupEditorEvents() {
     const y = e.clientY - rect.top;
 
     lastMousePos = { x, y };
+    dragStartPos = { x, y };
+    constrainedAxis = null;
     hideGhostPoint();
 
     // Cancel any new shape creation if we're clicking on something
@@ -30,33 +52,35 @@ function setupEditorEvents() {
       }
     }
 
-    // Check for bounding box handle hits first
-    const handleHit = findBoundingBoxHandle(x, y);
-    if (handleHit) {
-      EditorState.isDragging = true;
-      if (handleHit.type === 'rotate') {
-        const bbox = EditorState.boundingBox.bounds;
-        rotateStartAngle = Math.atan2(y - bbox.centerY, x - bbox.centerX);
-        dragTarget = { type: 'rotate', center: { x: bbox.centerX, y: bbox.centerY } };
-      } else {
-        // Store bounds AND original vertex positions for resize
-        const currentPath = getCurrentPath();
-        const bounds = { ...EditorState.boundingBox.bounds };
-        const originalVertices = currentPath.vertices.map(v => {
-          const absPos = getAbsolutePosition(v);
-          return {
-            x: absPos.x,
-            y: absPos.y,
-            ctrlLeftX: v.controls ? v.controls.left.x : 0,
-            ctrlLeftY: v.controls ? v.controls.left.y : 0,
-            ctrlRightX: v.controls ? v.controls.right.x : 0,
-            ctrlRightY: v.controls ? v.controls.right.y : 0
-          };
-        });
-        resizeStartData = { bounds, originalVertices };
-        dragTarget = { type: 'resize', handleId: handleHit.handleId };
+    // Check for bounding box handle hits first (only if CMD is held)
+    if (e.metaKey || e.ctrlKey) {
+      const handleHit = findBoundingBoxHandle(x, y);
+      if (handleHit) {
+        EditorState.isDragging = true;
+        if (handleHit.type === 'rotate') {
+          const bbox = EditorState.boundingBox.bounds;
+          rotateStartAngle = Math.atan2(y - bbox.centerY, x - bbox.centerX);
+          dragTarget = { type: 'rotate', center: { x: bbox.centerX, y: bbox.centerY } };
+        } else {
+          // Store bounds AND original vertex positions for resize
+          const currentPath = getCurrentPath();
+          const bounds = { ...EditorState.boundingBox.bounds };
+          const originalVertices = currentPath.vertices.map(v => {
+            const absPos = getAbsolutePosition(v);
+            return {
+              x: absPos.x,
+              y: absPos.y,
+              ctrlLeftX: v.controls ? v.controls.left.x : 0,
+              ctrlLeftY: v.controls ? v.controls.left.y : 0,
+              ctrlRightX: v.controls ? v.controls.right.x : 0,
+              ctrlRightY: v.controls ? v.controls.right.y : 0
+            };
+          });
+          resizeStartData = { bounds, originalVertices };
+          dragTarget = { type: 'resize', handleId: handleHit.handleId };
+        }
+        return;
       }
-      return;
     }
 
     // Check for anchor/control point hits
@@ -65,8 +89,8 @@ function setupEditorEvents() {
       EditorState.isDragging = true;
 
       if (anchorHit.type === 'anchor') {
-        // Handle shift+click for multi-select
-        if (e.shiftKey) {
+        // Handle shift+click for multi-select (but not if already dragging)
+        if (e.shiftKey && !EditorState.isDragging) {
           toggleAnchorSelection(anchorHit.data);
           // If anchor is now selected, prepare for drag
           if (isAnchorSelected(anchorHit.data)) {
@@ -102,7 +126,9 @@ function setupEditorEvents() {
       // If clicked on a different path, select it first
       if (pathHit.pathIndex !== EditorState.currentPathIndex) {
         selectPath(pathHit.pathIndex);
-        createBoundingBox();
+        if (e.metaKey || e.ctrlKey) {
+          createBoundingBox();
+        }
       }
 
       // Option+drag duplicates the current path
@@ -111,7 +137,9 @@ function setupEditorEvents() {
         if (newPath) {
           // The duplicated path is now selected, drag that instead
           dragTarget = { type: 'path', path: newPath, pathIndex: EditorState.currentPathIndex };
-          createBoundingBox();
+          if (e.metaKey || e.ctrlKey) {
+            createBoundingBox();
+          }
         } else {
           dragTarget = pathHit;
         }
@@ -130,7 +158,9 @@ function setupEditorEvents() {
     const edgeHit = findClosestEdge(x, y);
     if (edgeHit) {
       insertPointAtEdge(edgeHit, edgeHit.point.x, edgeHit.point.y);
-      updateBoundingBox();
+      if (e.metaKey || e.ctrlKey) {
+        updateBoundingBox();
+      }
       return;
     }
 
@@ -184,7 +214,14 @@ function setupEditorEvents() {
     if (dragTarget.type === 'rotate') {
       // Rotate around center
       const center = dragTarget.center;
-      const currentAngle = Math.atan2(y - center.y, x - center.x);
+      let currentAngle = Math.atan2(y - center.y, x - center.x);
+
+      // Shift+rotate snaps to 45° increments
+      if (e.shiftKey) {
+        const snapAngle = Math.PI / 4;  // 45 degrees
+        currentAngle = Math.round(currentAngle / snapAngle) * snapAngle;
+      }
+
       const angleDelta = currentAngle - rotateStartAngle;
       rotateStartAngle = currentAngle;
 
@@ -248,6 +285,18 @@ function setupEditorEvents() {
         scaleX = halfWidth > 0 ? (center.x - x) / halfWidth : 1;
       }
 
+      // Shift+resize maintains aspect ratio (proportional scaling)
+      if (e.shiftKey) {
+        // For corner handles, use the larger scale for both axes
+        if (['nw', 'ne', 'se', 'sw'].includes(handleId)) {
+          const uniformScale = Math.max(Math.abs(scaleX), Math.abs(scaleY));
+          // Preserve the sign of each scale
+          scaleX = uniformScale * Math.sign(scaleX || 1);
+          scaleY = uniformScale * Math.sign(scaleY || 1);
+        }
+        // Edge handles remain single-axis (no aspect ratio to maintain)
+      }
+
       // Apply scale to ORIGINAL vertex positions
       resizeStartData.originalVertices.forEach((orig, i) => {
         const vertex = currentPath.vertices[i];
@@ -270,17 +319,61 @@ function setupEditorEvents() {
       updateBoundingBox();
     } else if (dragTarget.type === 'multiAnchor' || (dragTarget.type === 'anchor' && isDraggingMultiple)) {
       // Move all selected anchors together
+      let effectiveDeltaX = deltaX;
+      let effectiveDeltaY = deltaY;
+
+      // Shift+drag constrains to axis
+      if (e.shiftKey) {
+        if (!constrainedAxis) {
+          const totalDeltaX = Math.abs(x - dragStartPos.x);
+          const totalDeltaY = Math.abs(y - dragStartPos.y);
+          if (totalDeltaX > 5 || totalDeltaY > 5) {
+            constrainedAxis = totalDeltaX > totalDeltaY ? 'x' : 'y';
+          }
+        }
+        if (constrainedAxis === 'x') {
+          effectiveDeltaY = 0;
+        } else if (constrainedAxis === 'y') {
+          effectiveDeltaX = 0;
+        }
+      } else {
+        constrainedAxis = null;
+      }
+
       EditorState.selectedAnchors.forEach(anchorData => {
-        anchorData.vertex.x += deltaX;
-        anchorData.vertex.y += deltaY;
+        anchorData.vertex.x += effectiveDeltaX;
+        anchorData.vertex.y += effectiveDeltaY;
       });
       updateAnchorVisuals();
       updateBoundingBox();
     } else if (dragTarget.type === 'anchor') {
       const vertex = dragTarget.data.vertex;
-      // Convert mouse position to relative vertex position (subtract path translation)
-      vertex.x = x - currentPath.translation.x;
-      vertex.y = y - currentPath.translation.y;
+
+      // Shift+drag constrains to axis
+      if (e.shiftKey) {
+        if (!constrainedAxis) {
+          const totalDeltaX = Math.abs(x - dragStartPos.x);
+          const totalDeltaY = Math.abs(y - dragStartPos.y);
+          if (totalDeltaX > 5 || totalDeltaY > 5) {
+            constrainedAxis = totalDeltaX > totalDeltaY ? 'x' : 'y';
+          }
+        }
+        // Constrain position based on start position
+        if (constrainedAxis === 'x') {
+          vertex.x = x - currentPath.translation.x;
+          vertex.y = dragStartPos.y - currentPath.translation.y;
+        } else if (constrainedAxis === 'y') {
+          vertex.x = dragStartPos.x - currentPath.translation.x;
+          vertex.y = y - currentPath.translation.y;
+        } else {
+          vertex.x = x - currentPath.translation.x;
+          vertex.y = y - currentPath.translation.y;
+        }
+      } else {
+        constrainedAxis = null;
+        vertex.x = x - currentPath.translation.x;
+        vertex.y = y - currentPath.translation.y;
+      }
       updateAnchorVisuals();
       updateBoundingBox();
     } else if (dragTarget.type === 'controlIn') {
@@ -298,9 +391,32 @@ function setupEditorEvents() {
       updateAnchorVisuals();
     } else if (dragTarget.type === 'path') {
       // Move entire path by shifting all vertices
+      let effectiveDeltaX = deltaX;
+      let effectiveDeltaY = deltaY;
+
+      // Shift+drag constrains to axis
+      if (e.shiftKey) {
+        // Determine axis on first significant movement
+        if (!constrainedAxis) {
+          const totalDeltaX = Math.abs(x - dragStartPos.x);
+          const totalDeltaY = Math.abs(y - dragStartPos.y);
+          if (totalDeltaX > 5 || totalDeltaY > 5) {
+            constrainedAxis = totalDeltaX > totalDeltaY ? 'x' : 'y';
+          }
+        }
+        // Apply constraint
+        if (constrainedAxis === 'x') {
+          effectiveDeltaY = 0;
+        } else if (constrainedAxis === 'y') {
+          effectiveDeltaX = 0;
+        }
+      } else {
+        constrainedAxis = null;  // Reset if shift released
+      }
+
       currentPath.vertices.forEach(vertex => {
-        vertex.x += deltaX;
-        vertex.y += deltaY;
+        vertex.x += effectiveDeltaX;
+        vertex.y += effectiveDeltaY;
       });
       updateAnchorVisuals();
       updateBoundingBox();
@@ -314,6 +430,7 @@ function setupEditorEvents() {
     dragTarget = null;
     isDraggingMultiple = false;
     resizeStartData = null;
+    constrainedAxis = null;
     svg.style.cursor = 'default';
   });
 
@@ -322,6 +439,7 @@ function setupEditorEvents() {
     dragTarget = null;
     isDraggingMultiple = false;
     resizeStartData = null;
+    constrainedAxis = null;
     svg.style.cursor = 'default';
     hideGhostPoint();
   });
