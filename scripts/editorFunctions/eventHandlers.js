@@ -166,6 +166,11 @@ function setupEditorEvents() {
       return;
     }
 
+    // When CMD is held, skip point insertion/creation (transform mode only)
+    if (e.metaKey || e.ctrlKey) {
+      return;
+    }
+
     // Check if clicking near an edge of the current path (to insert a point)
     const edgeHit = findClosestEdge(x, y);
     if (edgeHit) {
@@ -456,9 +461,9 @@ function setupEditorEvents() {
 
       // Determine which paths to move - if the dragged path is part of multi-selection, move all
       let pathsToMove = [currentPath];
-      if (typeof selectedPathIndices !== 'undefined' && selectedPathIndices.length > 1 &&
-          selectedPathIndices.includes(dragTarget.pathIndex)) {
-        pathsToMove = selectedPathIndices.map(i => EditorState.paths[i]).filter(p => p);
+      if (EditorState.selectedPathIndices && EditorState.selectedPathIndices.length > 1 &&
+          EditorState.selectedPathIndices.includes(dragTarget.pathIndex)) {
+        pathsToMove = EditorState.selectedPathIndices.map(i => EditorState.paths[i]).filter(p => p);
       }
 
       pathsToMove.forEach(path => {

@@ -347,9 +347,9 @@ function createBoundingBox() {
 
   // Determine which paths to include in the bounding box
   let pathsToInclude = [];
-  if (typeof selectedPathIndices !== 'undefined' && selectedPathIndices.length > 1) {
+  if (EditorState.selectedPathIndices && EditorState.selectedPathIndices.length > 1) {
     // Multiple paths selected - include all of them
-    pathsToInclude = selectedPathIndices.map(i => EditorState.paths[i]).filter(p => p);
+    pathsToInclude = EditorState.selectedPathIndices.map(i => EditorState.paths[i]).filter(p => p);
   } else {
     // Single path or no selection - use current path
     const currentPath = getCurrentPath();

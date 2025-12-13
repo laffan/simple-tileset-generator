@@ -1,8 +1,5 @@
 /* Shape Toolbar - Tools for reflecting, aligning, and boolean operations */
 
-// Track selected paths for multi-path operations
-let selectedPathIndices = [];
-
 // Set up toolbar event listeners
 function setupShapeToolbar() {
   const toolbar = document.querySelector('.shape-toolbar');
@@ -79,8 +76,8 @@ function executeToolAction(actionType) {
 
 // Get list of paths to operate on (selected paths or current path)
 function getSelectedPaths() {
-  if (selectedPathIndices.length > 0) {
-    return selectedPathIndices.map(i => EditorState.paths[i]).filter(p => p);
+  if (EditorState.selectedPathIndices.length > 0) {
+    return EditorState.selectedPathIndices.map(i => EditorState.paths[i]).filter(p => p);
   }
   const current = getCurrentPath();
   return current ? [current] : [];
@@ -88,11 +85,11 @@ function getSelectedPaths() {
 
 // Toggle path selection (for shift+click)
 function togglePathSelection(pathIndex) {
-  const idx = selectedPathIndices.indexOf(pathIndex);
+  const idx = EditorState.selectedPathIndices.indexOf(pathIndex);
   if (idx >= 0) {
-    selectedPathIndices.splice(idx, 1);
+    EditorState.selectedPathIndices.splice(idx, 1);
   } else {
-    selectedPathIndices.push(pathIndex);
+    EditorState.selectedPathIndices.push(pathIndex);
   }
   updatePathSelectionVisuals();
 }
@@ -120,12 +117,12 @@ function deleteSelectedPath() {
   }
 
   // Clear from selection if it was selected
-  const selIdx = selectedPathIndices.indexOf(indexToDelete);
+  const selIdx = EditorState.selectedPathIndices.indexOf(indexToDelete);
   if (selIdx >= 0) {
-    selectedPathIndices.splice(selIdx, 1);
+    EditorState.selectedPathIndices.splice(selIdx, 1);
   }
   // Adjust selection indices for paths after deleted one
-  selectedPathIndices = selectedPathIndices.map(i => i > indexToDelete ? i - 1 : i);
+  EditorState.selectedPathIndices = EditorState.selectedPathIndices.map(i => i > indexToDelete ? i - 1 : i);
 
   // Update visuals
   updatePathStyles();
@@ -137,15 +134,15 @@ function deleteSelectedPath() {
 
 // Add path to selection
 function addPathToSelection(pathIndex) {
-  if (!selectedPathIndices.includes(pathIndex)) {
-    selectedPathIndices.push(pathIndex);
+  if (!EditorState.selectedPathIndices.includes(pathIndex)) {
+    EditorState.selectedPathIndices.push(pathIndex);
     updatePathSelectionVisuals();
   }
 }
 
 // Clear path selection
 function clearPathSelection() {
-  selectedPathIndices = [];
+  EditorState.selectedPathIndices = [];
   updatePathSelectionVisuals();
 }
 
@@ -155,7 +152,7 @@ function updatePathSelectionVisuals() {
   if (!EditorState.two || !EditorState.paths) return;
 
   EditorState.paths.forEach((path, index) => {
-    const isSelected = selectedPathIndices.includes(index);
+    const isSelected = EditorState.selectedPathIndices.includes(index);
     const isCurrent = index === EditorState.currentPathIndex;
 
     if (isSelected) {
@@ -240,7 +237,7 @@ function alignPaths(alignment) {
   const paths = getSelectedPaths();
   if (paths.length === 0) return;
 
-  if (selectedPathIndices.length <= 1) {
+  if (EditorState.selectedPathIndices.length <= 1) {
     // Single path or no multi-selection - align to workspace
     alignPathToWorkspace(paths[0], alignment);
   } else {
@@ -292,7 +289,7 @@ function alignPathToWorkspace(path, alignment) {
 
 // Align multiple paths to each other
 function alignPathsToEachOther(alignment) {
-  const paths = selectedPathIndices.map(i => EditorState.paths[i]).filter(p => p);
+  const paths = EditorState.selectedPathIndices.map(i => EditorState.paths[i]).filter(p => p);
   if (paths.length < 2) return;
 
   // Get bounding boxes for all selected paths

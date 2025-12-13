@@ -5,6 +5,7 @@ const EditorState = {
   paths: [],  // Array of Two.Path objects for multi-path shapes
   anchors: [],
   selectedAnchors: [],  // Array of selected anchor data objects
+  selectedPathIndices: [],  // Array of selected path indices for multi-path operations
   currentEditingShapeIndex: null,
   currentPathIndex: 0,  // Currently selected path in multi-path shapes
   isDragging: false,
@@ -32,6 +33,7 @@ function resetEditorState() {
   EditorState.currentPathIndex = 0;
   EditorState.anchors = [];
   EditorState.selectedAnchors = [];
+  EditorState.selectedPathIndices = [];
   EditorState.currentEditingShapeIndex = null;
   EditorState.isDragging = false;
   EditorState.newShapePoints = [];
