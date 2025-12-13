@@ -37,9 +37,18 @@ window.onload = function () {
   const defaultSize = parseInt(document.getElementById('sizeInput').value, 10);
   const complexitySlider = document.getElementById('paletteComplexity');
 
+  // Function to invert slider value (so right = more colors)
+  // Slider range is 14-128, where lower step = more colors
+  function getInvertedComplexity(slider) {
+    const min = parseInt(slider.min);
+    const max = parseInt(slider.max);
+    const value = parseInt(slider.value);
+    return max - value + min; // Invert: left=128 (few), right=14 (many)
+  }
+
   // Draw initial shapes and generate initial palette
   drawShapes(defaultColors, defaultSize);
-  generateColorPalette(parseInt(complexitySlider.value));
+  generateColorPalette(getInvertedComplexity(complexitySlider));
 
   // Function to update slider fill
   function updateSliderFill(slider) {
@@ -55,7 +64,7 @@ window.onload = function () {
 
   // Add listener to the complexity slider to regenerate palette on change
   complexitySlider.addEventListener('input', function () {
-    generateColorPalette(parseInt(this.value));
+    generateColorPalette(getInvertedComplexity(this));
     updateSliderFill(this);
   });
   addShapeCheckboxesListeners();
@@ -71,8 +80,10 @@ window.onload = function () {
   // Initialize editor buttons
   setupEditorButtons();
 
-  // Initialize color wheel
-  initColorWheel();
+  // Initialize color wheel (with safeguard)
+  if (typeof initColorWheel === 'function') {
+    initColorWheel();
+  }
 };
 
 
@@ -98,4 +109,5 @@ document.getElementById('fitPreview').addEventListener('change', function() {
 });
 
 
-generateColorPalette();
+// Initial palette generation (will be overwritten by window.onload)
+generateColorPalette(40);
