@@ -2,7 +2,9 @@
 
 // Create a Two.Path from single path data
 function createPathFromData(singlePathData, isSelected) {
-  const anchors = singlePathData.vertices.map((v, index) => {
+  const vertices = singlePathData.vertices;
+
+  const anchors = vertices.map((v, index) => {
     const x = normalizedToEditor(v.x);
     const y = normalizedToEditor(v.y);
 
@@ -19,14 +21,16 @@ function createPathFromData(singlePathData, isSelected) {
       ctrlRightY = normalizedControlToEditor(v.ctrlRight.y);
     }
 
-    // Determine command type - curve if has control points
+    // Determine command type - curve if THIS segment (from prev to current) uses bezier
+    // A segment is curved if prev has ctrlRight OR current has ctrlLeft
     let command;
     if (index === 0) {
       command = Two.Commands.move;
-    } else if (v.ctrlLeft || v.ctrlRight) {
-      command = Two.Commands.curve;
     } else {
-      command = Two.Commands.line;
+      const prevV = vertices[index - 1];
+      const prevHasCtrlRight = prevV.ctrlRight && (prevV.ctrlRight.x !== 0 || prevV.ctrlRight.y !== 0);
+      const currentHasCtrlLeft = v.ctrlLeft && (v.ctrlLeft.x !== 0 || v.ctrlLeft.y !== 0);
+      command = (prevHasCtrlRight || currentHasCtrlLeft) ? Two.Commands.curve : Two.Commands.line;
     }
 
     return new Two.Anchor(x, y, ctrlLeftX, ctrlLeftY, ctrlRightX, ctrlRightY, command);

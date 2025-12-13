@@ -197,19 +197,19 @@ function reflectPath(direction) {
       // Reflect x around vertical center axis
       newX = 2 * bbox.centerX - absX;
 
-      // Flip and swap control points
+      // Negate x component of control points (do NOT swap left/right)
       if (vertex.controls) {
-        newCtrlLeft = { x: -vertex.controls.right.x, y: vertex.controls.right.y };
-        newCtrlRight = { x: -vertex.controls.left.x, y: vertex.controls.left.y };
+        newCtrlLeft = { x: -vertex.controls.left.x, y: vertex.controls.left.y };
+        newCtrlRight = { x: -vertex.controls.right.x, y: vertex.controls.right.y };
       }
     } else if (direction === 'vertical') {
       // Reflect y around horizontal center axis
       newY = 2 * bbox.centerY - absY;
 
-      // Flip and swap control points
+      // Negate y component of control points (do NOT swap left/right)
       if (vertex.controls) {
-        newCtrlLeft = { x: vertex.controls.right.x, y: -vertex.controls.right.y };
-        newCtrlRight = { x: vertex.controls.left.x, y: -vertex.controls.left.y };
+        newCtrlLeft = { x: vertex.controls.left.x, y: -vertex.controls.left.y };
+        newCtrlRight = { x: vertex.controls.right.x, y: -vertex.controls.right.y };
       }
     }
 

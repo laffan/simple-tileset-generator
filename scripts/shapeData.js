@@ -127,95 +127,82 @@ shapePathData.angleBottomRight = {
   closed: true
 };
 
-// Half Circle Bottom
+// Half Circle Bottom - semicircle bulging down from top edge
 shapePathData.halfCircleBottom = {
   vertices: [
-    { x: 0, y: 0.5 },
-    { x: 0, y: 1 },
-    { x: 1, y: 1 },
-    { x: 1, y: 0.5, ctrlLeft: { x: 0, y: BEZIER_CIRCLE * 0.5 }, ctrlRight: { x: 0, y: 0 } },
-    { x: 0.5, y: 0, ctrlLeft: { x: BEZIER_CIRCLE * 0.5, y: 0 }, ctrlRight: { x: -BEZIER_CIRCLE * 0.5, y: 0 } },
-    { x: 0, y: 0.5, ctrlLeft: { x: 0, y: 0 }, ctrlRight: { x: 0, y: BEZIER_CIRCLE * 0.5 } }
+    { x: 0, y: 0, ctrlRight: { x: 0, y: BEZIER_CIRCLE * 0.5 } },
+    { x: 0.5, y: 0.5, ctrlLeft: { x: -BEZIER_CIRCLE * 0.5, y: 0 }, ctrlRight: { x: BEZIER_CIRCLE * 0.5, y: 0 } },
+    { x: 1, y: 0, ctrlLeft: { x: 0, y: BEZIER_CIRCLE * 0.5 } }
   ],
   closed: true
 };
 
-// Half Circle Top
+// Half Circle Top - semicircle bulging up from bottom edge
 shapePathData.halfCircleTop = {
   vertices: [
-    { x: 0, y: 0.5, ctrlLeft: { x: 0, y: -BEZIER_CIRCLE * 0.5 }, ctrlRight: { x: 0, y: 0 } },
-    { x: 0, y: 0 },
-    { x: 1, y: 0 },
-    { x: 1, y: 0.5, ctrlLeft: { x: 0, y: 0 }, ctrlRight: { x: 0, y: -BEZIER_CIRCLE * 0.5 } },
-    { x: 0.5, y: 1, ctrlLeft: { x: BEZIER_CIRCLE * 0.5, y: 0 }, ctrlRight: { x: -BEZIER_CIRCLE * 0.5, y: 0 } }
+    { x: 0, y: 1, ctrlRight: { x: 0, y: -BEZIER_CIRCLE * 0.5 } },
+    { x: 0.5, y: 0.5, ctrlLeft: { x: -BEZIER_CIRCLE * 0.5, y: 0 }, ctrlRight: { x: BEZIER_CIRCLE * 0.5, y: 0 } },
+    { x: 1, y: 1, ctrlLeft: { x: 0, y: -BEZIER_CIRCLE * 0.5 } }
   ],
   closed: true
 };
 
-// Half Circle Left
+// Half Circle Left - semicircle bulging left from right edge
 shapePathData.halfCircleLeft = {
   vertices: [
-    { x: 0.5, y: 0, ctrlLeft: { x: 0, y: 0 }, ctrlRight: { x: -BEZIER_CIRCLE * 0.5, y: 0 } },
-    { x: 0, y: 0.5, ctrlLeft: { x: 0, y: -BEZIER_CIRCLE * 0.5 }, ctrlRight: { x: 0, y: BEZIER_CIRCLE * 0.5 } },
-    { x: 0.5, y: 1, ctrlLeft: { x: -BEZIER_CIRCLE * 0.5, y: 0 }, ctrlRight: { x: 0, y: 0 } },
-    { x: 1, y: 1 },
-    { x: 1, y: 0 }
+    { x: 1, y: 0, ctrlRight: { x: -BEZIER_CIRCLE * 0.5, y: 0 } },
+    { x: 0.5, y: 0.5, ctrlLeft: { x: 0, y: -BEZIER_CIRCLE * 0.5 }, ctrlRight: { x: 0, y: BEZIER_CIRCLE * 0.5 } },
+    { x: 1, y: 1, ctrlLeft: { x: -BEZIER_CIRCLE * 0.5, y: 0 } }
   ],
   closed: true
 };
 
-// Half Circle Right
+// Half Circle Right - semicircle bulging right from left edge
 shapePathData.halfCircleRight = {
   vertices: [
-    { x: 0.5, y: 0, ctrlLeft: { x: 0, y: 0 }, ctrlRight: { x: BEZIER_CIRCLE * 0.5, y: 0 } },
-    { x: 0, y: 0 },
-    { x: 0, y: 1 },
-    { x: 0.5, y: 1, ctrlLeft: { x: 0, y: 0 }, ctrlRight: { x: BEZIER_CIRCLE * 0.5, y: 0 } },
-    { x: 1, y: 0.5, ctrlLeft: { x: 0, y: BEZIER_CIRCLE * 0.5 }, ctrlRight: { x: 0, y: -BEZIER_CIRCLE * 0.5 } }
+    { x: 0, y: 0, ctrlRight: { x: BEZIER_CIRCLE * 0.5, y: 0 } },
+    { x: 0.5, y: 0.5, ctrlLeft: { x: 0, y: -BEZIER_CIRCLE * 0.5 }, ctrlRight: { x: 0, y: BEZIER_CIRCLE * 0.5 } },
+    { x: 0, y: 1, ctrlLeft: { x: BEZIER_CIRCLE * 0.5, y: 0 } }
   ],
   closed: true
 };
 
-// Quarter Circle Top Left
+// Quarter Circle Top Left - cutout in top-left corner
 shapePathData.quarterCircleTopLeft = {
   vertices: [
-    { x: 0, y: 1 },
+    { x: 0, y: 1, ctrlLeft: { x: BEZIER_CIRCLE, y: 0 } },
     { x: 1, y: 1 },
-    { x: 1, y: 0 },
-    { x: 0, y: 0, ctrlLeft: { x: BEZIER_CIRCLE, y: 0 }, ctrlRight: { x: 0, y: BEZIER_CIRCLE } }
+    { x: 1, y: 0, ctrlRight: { x: 0, y: BEZIER_CIRCLE } }
   ],
   closed: true
 };
 
-// Quarter Circle Top Right
+// Quarter Circle Top Right - cutout in top-right corner
 shapePathData.quarterCircleTopRight = {
   vertices: [
-    { x: 0, y: 0 },
+    { x: 1, y: 1, ctrlLeft: { x: 0, y: -BEZIER_CIRCLE } },
     { x: 0, y: 1 },
-    { x: 1, y: 1 },
-    { x: 1, y: 0, ctrlLeft: { x: 0, y: BEZIER_CIRCLE }, ctrlRight: { x: -BEZIER_CIRCLE, y: 0 } }
+    { x: 0, y: 0, ctrlRight: { x: BEZIER_CIRCLE, y: 0 } }
   ],
   closed: true
 };
 
-// Quarter Circle Bottom Left
+// Quarter Circle Bottom Left - cutout in bottom-left corner
 shapePathData.quarterCircleBottomLeft = {
   vertices: [
-    { x: 0, y: 0 },
+    { x: 0, y: 0, ctrlLeft: { x: BEZIER_CIRCLE, y: 0 } },
     { x: 1, y: 0 },
-    { x: 1, y: 1 },
-    { x: 0, y: 1, ctrlLeft: { x: BEZIER_CIRCLE, y: 0 }, ctrlRight: { x: 0, y: -BEZIER_CIRCLE } }
+    { x: 1, y: 1, ctrlRight: { x: 0, y: -BEZIER_CIRCLE } }
   ],
   closed: true
 };
 
-// Quarter Circle Bottom Right
+// Quarter Circle Bottom Right - cutout in bottom-right corner
 shapePathData.quarterCircleBottomRight = {
   vertices: [
-    { x: 1, y: 0 },
+    { x: 1, y: 0, ctrlLeft: { x: 0, y: BEZIER_CIRCLE } },
     { x: 0, y: 0 },
-    { x: 0, y: 1 },
-    { x: 1, y: 1, ctrlLeft: { x: -BEZIER_CIRCLE, y: 0 }, ctrlRight: { x: 0, y: -BEZIER_CIRCLE } }
+    { x: 0, y: 1, ctrlRight: { x: BEZIER_CIRCLE, y: 0 } }
   ],
   closed: true
 };
@@ -306,19 +293,19 @@ shapePathData.smallDots = {
   })()
 };
 
-// Waves
+// Waves - wavy band across the middle
 shapePathData.waves = {
   vertices: [
-    { x: 0, y: 0.3 },
+    { x: 0, y: 0.3, ctrlRight: { x: 0.1, y: 0 } },
     { x: 0.25, y: 0.5, ctrlLeft: { x: -0.1, y: 0 }, ctrlRight: { x: 0.1, y: 0 } },
     { x: 0.5, y: 0.3, ctrlLeft: { x: -0.1, y: 0 }, ctrlRight: { x: 0.1, y: 0 } },
     { x: 0.75, y: 0.5, ctrlLeft: { x: -0.1, y: 0 }, ctrlRight: { x: 0.1, y: 0 } },
-    { x: 1, y: 0.3 },
-    { x: 1, y: 0.7 },
+    { x: 1, y: 0.3, ctrlLeft: { x: -0.1, y: 0 } },
+    { x: 1, y: 0.7, ctrlRight: { x: -0.1, y: 0 } },
     { x: 0.75, y: 0.5, ctrlLeft: { x: 0.1, y: 0 }, ctrlRight: { x: -0.1, y: 0 } },
     { x: 0.5, y: 0.7, ctrlLeft: { x: 0.1, y: 0 }, ctrlRight: { x: -0.1, y: 0 } },
     { x: 0.25, y: 0.5, ctrlLeft: { x: 0.1, y: 0 }, ctrlRight: { x: -0.1, y: 0 } },
-    { x: 0, y: 0.7 }
+    { x: 0, y: 0.7, ctrlLeft: { x: 0.1, y: 0 } }
   ],
   closed: true
 };
