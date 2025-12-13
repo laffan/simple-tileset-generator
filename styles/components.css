@@ -653,16 +653,11 @@
   color: white;
 }
 
-.tool-icon {
-  font-size: 18px;
-  line-height: 1;
-  margin-bottom: 2px;
-}
-
 .tool-label {
-  font-size: 10px;
+  font-size: 11px;
   text-align: center;
-  line-height: 1.2;
+  line-height: 1.3;
+  font-weight: 500;
 }
 
 /* Submenu - appears on click */

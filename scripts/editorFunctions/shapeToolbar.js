@@ -113,6 +113,9 @@ function clearPathSelection() {
 
 // Update visual indication of selected paths
 function updatePathSelectionVisuals() {
+  // Guard against calls when editor is not active
+  if (!EditorState.two || !EditorState.paths) return;
+
   EditorState.paths.forEach((path, index) => {
     const isSelected = selectedPathIndices.includes(index);
     const isCurrent = index === EditorState.currentPathIndex;
