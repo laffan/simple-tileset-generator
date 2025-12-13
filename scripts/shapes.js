@@ -314,24 +314,33 @@ function setupDragAndDrop() {
       e.dataTransfer.dropEffect = 'move';
 
       if (this === draggedItem) return;
-      if (this === currentDropTarget) return; // Already showing placeholder here
 
-      const targetIndex = parseInt(this.dataset.index);
+      // Determine if cursor is in left or right half of the element
+      const rect = this.getBoundingClientRect();
+      const cursorX = e.clientX - rect.left;
+      const isLeftHalf = cursorX < rect.width / 2;
+
+      // Check if we need to update placeholder position
+      const insertBefore = isLeftHalf;
+      if (currentDropTarget === this && currentDropTarget.dataset.insertBefore === String(insertBefore)) {
+        return; // Already showing placeholder in correct position
+      }
+
       currentDropTarget = this;
+      currentDropTarget.dataset.insertBefore = String(insertBefore);
 
       // Remove existing placeholder
-      removeDropPlaceholder();
+      if (dropPlaceholder && dropPlaceholder.parentNode) {
+        dropPlaceholder.parentNode.removeChild(dropPlaceholder);
+      }
 
-      // Create and insert placeholder
+      // Create and insert placeholder based on cursor position
       dropPlaceholder = createDropPlaceholder();
 
-      // Insert before or after based on drag direction
-      if (draggedIndex < targetIndex) {
-        // Dragging forward - insert after target
-        this.parentNode.insertBefore(dropPlaceholder, this.nextSibling);
-      } else {
-        // Dragging backward - insert before target
+      if (insertBefore) {
         this.parentNode.insertBefore(dropPlaceholder, this);
+      } else {
+        this.parentNode.insertBefore(dropPlaceholder, this.nextSibling);
       }
     });
 
@@ -346,11 +355,23 @@ function setupDragAndDrop() {
 
     item.addEventListener('drop', function(e) {
       e.preventDefault();
+
+      if (this === draggedItem) {
+        removeDropPlaceholder();
+        return;
+      }
+
+      let targetIndex = parseInt(this.dataset.index);
+      const insertBefore = this.dataset.insertBefore === 'true';
+
       removeDropPlaceholder();
 
-      if (this === draggedItem) return;
-
-      const targetIndex = parseInt(this.dataset.index);
+      // Adjust target index based on cursor position and drag direction
+      if (!insertBefore && draggedIndex > targetIndex) {
+        targetIndex += 1;
+      } else if (insertBefore && draggedIndex < targetIndex) {
+        targetIndex -= 1;
+      }
 
       // Reorder the shapeOrder array
       const [movedShape] = shapeOrder.splice(draggedIndex, 1);
@@ -373,10 +394,19 @@ function setupDragAndDrop() {
   document.addEventListener('drop', function(e) {
     if (dropPlaceholder && e.target === dropPlaceholder && currentDropTarget) {
       e.preventDefault();
-      const targetIndex = parseInt(currentDropTarget.dataset.index);
+      let targetIndex = parseInt(currentDropTarget.dataset.index);
+      const insertBefore = currentDropTarget.dataset.insertBefore === 'true';
+
       removeDropPlaceholder();
 
       if (draggedItem) {
+        // Adjust target index based on cursor position and drag direction
+        if (!insertBefore && draggedIndex > targetIndex) {
+          targetIndex += 1;
+        } else if (insertBefore && draggedIndex < targetIndex) {
+          targetIndex -= 1;
+        }
+
         // Reorder the shapeOrder array
         const [movedShape] = shapeOrder.splice(draggedIndex, 1);
         shapeOrder.splice(targetIndex, 0, movedShape);
