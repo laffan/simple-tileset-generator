@@ -311,19 +311,24 @@ function hideGhostPoint() {
   }
 }
 
-// Calculate bounding box for the current path
+// Calculate bounding box for a path (uses path's own translation, not current path)
 function getPathBoundingBox(path) {
   if (!path || !path.vertices || path.vertices.length === 0) return null;
 
   let minX = Infinity, minY = Infinity;
   let maxX = -Infinity, maxY = -Infinity;
 
+  // Use the path's own translation, not getCurrentPath()
+  const tx = path.translation ? path.translation.x : 0;
+  const ty = path.translation ? path.translation.y : 0;
+
   path.vertices.forEach(vertex => {
-    const absPos = getAbsolutePosition(vertex);
-    minX = Math.min(minX, absPos.x);
-    minY = Math.min(minY, absPos.y);
-    maxX = Math.max(maxX, absPos.x);
-    maxY = Math.max(maxY, absPos.y);
+    const absX = vertex.x + tx;
+    const absY = vertex.y + ty;
+    minX = Math.min(minX, absX);
+    minY = Math.min(minY, absY);
+    maxX = Math.max(maxX, absX);
+    maxY = Math.max(maxY, absY);
   });
 
   return {
@@ -336,15 +341,51 @@ function getPathBoundingBox(path) {
   };
 }
 
-// Create bounding box visuals for the current path
+// Create bounding box visuals for selected paths (or current path if no multi-selection)
 function createBoundingBox() {
   clearBoundingBox();
 
-  const currentPath = getCurrentPath();
-  if (!currentPath) return;
+  // Determine which paths to include in the bounding box
+  let pathsToInclude = [];
+  if (typeof selectedPathIndices !== 'undefined' && selectedPathIndices.length > 1) {
+    // Multiple paths selected - include all of them
+    pathsToInclude = selectedPathIndices.map(i => EditorState.paths[i]).filter(p => p);
+  } else {
+    // Single path or no selection - use current path
+    const currentPath = getCurrentPath();
+    if (currentPath) {
+      pathsToInclude = [currentPath];
+    }
+  }
 
-  const bbox = getPathBoundingBox(currentPath);
-  if (!bbox || bbox.width === 0 || bbox.height === 0) return;
+  if (pathsToInclude.length === 0) return;
+
+  // Calculate combined bounding box for all paths
+  let minX = Infinity, minY = Infinity;
+  let maxX = -Infinity, maxY = -Infinity;
+
+  pathsToInclude.forEach(path => {
+    const pathBbox = getPathBoundingBox(path);
+    if (pathBbox) {
+      minX = Math.min(minX, pathBbox.x);
+      minY = Math.min(minY, pathBbox.y);
+      maxX = Math.max(maxX, pathBbox.x + pathBbox.width);
+      maxY = Math.max(maxY, pathBbox.y + pathBbox.height);
+    }
+  });
+
+  if (minX === Infinity) return;
+
+  const bbox = {
+    x: minX,
+    y: minY,
+    width: maxX - minX,
+    height: maxY - minY,
+    centerX: (minX + maxX) / 2,
+    centerY: (minY + maxY) / 2
+  };
+
+  if (bbox.width === 0 && bbox.height === 0) return;
 
   const padding = 10;  // Padding around the shape
   const x = bbox.x - padding;
@@ -353,7 +394,9 @@ function createBoundingBox() {
   const h = bbox.height + padding * 2;
 
   const bb = {
-    bounds: bbox
+    bounds: bbox,
+    pathsToTransform: pathsToInclude,  // Store which paths to transform
+    isMultiSelect: pathsToInclude.length > 1
   };
 
   // Dashed border rectangle

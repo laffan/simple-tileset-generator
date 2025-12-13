@@ -88,14 +88,11 @@ function getSelectedPaths() {
 
 // Toggle path selection (for shift+click)
 function togglePathSelection(pathIndex) {
-  console.log('togglePathSelection called with index:', pathIndex);
   const idx = selectedPathIndices.indexOf(pathIndex);
   if (idx >= 0) {
     selectedPathIndices.splice(idx, 1);
-    console.log('Removed from selection, now:', selectedPathIndices);
   } else {
     selectedPathIndices.push(pathIndex);
-    console.log('Added to selection, now:', selectedPathIndices);
   }
   updatePathSelectionVisuals();
 }
@@ -104,7 +101,6 @@ function togglePathSelection(pathIndex) {
 function deleteSelectedPath() {
   // Need at least 2 paths to delete one
   if (EditorState.paths.length < 2) {
-    console.log('Cannot delete - need at least one path remaining');
     return false;
   }
 
@@ -244,8 +240,8 @@ function alignPaths(alignment) {
   const paths = getSelectedPaths();
   if (paths.length === 0) return;
 
-  if (paths.length === 1 || selectedPathIndices.length <= 1) {
-    // Single path - align to workspace
+  if (selectedPathIndices.length <= 1) {
+    // Single path or no multi-selection - align to workspace
     alignPathToWorkspace(paths[0], alignment);
   } else {
     // Multiple paths - align to each other
@@ -254,6 +250,7 @@ function alignPaths(alignment) {
 
   updateAnchorVisuals();
   updateBoundingBox();
+  EditorState.two.update();
 }
 
 // Align a single path to workspace bounds
@@ -357,7 +354,6 @@ function alignPathsToEachOther(alignment) {
 // Boolean cut operation - subtract current path from overlapping paths
 function booleanCut() {
   if (EditorState.paths.length < 2) {
-    console.log('Boolean cut requires at least 2 paths');
     return;
   }
 

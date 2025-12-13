@@ -33,10 +33,7 @@ function setupEditorEvents() {
     }
   });
 
-  console.log('setupEditorEvents: attaching to SVG', svg);
-
   svg.addEventListener('mousedown', (e) => {
-    console.log('mousedown event fired, shiftKey:', e.shiftKey);
     const rect = svg.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
@@ -66,21 +63,24 @@ function setupEditorEvents() {
           rotateStartAngle = Math.atan2(y - bbox.centerY, x - bbox.centerX);
           dragTarget = { type: 'rotate', center: { x: bbox.centerX, y: bbox.centerY } };
         } else {
-          // Store bounds AND original vertex positions for resize
-          const currentPath = getCurrentPath();
+          // Store bounds AND original vertex positions for resize (for all paths to transform)
           const bounds = { ...EditorState.boundingBox.bounds };
-          const originalVertices = currentPath.vertices.map(v => {
-            const absPos = getAbsolutePosition(v);
-            return {
-              x: absPos.x,
-              y: absPos.y,
+          const pathsToTransform = EditorState.boundingBox.pathsToTransform || [getCurrentPath()];
+
+          // Store original vertices for each path
+          const originalPathsData = pathsToTransform.map(path => {
+            const tx = path.translation ? path.translation.x : 0;
+            const ty = path.translation ? path.translation.y : 0;
+            return path.vertices.map(v => ({
+              x: v.x + tx,
+              y: v.y + ty,
               ctrlLeftX: v.controls ? v.controls.left.x : 0,
               ctrlLeftY: v.controls ? v.controls.left.y : 0,
               ctrlRightX: v.controls ? v.controls.right.x : 0,
               ctrlRightY: v.controls ? v.controls.right.y : 0
-            };
+            }));
           });
-          resizeStartData = { bounds, originalVertices };
+          resizeStartData = { bounds, originalPathsData, pathsToTransform };
           dragTarget = { type: 'resize', handleId: handleHit.handleId };
         }
         return;
@@ -89,11 +89,8 @@ function setupEditorEvents() {
 
     // Shift+click on paths for multi-path selection (check BEFORE anchors)
     if (e.shiftKey) {
-      console.log('Shift key detected, checking for path hit at', x, y);
       const pathHit = findPathAtPosition(x, y);
-      console.log('Path hit result:', pathHit);
       if (pathHit) {
-        console.log('Calling togglePathSelection with index:', pathHit.pathIndex);
         togglePathSelection(pathHit.pathIndex);
         return;
       }
@@ -243,33 +240,45 @@ function setupEditorEvents() {
       const angleDelta = currentAngle - rotateStartAngle;
       rotateStartAngle = currentAngle;
 
-      // Rotate all vertices around center
-      currentPath.vertices.forEach(vertex => {
-        const absPos = getAbsolutePosition(vertex);
-        const dx = absPos.x - center.x;
-        const dy = absPos.y - center.y;
-        const cos = Math.cos(angleDelta);
-        const sin = Math.sin(angleDelta);
-        const newX = center.x + (dx * cos - dy * sin);
-        const newY = center.y + (dx * sin + dy * cos);
-        vertex.x = newX - currentPath.translation.x;
-        vertex.y = newY - currentPath.translation.y;
+      // Get all paths to rotate (either multi-selected or just current)
+      const pathsToRotate = EditorState.boundingBox && EditorState.boundingBox.pathsToTransform
+        ? EditorState.boundingBox.pathsToTransform
+        : [currentPath];
 
-        // Also rotate control points
-        if (vertex.controls) {
-          const ctrlLeftX = vertex.controls.left.x;
-          const ctrlLeftY = vertex.controls.left.y;
-          vertex.controls.left.x = ctrlLeftX * cos - ctrlLeftY * sin;
-          vertex.controls.left.y = ctrlLeftX * sin + ctrlLeftY * cos;
+      // Rotate all vertices in all paths around center
+      pathsToRotate.forEach(path => {
+        const tx = path.translation ? path.translation.x : 0;
+        const ty = path.translation ? path.translation.y : 0;
 
-          const ctrlRightX = vertex.controls.right.x;
-          const ctrlRightY = vertex.controls.right.y;
-          vertex.controls.right.x = ctrlRightX * cos - ctrlRightY * sin;
-          vertex.controls.right.y = ctrlRightX * sin + ctrlRightY * cos;
-        }
+        path.vertices.forEach(vertex => {
+          const absX = vertex.x + tx;
+          const absY = vertex.y + ty;
+          const dx = absX - center.x;
+          const dy = absY - center.y;
+          const cos = Math.cos(angleDelta);
+          const sin = Math.sin(angleDelta);
+          const newX = center.x + (dx * cos - dy * sin);
+          const newY = center.y + (dx * sin + dy * cos);
+          vertex.x = newX - tx;
+          vertex.y = newY - ty;
+
+          // Also rotate control points
+          if (vertex.controls) {
+            const ctrlLeftX = vertex.controls.left.x;
+            const ctrlLeftY = vertex.controls.left.y;
+            vertex.controls.left.x = ctrlLeftX * cos - ctrlLeftY * sin;
+            vertex.controls.left.y = ctrlLeftX * sin + ctrlLeftY * cos;
+
+            const ctrlRightX = vertex.controls.right.x;
+            const ctrlRightY = vertex.controls.right.y;
+            vertex.controls.right.x = ctrlRightX * cos - ctrlRightY * sin;
+            vertex.controls.right.y = ctrlRightX * sin + ctrlRightY * cos;
+          }
+        });
       });
       updateAnchorVisuals();
       updateBoundingBox();
+      EditorState.two.update();
     } else if (dragTarget.type === 'resize' && resizeStartData) {
       // Resize based on handle - use original positions
       const handleId = dragTarget.handleId;
@@ -315,26 +324,40 @@ function setupEditorEvents() {
         // Edge handles remain single-axis (no aspect ratio to maintain)
       }
 
-      // Apply scale to ORIGINAL vertex positions
-      resizeStartData.originalVertices.forEach((orig, i) => {
-        const vertex = currentPath.vertices[i];
-        const relX = orig.x - center.x;
-        const relY = orig.y - center.y;
-        const newX = center.x + relX * scaleX;
-        const newY = center.y + relY * scaleY;
-        vertex.x = newX - currentPath.translation.x;
-        vertex.y = newY - currentPath.translation.y;
+      // Apply scale to ORIGINAL vertex positions for all paths
+      const pathsToResize = resizeStartData.pathsToTransform || [currentPath];
+      const originalPathsData = resizeStartData.originalPathsData || [resizeStartData.originalVertices];
 
-        // Scale control points too
-        if (vertex.controls) {
-          vertex.controls.left.x = orig.ctrlLeftX * scaleX;
-          vertex.controls.left.y = orig.ctrlLeftY * scaleY;
-          vertex.controls.right.x = orig.ctrlRightX * scaleX;
-          vertex.controls.right.y = orig.ctrlRightY * scaleY;
-        }
+      pathsToResize.forEach((path, pathIndex) => {
+        const originalVerts = originalPathsData[pathIndex];
+        if (!originalVerts) return;
+
+        const tx = path.translation ? path.translation.x : 0;
+        const ty = path.translation ? path.translation.y : 0;
+
+        originalVerts.forEach((orig, i) => {
+          const vertex = path.vertices[i];
+          if (!vertex) return;
+
+          const relX = orig.x - center.x;
+          const relY = orig.y - center.y;
+          const newX = center.x + relX * scaleX;
+          const newY = center.y + relY * scaleY;
+          vertex.x = newX - tx;
+          vertex.y = newY - ty;
+
+          // Scale control points too
+          if (vertex.controls) {
+            vertex.controls.left.x = orig.ctrlLeftX * scaleX;
+            vertex.controls.left.y = orig.ctrlLeftY * scaleY;
+            vertex.controls.right.x = orig.ctrlRightX * scaleX;
+            vertex.controls.right.y = orig.ctrlRightY * scaleY;
+          }
+        });
       });
       updateAnchorVisuals();
       updateBoundingBox();
+      EditorState.two.update();
     } else if (dragTarget.type === 'multiAnchor' || (dragTarget.type === 'anchor' && isDraggingMultiple)) {
       // Move all selected anchors together
       let effectiveDeltaX = deltaX;
@@ -408,36 +431,45 @@ function setupEditorEvents() {
       vertex.controls.right.y = y - absPos.y;
       updateAnchorVisuals();
     } else if (dragTarget.type === 'path') {
-      // Move entire path by shifting all vertices
+      // Move path(s) by shifting all vertices
       let effectiveDeltaX = deltaX;
       let effectiveDeltaY = deltaY;
 
-      // Shift+drag constrains to axis
-      if (e.shiftKey) {
-        // Determine axis on first significant movement
-        if (!constrainedAxis) {
-          const totalDeltaX = Math.abs(x - dragStartPos.x);
-          const totalDeltaY = Math.abs(y - dragStartPos.y);
-          if (totalDeltaX > 5 || totalDeltaY > 5) {
-            constrainedAxis = totalDeltaX > totalDeltaY ? 'x' : 'y';
-          }
-        }
-        // Apply constraint
+      // Shift+drag constrains to axis (but don't enable multi-select during drag)
+      if (e.shiftKey && constrainedAxis !== null) {
+        // Apply constraint only if already determined
         if (constrainedAxis === 'x') {
           effectiveDeltaY = 0;
         } else if (constrainedAxis === 'y') {
           effectiveDeltaX = 0;
         }
+      } else if (e.shiftKey) {
+        // Determine axis on first significant movement
+        const totalDeltaX = Math.abs(x - dragStartPos.x);
+        const totalDeltaY = Math.abs(y - dragStartPos.y);
+        if (totalDeltaX > 5 || totalDeltaY > 5) {
+          constrainedAxis = totalDeltaX > totalDeltaY ? 'x' : 'y';
+        }
       } else {
         constrainedAxis = null;  // Reset if shift released
       }
 
-      currentPath.vertices.forEach(vertex => {
-        vertex.x += effectiveDeltaX;
-        vertex.y += effectiveDeltaY;
+      // Determine which paths to move - if the dragged path is part of multi-selection, move all
+      let pathsToMove = [currentPath];
+      if (typeof selectedPathIndices !== 'undefined' && selectedPathIndices.length > 1 &&
+          selectedPathIndices.includes(dragTarget.pathIndex)) {
+        pathsToMove = selectedPathIndices.map(i => EditorState.paths[i]).filter(p => p);
+      }
+
+      pathsToMove.forEach(path => {
+        path.vertices.forEach(vertex => {
+          vertex.x += effectiveDeltaX;
+          vertex.y += effectiveDeltaY;
+        });
       });
       updateAnchorVisuals();
       updateBoundingBox();
+      EditorState.two.update();
     }
 
     lastMousePos = { x, y };
