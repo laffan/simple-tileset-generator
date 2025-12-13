@@ -350,7 +350,6 @@ function setupDragAndDrop() {
     item.addEventListener('dragstart', function(e) {
       draggedItem = this;
       draggedIndex = parseInt(this.dataset.index);
-      this.classList.add('dragging');
       e.dataTransfer.effectAllowed = 'move';
       e.dataTransfer.setData('text/plain', '');
 
@@ -358,6 +357,11 @@ function setupDragAndDrop() {
       if (preview) {
         e.dataTransfer.setDragImage(preview, 20, 20);
       }
+
+      // Delay hiding the element so the drag can initialize first
+      setTimeout(() => {
+        this.classList.add('dragging');
+      }, 0);
     });
 
     item.addEventListener('dragend', function() {
