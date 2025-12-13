@@ -125,6 +125,36 @@ function updateAnchorHighlights() {
   EditorState.two.update();
 }
 
+// Hide anchor points (for transform mode)
+function hideAnchorPoints() {
+  if (!EditorState.two || !EditorState.anchors) return;
+
+  EditorState.anchors.forEach(anchorData => {
+    if (anchorData.circle) anchorData.circle.opacity = 0;
+    if (anchorData.controlIn) anchorData.controlIn.opacity = 0;
+    if (anchorData.controlOut) anchorData.controlOut.opacity = 0;
+    if (anchorData.lineIn) anchorData.lineIn.opacity = 0;
+    if (anchorData.lineOut) anchorData.lineOut.opacity = 0;
+  });
+
+  EditorState.two.update();
+}
+
+// Show anchor points (exit transform mode)
+function showAnchorPoints() {
+  if (!EditorState.two || !EditorState.anchors) return;
+
+  EditorState.anchors.forEach(anchorData => {
+    if (anchorData.circle) anchorData.circle.opacity = 1;
+    if (anchorData.controlIn) anchorData.controlIn.opacity = 1;
+    if (anchorData.controlOut) anchorData.controlOut.opacity = 1;
+    if (anchorData.lineIn) anchorData.lineIn.opacity = 1;
+    if (anchorData.lineOut) anchorData.lineOut.opacity = 1;
+  });
+
+  EditorState.two.update();
+}
+
 // Check if an anchor is currently selected
 function isAnchorSelected(anchorData) {
   return EditorState.selectedAnchors.some(a => a.vertex === anchorData.vertex);

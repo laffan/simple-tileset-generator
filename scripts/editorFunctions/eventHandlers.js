@@ -14,22 +14,26 @@ function setupEditorEvents() {
   let rotateStartAngle = 0;
   let constrainedAxis = null;  // 'x' or 'y' for shift+drag
 
-  // Track CMD key for showing/hiding bounding box
+  // Track CMD key for showing/hiding bounding box and anchor points
   document.addEventListener('keydown', (e) => {
     if (e.metaKey || e.ctrlKey) {
       if (EditorState.paths.length > 0 && !EditorState.boundingBox) {
         createBoundingBox();
       }
+      // Hide anchor points in transform mode
+      hideAnchorPoints();
     }
   });
 
   document.addEventListener('keyup', (e) => {
     // Check if the released key is Meta or Control
     if (e.key === 'Meta' || e.key === 'Control') {
-      // Only hide if not currently dragging a handle
+      // Only hide bounding box if not currently dragging a handle
       if (!dragTarget || (dragTarget.type !== 'resize' && dragTarget.type !== 'rotate')) {
         clearBoundingBox();
       }
+      // Show anchor points again
+      showAnchorPoints();
     }
   });
 
@@ -138,7 +142,21 @@ function setupEditorEvents() {
     // If no anchor hit, check if clicking on any path shape
     const pathHit = findPathAtPosition(x, y);
     if (pathHit) {
-      // Clear multi-path selection on regular click
+      // Check if clicked path is part of multi-selection
+      const isPartOfMultiSelect = EditorState.selectedPathIndices &&
+        EditorState.selectedPathIndices.length > 1 &&
+        EditorState.selectedPathIndices.includes(pathHit.pathIndex);
+
+      if (isPartOfMultiSelect) {
+        // Drag all selected paths together
+        dragTarget = { type: 'multiPath', pathIndex: pathHit.pathIndex };
+        EditorState.isDragging = true;
+        clearAnchorSelection();
+        svg.style.cursor = 'grabbing';
+        return;
+      }
+
+      // Not part of multi-selection - clear selection and handle normally
       clearPathSelection();
 
       // If clicked on a different path, select it first
@@ -435,7 +453,7 @@ function setupEditorEvents() {
       vertex.controls.right.x = x - absPos.x;
       vertex.controls.right.y = y - absPos.y;
       updateAnchorVisuals();
-    } else if (dragTarget.type === 'path') {
+    } else if (dragTarget.type === 'path' || dragTarget.type === 'multiPath') {
       // Move path(s) by shifting all vertices
       let effectiveDeltaX = deltaX;
       let effectiveDeltaY = deltaY;
@@ -459,11 +477,14 @@ function setupEditorEvents() {
         constrainedAxis = null;  // Reset if shift released
       }
 
-      // Determine which paths to move - if the dragged path is part of multi-selection, move all
-      let pathsToMove = [currentPath];
-      if (EditorState.selectedPathIndices && EditorState.selectedPathIndices.length > 1 &&
-          EditorState.selectedPathIndices.includes(dragTarget.pathIndex)) {
+      // Determine which paths to move
+      let pathsToMove;
+      if (dragTarget.type === 'multiPath') {
+        // Multi-path drag - move all selected paths
         pathsToMove = EditorState.selectedPathIndices.map(i => EditorState.paths[i]).filter(p => p);
+      } else {
+        // Single path drag
+        pathsToMove = [currentPath];
       }
 
       pathsToMove.forEach(path => {
