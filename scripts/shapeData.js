@@ -104,17 +104,84 @@ function drawSinglePath(x, y, size, ctx, singlePath) {
   ctx.fill();
 }
 
+// Draw a single path without filling (for compound paths)
+function traceSinglePath(x, y, size, ctx, singlePath) {
+  if (!singlePath || !singlePath.vertices || singlePath.vertices.length === 0) {
+    return;
+  }
+
+  const vertices = singlePath.vertices;
+
+  for (let i = 0; i < vertices.length; i++) {
+    const v = vertices[i];
+    const px = x + v.x * size;
+    const py = y + v.y * size;
+
+    if (i === 0) {
+      ctx.moveTo(px, py);
+    } else {
+      const prevV = vertices[i - 1];
+      const hasCtrlOut = prevV.ctrlRight && (prevV.ctrlRight.x !== 0 || prevV.ctrlRight.y !== 0);
+      const hasCtrlIn = v.ctrlLeft && (v.ctrlLeft.x !== 0 || v.ctrlLeft.y !== 0);
+
+      if (hasCtrlOut || hasCtrlIn) {
+        const prevPx = x + prevV.x * size;
+        const prevPy = y + prevV.y * size;
+        const cp1x = hasCtrlOut ? prevPx + prevV.ctrlRight.x * size : prevPx;
+        const cp1y = hasCtrlOut ? prevPy + prevV.ctrlRight.y * size : prevPy;
+        const cp2x = hasCtrlIn ? px + v.ctrlLeft.x * size : px;
+        const cp2y = hasCtrlIn ? py + v.ctrlLeft.y * size : py;
+        ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, px, py);
+      } else {
+        ctx.lineTo(px, py);
+      }
+    }
+  }
+
+  // Close the path if needed
+  if (singlePath.closed !== false) {
+    const lastV = vertices[vertices.length - 1];
+    const firstV = vertices[0];
+    const hasCtrlOut = lastV.ctrlRight && (lastV.ctrlRight.x !== 0 || lastV.ctrlRight.y !== 0);
+    const hasCtrlIn = firstV.ctrlLeft && (firstV.ctrlLeft.x !== 0 || firstV.ctrlLeft.y !== 0);
+
+    if (hasCtrlOut || hasCtrlIn) {
+      const lastPx = x + lastV.x * size;
+      const lastPy = y + lastV.y * size;
+      const firstPx = x + firstV.x * size;
+      const firstPy = y + firstV.y * size;
+      const cp1x = hasCtrlOut ? lastPx + lastV.ctrlRight.x * size : lastPx;
+      const cp1y = hasCtrlOut ? lastPy + lastV.ctrlRight.y * size : lastPy;
+      const cp2x = hasCtrlIn ? firstPx + firstV.ctrlLeft.x * size : firstPx;
+      const cp2y = hasCtrlIn ? firstPy + firstV.ctrlLeft.y * size : firstPy;
+      ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, firstPx, firstPy);
+    }
+    ctx.closePath();
+  }
+}
+
 // Draw a shape from path data using Canvas 2D API
 // Supports both single-path shapes (vertices array) and multi-path shapes (paths array)
+// Supports fillRule: 'evenodd' for shapes with holes (like donut)
 function drawShapeFromPath(x, y, size, ctx, pathData) {
   if (!pathData) return;
 
   // Check if this is a multi-path shape
   if (pathData.paths && Array.isArray(pathData.paths)) {
-    // Draw each path separately
-    pathData.paths.forEach(singlePath => {
-      drawSinglePath(x, y, size, ctx, singlePath);
-    });
+    // Check if using evenodd fill rule (for holes/cutouts)
+    if (pathData.fillRule === 'evenodd') {
+      // Draw all paths in a single beginPath/fill call for evenodd to work
+      ctx.beginPath();
+      pathData.paths.forEach(singlePath => {
+        traceSinglePath(x, y, size, ctx, singlePath);
+      });
+      ctx.fill('evenodd');
+    } else {
+      // Draw each path separately (default behavior)
+      pathData.paths.forEach(singlePath => {
+        drawSinglePath(x, y, size, ctx, singlePath);
+      });
+    }
   } else if (pathData.vertices) {
     // Single path shape (backward compatible)
     drawSinglePath(x, y, size, ctx, pathData);
