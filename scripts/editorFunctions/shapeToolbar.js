@@ -35,6 +35,19 @@ function setupShapeToolbar() {
       closeAllSubmenus();
     }
   });
+
+  // Upload/Download buttons
+  const uploadBtn = document.getElementById('shapeUploadBtn');
+  const uploadInput = document.getElementById('shapeUploadInput');
+  if (uploadBtn && uploadInput) {
+    uploadBtn.addEventListener('click', () => uploadInput.click());
+    uploadInput.addEventListener('change', handleShapeUpload);
+  }
+
+  const downloadBtn = document.getElementById('shapeDownloadBtn');
+  if (downloadBtn) {
+    downloadBtn.addEventListener('click', downloadShape);
+  }
 }
 
 // Close all tool submenus
@@ -965,5 +978,551 @@ function lineIntersection(p1, p2, p3, p4) {
   return {
     x: p1.x + t * d1x,
     y: p1.y + t * d1y
+  };
+}
+
+// ============================================
+// UPLOAD/DOWNLOAD SHAPE FUNCTIONS
+// ============================================
+
+// Download the current shape as an SVG file
+function downloadShape() {
+  if (!EditorState.paths || EditorState.paths.length === 0) return;
+
+  // Convert editor paths to normalized path data
+  const pathDataList = EditorState.paths.map(path => pathToNormalizedData(path));
+
+  // Create SVG content
+  const svgSize = 100; // Use 100x100 viewBox for clean coordinates
+  let pathStrings = [];
+
+  pathDataList.forEach((pathData, index) => {
+    const d = pathDataToSVGPath(pathData, svgSize);
+    const isHole = EditorState.holePathIndices.includes(index);
+    // Mark holes with a data attribute for round-trip
+    const holeAttr = isHole ? ' data-hole="true"' : '';
+    pathStrings.push(`  <path d="${d}"${holeAttr} />`);
+  });
+
+  // Build SVG with metadata for round-trip
+  const fillRule = EditorState.fillRule || 'nonzero';
+  const svgContent = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${svgSize} ${svgSize}" fill-rule="${fillRule}">
+${pathStrings.join('\n')}
+</svg>`;
+
+  // Download
+  const blob = new Blob([svgContent], { type: 'image/svg+xml' });
+  const link = document.createElement('a');
+  link.download = 'shape.svg';
+  link.href = URL.createObjectURL(blob);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(link.href);
+}
+
+// Convert normalized path data to SVG path string
+function pathDataToSVGPath(pathData, svgSize) {
+  if (!pathData.vertices || pathData.vertices.length === 0) return '';
+
+  const commands = [];
+  const vertices = pathData.vertices;
+
+  for (let i = 0; i < vertices.length; i++) {
+    const v = vertices[i];
+    const x = (v.x * svgSize).toFixed(2);
+    const y = (v.y * svgSize).toFixed(2);
+
+    if (i === 0) {
+      commands.push(`M ${x} ${y}`);
+    } else {
+      const prevV = vertices[i - 1];
+      const hasCtrlOut = prevV.ctrlRight && (prevV.ctrlRight.x !== 0 || prevV.ctrlRight.y !== 0);
+      const hasCtrlIn = v.ctrlLeft && (v.ctrlLeft.x !== 0 || v.ctrlLeft.y !== 0);
+
+      if (hasCtrlOut || hasCtrlIn) {
+        // Bezier curve
+        const prevX = prevV.x * svgSize;
+        const prevY = prevV.y * svgSize;
+        const cp1x = hasCtrlOut ? (prevX + prevV.ctrlRight.x * svgSize).toFixed(2) : prevX.toFixed(2);
+        const cp1y = hasCtrlOut ? (prevY + prevV.ctrlRight.y * svgSize).toFixed(2) : prevY.toFixed(2);
+        const cp2x = hasCtrlIn ? (v.x * svgSize + v.ctrlLeft.x * svgSize).toFixed(2) : x;
+        const cp2y = hasCtrlIn ? (v.y * svgSize + v.ctrlLeft.y * svgSize).toFixed(2) : y;
+        commands.push(`C ${cp1x} ${cp1y} ${cp2x} ${cp2y} ${x} ${y}`);
+      } else {
+        commands.push(`L ${x} ${y}`);
+      }
+    }
+  }
+
+  // Handle closing segment with potential curve
+  if (pathData.closed !== false && vertices.length > 1) {
+    const lastV = vertices[vertices.length - 1];
+    const firstV = vertices[0];
+    const hasCtrlOut = lastV.ctrlRight && (lastV.ctrlRight.x !== 0 || lastV.ctrlRight.y !== 0);
+    const hasCtrlIn = firstV.ctrlLeft && (firstV.ctrlLeft.x !== 0 || firstV.ctrlLeft.y !== 0);
+
+    if (hasCtrlOut || hasCtrlIn) {
+      const lastX = lastV.x * svgSize;
+      const lastY = lastV.y * svgSize;
+      const firstX = (firstV.x * svgSize).toFixed(2);
+      const firstY = (firstV.y * svgSize).toFixed(2);
+      const cp1x = hasCtrlOut ? (lastX + lastV.ctrlRight.x * svgSize).toFixed(2) : lastX.toFixed(2);
+      const cp1y = hasCtrlOut ? (lastY + lastV.ctrlRight.y * svgSize).toFixed(2) : lastY.toFixed(2);
+      const cp2x = hasCtrlIn ? (firstV.x * svgSize + firstV.ctrlLeft.x * svgSize).toFixed(2) : firstX;
+      const cp2y = hasCtrlIn ? (firstV.y * svgSize + firstV.ctrlLeft.y * svgSize).toFixed(2) : firstY;
+      commands.push(`C ${cp1x} ${cp1y} ${cp2x} ${cp2y} ${firstX} ${firstY}`);
+    }
+    commands.push('Z');
+  }
+
+  return commands.join(' ');
+}
+
+// Handle SVG file upload
+function handleShapeUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(event) {
+    const svgContent = event.target.result;
+    loadShapeFromSVG(svgContent);
+  };
+  reader.readAsText(file);
+
+  // Reset input
+  e.target.value = '';
+}
+
+// Load shape from SVG content
+function loadShapeFromSVG(svgContent) {
+  // Parse SVG
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(svgContent, 'image/svg+xml');
+  const svg = doc.querySelector('svg');
+
+  if (!svg) {
+    console.warn('Invalid SVG file');
+    return;
+  }
+
+  // Get viewBox for coordinate transformation
+  const viewBox = svg.getAttribute('viewBox');
+  let svgWidth = 100, svgHeight = 100;
+  if (viewBox) {
+    const parts = viewBox.split(/\s+|,/).map(parseFloat);
+    if (parts.length >= 4) {
+      svgWidth = parts[2];
+      svgHeight = parts[3];
+    }
+  }
+
+  // Get fill-rule from SVG root
+  const fillRule = svg.getAttribute('fill-rule') || 'nonzero';
+
+  // Find all path elements
+  const pathElements = svg.querySelectorAll('path');
+  if (pathElements.length === 0) {
+    console.warn('No paths found in SVG');
+    return;
+  }
+
+  // Clear existing paths
+  EditorState.paths.forEach(path => EditorState.two.remove(path));
+  EditorState.paths = [];
+  EditorState.currentPathIndex = 0;
+  EditorState.holePathIndices = [];
+  EditorState.fillRule = fillRule === 'evenodd' ? 'evenodd' : null;
+
+  // Parse each path
+  pathElements.forEach((pathEl, index) => {
+    const d = pathEl.getAttribute('d');
+    if (!d) return;
+
+    const pathData = parseSVGPathData(d, svgWidth, svgHeight);
+    if (!pathData || !pathData.vertices || pathData.vertices.length < 2) return;
+
+    // Check if this path is marked as a hole
+    const isHole = pathEl.getAttribute('data-hole') === 'true';
+
+    // Create Two.js path
+    const isSelected = EditorState.paths.length === 0;
+    const path = createPathFromData(pathData, isSelected, isHole);
+    EditorState.paths.push(path);
+    EditorState.two.add(path);
+
+    if (isHole) {
+      EditorState.holePathIndices.push(EditorState.paths.length - 1);
+    }
+  });
+
+  // If we have holes but no fillRule set, set it
+  if (EditorState.holePathIndices.length > 0 && !EditorState.fillRule) {
+    EditorState.fillRule = 'evenodd';
+  }
+
+  // Update visuals
+  createAnchorVisuals();
+  EditorState.two.update();
+}
+
+// Parse SVG path data string to normalized path data
+function parseSVGPathData(d, svgWidth, svgHeight) {
+  const vertices = [];
+  let currentX = 0, currentY = 0;
+  let startX = 0, startY = 0;
+  let lastCtrlX = null, lastCtrlY = null;
+  let closed = false;
+
+  // Tokenize path data
+  const tokens = d.match(/[MmLlHhVvCcSsQqTtAaZz]|[-+]?[0-9]*\.?[0-9]+(?:[eE][-+]?[0-9]+)?/g) || [];
+
+  let i = 0;
+  let currentCommand = '';
+
+  while (i < tokens.length) {
+    const token = tokens[i];
+
+    // Check if it's a command
+    if (/^[MmLlHhVvCcSsQqTtAaZz]$/.test(token)) {
+      currentCommand = token;
+      i++;
+      continue;
+    }
+
+    // Parse based on current command
+    switch (currentCommand) {
+      case 'M': // Absolute moveto
+        currentX = parseFloat(tokens[i]);
+        currentY = parseFloat(tokens[i + 1]);
+        startX = currentX;
+        startY = currentY;
+        vertices.push({
+          x: currentX / svgWidth,
+          y: currentY / svgHeight
+        });
+        currentCommand = 'L'; // Subsequent coordinates are lineto
+        i += 2;
+        break;
+
+      case 'm': // Relative moveto
+        currentX += parseFloat(tokens[i]);
+        currentY += parseFloat(tokens[i + 1]);
+        startX = currentX;
+        startY = currentY;
+        vertices.push({
+          x: currentX / svgWidth,
+          y: currentY / svgHeight
+        });
+        currentCommand = 'l';
+        i += 2;
+        break;
+
+      case 'L': // Absolute lineto
+        currentX = parseFloat(tokens[i]);
+        currentY = parseFloat(tokens[i + 1]);
+        vertices.push({
+          x: currentX / svgWidth,
+          y: currentY / svgHeight
+        });
+        i += 2;
+        break;
+
+      case 'l': // Relative lineto
+        currentX += parseFloat(tokens[i]);
+        currentY += parseFloat(tokens[i + 1]);
+        vertices.push({
+          x: currentX / svgWidth,
+          y: currentY / svgHeight
+        });
+        i += 2;
+        break;
+
+      case 'H': // Absolute horizontal lineto
+        currentX = parseFloat(tokens[i]);
+        vertices.push({
+          x: currentX / svgWidth,
+          y: currentY / svgHeight
+        });
+        i += 1;
+        break;
+
+      case 'h': // Relative horizontal lineto
+        currentX += parseFloat(tokens[i]);
+        vertices.push({
+          x: currentX / svgWidth,
+          y: currentY / svgHeight
+        });
+        i += 1;
+        break;
+
+      case 'V': // Absolute vertical lineto
+        currentY = parseFloat(tokens[i]);
+        vertices.push({
+          x: currentX / svgWidth,
+          y: currentY / svgHeight
+        });
+        i += 1;
+        break;
+
+      case 'v': // Relative vertical lineto
+        currentY += parseFloat(tokens[i]);
+        vertices.push({
+          x: currentX / svgWidth,
+          y: currentY / svgHeight
+        });
+        i += 1;
+        break;
+
+      case 'C': // Absolute cubic bezier
+        {
+          const cp1x = parseFloat(tokens[i]);
+          const cp1y = parseFloat(tokens[i + 1]);
+          const cp2x = parseFloat(tokens[i + 2]);
+          const cp2y = parseFloat(tokens[i + 3]);
+          const x = parseFloat(tokens[i + 4]);
+          const y = parseFloat(tokens[i + 5]);
+
+          // Add control point to previous vertex (outgoing)
+          if (vertices.length > 0) {
+            const prevVertex = vertices[vertices.length - 1];
+            prevVertex.ctrlRight = {
+              x: (cp1x - currentX) / svgWidth,
+              y: (cp1y - currentY) / svgHeight
+            };
+          }
+
+          // Add new vertex with incoming control point
+          vertices.push({
+            x: x / svgWidth,
+            y: y / svgHeight,
+            ctrlLeft: {
+              x: (cp2x - x) / svgWidth,
+              y: (cp2y - y) / svgHeight
+            }
+          });
+
+          lastCtrlX = cp2x;
+          lastCtrlY = cp2y;
+          currentX = x;
+          currentY = y;
+          i += 6;
+        }
+        break;
+
+      case 'c': // Relative cubic bezier
+        {
+          const cp1x = currentX + parseFloat(tokens[i]);
+          const cp1y = currentY + parseFloat(tokens[i + 1]);
+          const cp2x = currentX + parseFloat(tokens[i + 2]);
+          const cp2y = currentY + parseFloat(tokens[i + 3]);
+          const x = currentX + parseFloat(tokens[i + 4]);
+          const y = currentY + parseFloat(tokens[i + 5]);
+
+          if (vertices.length > 0) {
+            const prevVertex = vertices[vertices.length - 1];
+            prevVertex.ctrlRight = {
+              x: (cp1x - currentX) / svgWidth,
+              y: (cp1y - currentY) / svgHeight
+            };
+          }
+
+          vertices.push({
+            x: x / svgWidth,
+            y: y / svgHeight,
+            ctrlLeft: {
+              x: (cp2x - x) / svgWidth,
+              y: (cp2y - y) / svgHeight
+            }
+          });
+
+          lastCtrlX = cp2x;
+          lastCtrlY = cp2y;
+          currentX = x;
+          currentY = y;
+          i += 6;
+        }
+        break;
+
+      case 'S': // Absolute smooth cubic bezier
+        {
+          // Reflect previous control point
+          let cp1x = currentX;
+          let cp1y = currentY;
+          if (lastCtrlX !== null) {
+            cp1x = 2 * currentX - lastCtrlX;
+            cp1y = 2 * currentY - lastCtrlY;
+          }
+
+          const cp2x = parseFloat(tokens[i]);
+          const cp2y = parseFloat(tokens[i + 1]);
+          const x = parseFloat(tokens[i + 2]);
+          const y = parseFloat(tokens[i + 3]);
+
+          if (vertices.length > 0) {
+            const prevVertex = vertices[vertices.length - 1];
+            prevVertex.ctrlRight = {
+              x: (cp1x - currentX) / svgWidth,
+              y: (cp1y - currentY) / svgHeight
+            };
+          }
+
+          vertices.push({
+            x: x / svgWidth,
+            y: y / svgHeight,
+            ctrlLeft: {
+              x: (cp2x - x) / svgWidth,
+              y: (cp2y - y) / svgHeight
+            }
+          });
+
+          lastCtrlX = cp2x;
+          lastCtrlY = cp2y;
+          currentX = x;
+          currentY = y;
+          i += 4;
+        }
+        break;
+
+      case 's': // Relative smooth cubic bezier
+        {
+          let cp1x = currentX;
+          let cp1y = currentY;
+          if (lastCtrlX !== null) {
+            cp1x = 2 * currentX - lastCtrlX;
+            cp1y = 2 * currentY - lastCtrlY;
+          }
+
+          const cp2x = currentX + parseFloat(tokens[i]);
+          const cp2y = currentY + parseFloat(tokens[i + 1]);
+          const x = currentX + parseFloat(tokens[i + 2]);
+          const y = currentY + parseFloat(tokens[i + 3]);
+
+          if (vertices.length > 0) {
+            const prevVertex = vertices[vertices.length - 1];
+            prevVertex.ctrlRight = {
+              x: (cp1x - currentX) / svgWidth,
+              y: (cp1y - currentY) / svgHeight
+            };
+          }
+
+          vertices.push({
+            x: x / svgWidth,
+            y: y / svgHeight,
+            ctrlLeft: {
+              x: (cp2x - x) / svgWidth,
+              y: (cp2y - y) / svgHeight
+            }
+          });
+
+          lastCtrlX = cp2x;
+          lastCtrlY = cp2y;
+          currentX = x;
+          currentY = y;
+          i += 4;
+        }
+        break;
+
+      case 'Q': // Absolute quadratic bezier - convert to cubic
+        {
+          const qx = parseFloat(tokens[i]);
+          const qy = parseFloat(tokens[i + 1]);
+          const x = parseFloat(tokens[i + 2]);
+          const y = parseFloat(tokens[i + 3]);
+
+          // Convert quadratic to cubic control points
+          const cp1x = currentX + 2/3 * (qx - currentX);
+          const cp1y = currentY + 2/3 * (qy - currentY);
+          const cp2x = x + 2/3 * (qx - x);
+          const cp2y = y + 2/3 * (qy - y);
+
+          if (vertices.length > 0) {
+            const prevVertex = vertices[vertices.length - 1];
+            prevVertex.ctrlRight = {
+              x: (cp1x - currentX) / svgWidth,
+              y: (cp1y - currentY) / svgHeight
+            };
+          }
+
+          vertices.push({
+            x: x / svgWidth,
+            y: y / svgHeight,
+            ctrlLeft: {
+              x: (cp2x - x) / svgWidth,
+              y: (cp2y - y) / svgHeight
+            }
+          });
+
+          lastCtrlX = qx;
+          lastCtrlY = qy;
+          currentX = x;
+          currentY = y;
+          i += 4;
+        }
+        break;
+
+      case 'q': // Relative quadratic bezier
+        {
+          const qx = currentX + parseFloat(tokens[i]);
+          const qy = currentY + parseFloat(tokens[i + 1]);
+          const x = currentX + parseFloat(tokens[i + 2]);
+          const y = currentY + parseFloat(tokens[i + 3]);
+
+          const cp1x = currentX + 2/3 * (qx - currentX);
+          const cp1y = currentY + 2/3 * (qy - currentY);
+          const cp2x = x + 2/3 * (qx - x);
+          const cp2y = y + 2/3 * (qy - y);
+
+          if (vertices.length > 0) {
+            const prevVertex = vertices[vertices.length - 1];
+            prevVertex.ctrlRight = {
+              x: (cp1x - currentX) / svgWidth,
+              y: (cp1y - currentY) / svgHeight
+            };
+          }
+
+          vertices.push({
+            x: x / svgWidth,
+            y: y / svgHeight,
+            ctrlLeft: {
+              x: (cp2x - x) / svgWidth,
+              y: (cp2y - y) / svgHeight
+            }
+          });
+
+          lastCtrlX = qx;
+          lastCtrlY = qy;
+          currentX = x;
+          currentY = y;
+          i += 4;
+        }
+        break;
+
+      case 'Z':
+      case 'z':
+        closed = true;
+        currentX = startX;
+        currentY = startY;
+        i++;
+        break;
+
+      default:
+        // Skip unknown commands
+        i++;
+        break;
+    }
+
+    // Reset last control point for non-curve commands
+    if (!/[CcSsQqTt]/.test(currentCommand)) {
+      lastCtrlX = null;
+      lastCtrlY = null;
+    }
+  }
+
+  return {
+    vertices,
+    closed
   };
 }
