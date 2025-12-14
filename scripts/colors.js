@@ -50,8 +50,135 @@ function initColorTabs() {
       if (targetTab === 'wheel') {
         initColorField();
       }
+
+      // Load palettes when palettes tab is shown (lazy loading)
+      if (targetTab === 'palettes') {
+        loadPalettes();
+      }
     });
   });
+}
+
+// Initialize selected colors tabs
+function initSelectedColorsTabs() {
+  const tabs = document.querySelectorAll('.selected-colors-tab');
+  const contents = document.querySelectorAll('.selected-colors-tab-content');
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const targetTab = tab.getAttribute('data-tab');
+
+      // Update active tab
+      tabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+
+      // Update active content
+      contents.forEach(c => c.classList.remove('active'));
+      document.getElementById(`${targetTab}-tab`).classList.add('active');
+    });
+  });
+}
+
+// Palettes data cache
+let palettesLoaded = false;
+const paletteSources = [
+  'swatches/muzli.json',
+  'swatches/adobe.json',
+  'swatches/colourlovers.json',
+  'swatches/coolors.json',
+  'swatches/colorhunt.json'
+];
+
+// Load and display palettes
+async function loadPalettes() {
+  if (palettesLoaded) return;
+
+  const container = document.getElementById('palettesContainer');
+  if (!container) return;
+
+  container.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;">Loading palettes...</div>';
+
+  try {
+    const results = await Promise.all(
+      paletteSources.map(src => fetch(src).then(r => r.json()))
+    );
+
+    container.innerHTML = '';
+
+    results.forEach(source => {
+      const sourceDiv = document.createElement('div');
+      sourceDiv.className = 'palette-source';
+
+      // Header with name and link
+      const header = document.createElement('div');
+      header.className = 'palette-source-header';
+      header.innerHTML = `<h4>${source.name}</h4><a href="${source.url}" target="_blank">${source.url}</a>`;
+      sourceDiv.appendChild(header);
+
+      // Palette rows
+      source.palettes.forEach(palette => {
+        const row = document.createElement('div');
+        row.className = 'palette-row';
+
+        // Color swatches
+        palette.forEach(color => {
+          const swatch = document.createElement('div');
+          swatch.className = 'palette-color';
+          swatch.style.backgroundColor = color;
+          swatch.title = color;
+          swatch.addEventListener('click', () => addColorToSelection(color));
+          row.appendChild(swatch);
+        });
+
+        // Use button
+        const useBtn = document.createElement('button');
+        useBtn.className = 'palette-use-btn';
+        useBtn.textContent = 'Use';
+        useBtn.addEventListener('click', () => addPaletteToSelection(palette));
+        row.appendChild(useBtn);
+
+        sourceDiv.appendChild(row);
+      });
+
+      container.appendChild(sourceDiv);
+    });
+
+    palettesLoaded = true;
+  } catch (error) {
+    console.error('Error loading palettes:', error);
+    container.innerHTML = '<div style="text-align: center; padding: 20px; color: #dc3545;">Error loading palettes</div>';
+  }
+}
+
+// Add a single color to the selection
+function addColorToSelection(color) {
+  // Remove # if present
+  const hexColor = color.replace('#', '');
+  const colorInput = document.getElementById('colorInput');
+
+  if (colorInput.value) {
+    colorInput.value += `, ${hexColor}`;
+  } else {
+    colorInput.value = hexColor;
+  }
+
+  updateColorsPreview();
+  generateTileset();
+}
+
+// Add an entire palette to the selection
+function addPaletteToSelection(palette) {
+  const colorInput = document.getElementById('colorInput');
+  const hexColors = palette.map(c => c.replace('#', ''));
+
+  if (colorInput.value) {
+    colorInput.value += `, ${hexColors.join(', ')}`;
+  } else {
+    colorInput.value = hexColors.join(', ');
+  }
+
+  updateColorsPreview();
+  generateTileset();
 }
 
 // Initialize color field canvas
@@ -209,6 +336,7 @@ function initColorWheel() {
 
   // Initialize tabs
   initColorTabs();
+  initSelectedColorsTabs();
 }
 
 function updateColorsPreview() {

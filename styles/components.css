@@ -387,6 +387,42 @@
   margin-bottom: 20px;
 }
 
+/* Selected colors tabs */
+.selected-colors-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 10px;
+  border-bottom: 1px solid #ddd;
+}
+
+.selected-colors-tab {
+  padding: 6px 12px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 13px;
+  color: #666;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+.selected-colors-tab:hover {
+  color: #333;
+}
+
+.selected-colors-tab.active {
+  color: #007bff;
+  border-bottom-color: #007bff;
+}
+
+.selected-colors-tab-content {
+  display: none;
+}
+
+.selected-colors-tab-content.active {
+  display: block;
+}
+
 /* Color preview */
 #colorsPreviewContainer {
   padding: 10px;
@@ -1112,4 +1148,89 @@
   outline: none;
   border-color: #007bff;
   box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+/* =============================================
+   PALETTES TAB STYLES
+   ============================================= */
+
+#palettesContainer {
+  max-height: 500px;
+  overflow-y: auto;
+  border: 1px solid #eee;
+  padding: 10px;
+}
+
+.palette-source {
+  margin-bottom: 20px;
+}
+
+.palette-source:last-child {
+  margin-bottom: 0;
+}
+
+.palette-source-header {
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #eee;
+}
+
+.palette-source-header h4 {
+  margin: 0 0 4px 0;
+  font-size: 14px;
+  color: #333;
+}
+
+.palette-source-header a {
+  font-size: 12px;
+  color: #007bff;
+  text-decoration: none;
+}
+
+.palette-source-header a:hover {
+  text-decoration: underline;
+}
+
+.palette-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 6px;
+  padding: 4px;
+  border-radius: 4px;
+}
+
+.palette-row:hover {
+  background: #f5f5f5;
+}
+
+.palette-color {
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  transition: transform 0.1s ease;
+}
+
+.palette-color:hover {
+  transform: scale(1.15);
+  z-index: 1;
+  position: relative;
+}
+
+.palette-use-btn {
+  margin-left: auto;
+  padding: 4px 10px;
+  font-size: 11px;
+  background: #f0f0f0;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  cursor: pointer;
+  color: #666;
+}
+
+.palette-use-btn:hover {
+  background: #007bff;
+  border-color: #007bff;
+  color: white;
 }

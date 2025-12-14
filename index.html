@@ -72,12 +72,20 @@
 
       <div class="selected-colors-section">
         <h3>Selected Colors</h3>
-        <small>Check out <a href="https://observablehq.com/@makio135/give-me-colors" target="_blank">Give Me Colors</a>
-          for some great palettes. Copy/pasting in the whole array should work!</small>
-        <br />
-        <textarea id="colorInput" placeholder="Selected colors">FFFFFF, 000000, </textarea>
-        <small>Click color to remove</small>
-        <div id="colorsPreviewContainer"></div>
+        <!-- Selected colors tabs -->
+        <div class="selected-colors-tabs">
+          <button class="selected-colors-tab active" data-tab="selected-swatches">Swatches</button>
+          <button class="selected-colors-tab" data-tab="selected-hex">Hex Input</button>
+        </div>
+        <!-- Swatches tab content -->
+        <div class="selected-colors-tab-content active" id="selected-swatches-tab">
+          <small>Click color to remove</small>
+          <div id="colorsPreviewContainer"></div>
+        </div>
+        <!-- Hex input tab content -->
+        <div class="selected-colors-tab-content" id="selected-hex-tab">
+          <textarea id="colorInput" placeholder="Selected colors">FFFFFF, 000000, </textarea>
+        </div>
       </div>
 
       <h3>Add Colors</h3>
@@ -85,7 +93,8 @@
       <!-- Color picker tabs -->
       <div class="color-tabs">
         <button class="color-tab active" data-tab="swatches">Swatches</button>
-        <button class="color-tab" data-tab="wheel">Wheel</button>
+        <button class="color-tab" data-tab="wheel">Picker</button>
+        <button class="color-tab" data-tab="palettes">Palettes</button>
       </div>
 
       <!-- Swatches tab content -->
@@ -120,6 +129,11 @@
             <button class="wheel-add-btn" id="wheelAddBtn">Add Color</button>
           </div>
         </div>
+      </div>
+
+      <!-- Palettes tab content -->
+      <div class="color-tab-content" id="palettes-tab">
+        <div id="palettesContainer"></div>
       </div>
 
     </div>
