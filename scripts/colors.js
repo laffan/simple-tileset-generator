@@ -337,6 +337,9 @@ function initColorWheel() {
   // Initialize tabs
   initColorTabs();
   initSelectedColorsTabs();
+
+  // Initialize color field on initial load (wheel tab is active by default)
+  initColorField();
 }
 
 function updateColorsPreview() {
