@@ -1,21 +1,16 @@
 /* Big Dots shape */
 
 shapeRenderers.bigDots = function(x, y, size, ctx) {
-  const bigDotSize = size / 2;
-  const bigDotSpacing = size / 2;
-  for (let i = 0; i < 2; i++) {
-    for (let j = 0; j < 2; j++) {
-      ctx.beginPath();
-      ctx.arc(
-        x + (i * bigDotSpacing) + (bigDotSize / 2),
-        y + (j * bigDotSpacing) + (bigDotSize / 2),
-        bigDotSize / 2,
-        0,
-        Math.PI * 2
-      );
-      ctx.fill();
-    }
-  }
+  // Single large dot in top-left quadrant to match path data
+  ctx.beginPath();
+  ctx.arc(
+    x + size * 0.25,  // center x at 0.25
+    y + size * 0.25,  // center y at 0.25
+    size * 0.15,      // radius matching path data (0.1 to 0.4 = 0.3 diameter, so 0.15 radius)
+    0,
+    Math.PI * 2
+  );
+  ctx.fill();
 };
 
 // Simple representation - single dot in top-left quadrant

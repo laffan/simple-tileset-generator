@@ -1,11 +1,10 @@
 /* Line Across (horizontal) shape */
 
 shapeRenderers.lineAcross = function(x, y, size, ctx) {
-  const lineAcrossWidth = size / 3;
-  const lineAcrossHeight = size;
-  const lineAcrossX = x + (size - lineAcrossWidth) / 2;
-  const lineAcrossY = y;
-  ctx.fillRect(lineAcrossX, lineAcrossY, lineAcrossWidth, lineAcrossHeight);
+  // Horizontal line (full width, narrow height) matching path data
+  const lineHeight = size * 0.2;  // y: 0.4 to 0.6 = 0.2 height
+  const lineY = y + (size - lineHeight) / 2;  // centered vertically
+  ctx.fillRect(x, lineY, size, lineHeight);
 };
 
 shapePathData.lineAcross = {

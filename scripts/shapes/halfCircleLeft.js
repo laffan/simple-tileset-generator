@@ -1,9 +1,10 @@
 /* Half Circle Left shape */
 
 shapeRenderers.halfCircleLeft = function(x, y, size, ctx) {
+  // Flat edge on left (x=0), curve bulging right to x=0.5
   ctx.beginPath();
-  ctx.arc(x + size / 2, y + size / 2, size / 2, Math.PI * 1.5, Math.PI / 2, true);
-  ctx.lineTo(x + size / 2, y + size / 2); // Close path towards the starting point
+  ctx.arc(x, y + size / 2, size / 2, -Math.PI / 2, Math.PI / 2, false);
+  ctx.closePath();
   ctx.fill();
 };
 

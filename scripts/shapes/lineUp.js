@@ -1,11 +1,10 @@
 /* Line Up (vertical) shape */
 
 shapeRenderers.lineUp = function(x, y, size, ctx) {
-  const lineUpWidth = size;
-  const lineUpHeight = size / 3;
-  const lineUpX = x;
-  const lineUpY = y + (size - lineUpHeight) / 2;
-  ctx.fillRect(lineUpX, lineUpY, lineUpWidth, lineUpHeight);
+  // Vertical line (full height, narrow width) matching path data
+  const lineWidth = size * 0.2;  // x: 0.4 to 0.6 = 0.2 width
+  const lineX = x + (size - lineWidth) / 2;  // centered horizontally
+  ctx.fillRect(lineX, y, lineWidth, size);
 };
 
 shapePathData.lineUp = {
