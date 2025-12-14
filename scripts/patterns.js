@@ -361,6 +361,11 @@ function setupPatternDragAndDrop() {
     });
 
     item.addEventListener('dragover', function(e) {
+      // Skip reorder UI if file is being dragged or no internal drag is active
+      if ((typeof DragDropState !== 'undefined' && DragDropState.isDragging) || !draggedPatternItem) {
+        return;
+      }
+
       e.preventDefault();
       e.dataTransfer.dropEffect = 'move';
 
