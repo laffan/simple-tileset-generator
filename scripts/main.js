@@ -112,6 +112,11 @@ window.onload = function () {
   if (typeof initColorWheel === 'function') {
     initColorWheel();
   }
+
+  // Initialize tile tester
+  if (typeof initTileTester === 'function') {
+    initTileTester();
+  }
 };
 
 

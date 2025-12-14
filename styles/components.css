@@ -1325,3 +1325,232 @@
   font-weight: 600;
   color: #333;
 }
+
+/* =============================================
+   TILE TESTER STYLES
+   ============================================= */
+
+/* Test button in preview header */
+.previewHeaderControls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.testBtn {
+  padding: 4px 12px;
+  font-size: 12px;
+  background: #17a2b8;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.testBtn:hover {
+  background: #138496;
+}
+
+/* Tile tester modal - full screen */
+.tester-modal {
+  background: rgba(0, 0, 0, 0.85);
+}
+
+.tester-modal.active {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tester-modal-content {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Close button */
+.tester-close-btn {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  font-size: 28px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  transition: background 0.2s ease;
+}
+
+.tester-close-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Floating Palette Window */
+.tester-palette-window {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  z-index: 50;
+  max-width: 350px;
+  max-height: 60vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.tester-palette-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 15px;
+  background: #f5f5f5;
+  border-bottom: 1px solid #ddd;
+  border-radius: 8px 8px 0 0;
+  cursor: move;
+  user-select: none;
+}
+
+.tester-palette-header span {
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+}
+
+.tester-palette-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tester-fit-label {
+  font-size: 11px;
+  color: #666;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tester-fit-label input {
+  margin: 0;
+}
+
+.tester-palette-container {
+  padding: 10px;
+  overflow: auto;
+  flex: 1;
+}
+
+.tester-palette-wrapper {
+  border: 1px solid #ddd;
+  background: #fafafa;
+  overflow: auto;
+  max-height: 300px;
+}
+
+.tester-palette-wrapper.fit-mode {
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tester-palette-wrapper.fit-mode canvas {
+  max-width: 100%;
+  max-height: 300px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+#tileTesterPaletteCanvas {
+  display: block;
+  cursor: pointer;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+/* Main canvas area */
+.tester-main-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.tester-canvas-container {
+  background: #e0e0e0;
+  border: 2px solid #999;
+  border-radius: 4px;
+  overflow: auto;
+  max-width: 90vw;
+  max-height: 70vh;
+}
+
+#tileTesterMainCanvas {
+  display: block;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+#tileTesterMainCanvas.painting-mode {
+  cursor: crosshair;
+}
+
+/* Bottom controls */
+.tester-controls {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 10px 15px;
+  border-radius: 6px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.tester-control-btn {
+  padding: 8px 16px;
+  font-size: 13px;
+  border: 1px solid #ccc;
+  background: white;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.tester-control-btn:hover {
+  background: #f0f0f0;
+  border-color: #999;
+}
+
+.tester-download-btn {
+  background: #28a745;
+  color: white;
+  border-color: #28a745;
+}
+
+.tester-download-btn:hover {
+  background: #218838;
+  border-color: #218838;
+}
+
+.tester-color-picker-hidden {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}

@@ -26,7 +26,7 @@ function getSessionData() {
   const fitPreview = document.getElementById('fitPreview').checked;
 
   return {
-    version: 4,
+    version: 5,
     colors: colorInput,
     tileSize: sizeInput,
     paletteComplexity: paletteComplexity,
@@ -36,7 +36,8 @@ function getSessionData() {
     selectedPatternIndices: selectedPatternIndices, // Save which pattern indices are selected
     fitPreview: fitPreview,
     customShapes: getCustomShapeData(), // Save custom shape path data
-    customPatterns: getCustomPatternData() // Save custom pattern pixel data
+    customPatterns: getCustomPatternData(), // Save custom pattern pixel data
+    tileTester: getTileTesterData() // Save tile tester state
   };
 }
 
@@ -119,6 +120,11 @@ function applySessionData(data) {
     } else {
       previewBox.classList.remove('fit-mode');
     }
+  }
+
+  // Load tile tester state (version 5+)
+  if (data.tileTester !== undefined) {
+    loadTileTesterData(data.tileTester);
   }
 
   // Update the UI

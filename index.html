@@ -60,9 +60,12 @@
 
       <h3 class="previewHeader">
         <span>Preview</span>
-        <label class="fitCheckboxLabel">
-          <input type="checkbox" id="fitPreview"> Fit
-        </label>
+        <div class="previewHeaderControls">
+          <button id="testTilesetBtn" class="testBtn">Test</button>
+          <label class="fitCheckboxLabel">
+            <input type="checkbox" id="fitPreview"> Fit
+          </label>
+        </div>
       </h3>
       <div class="PreviewBox" id="previewBox">
         <canvas id="canvas"></canvas>
@@ -371,6 +374,46 @@
     </div>
   </div>
 
+  <!-- Tile Tester Modal -->
+  <div id="tileTesterModal" class="modal tester-modal">
+    <div class="tester-modal-content">
+      <!-- Close button -->
+      <button id="tileTesterCloseBtn" class="tester-close-btn">&times;</button>
+
+      <!-- Floating Palette Window -->
+      <div id="tileTesterPaletteWindow" class="tester-palette-window">
+        <div id="tileTesterPaletteHeader" class="tester-palette-header">
+          <span>Tile Palette</span>
+          <div class="tester-palette-controls">
+            <label class="tester-fit-label">
+              <input type="checkbox" id="tileTesterPaletteFit"> Fit
+            </label>
+          </div>
+        </div>
+        <div id="tileTesterPaletteContainer" class="tester-palette-container">
+          <div id="tileTesterPaletteWrapper" class="tester-palette-wrapper">
+            <canvas id="tileTesterPaletteCanvas"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Canvas Area -->
+      <div class="tester-main-area">
+        <div class="tester-canvas-container">
+          <canvas id="tileTesterMainCanvas"></canvas>
+        </div>
+
+        <!-- Bottom Controls -->
+        <div class="tester-controls">
+          <input type="color" id="tileTesterBgColorPicker" class="tester-color-picker-hidden">
+          <button id="tileTesterBgColorBtn" class="tester-control-btn">Background</button>
+          <button id="tileTesterClearBtn" class="tester-control-btn">Clear</button>
+          <button id="tileTesterDownloadBtn" class="tester-control-btn tester-download-btn">Download</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Scripts loaded in dependency order -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/two.js/0.8.10/two.min.js"></script>
   <script src="scripts/config.js"></script>
@@ -454,6 +497,13 @@
   <script src="scripts/patternEditorFunctions/drawing.js"></script>
   <script src="scripts/patternEditorFunctions/events.js"></script>
   <script src="scripts/patternEditorFunctions/modalManager.js"></script>
+
+  <!-- Tile Tester function modules -->
+  <script src="scripts/tileTester/state.js"></script>
+  <script src="scripts/tileTester/paletteWindow.js"></script>
+  <script src="scripts/tileTester/mainCanvas.js"></script>
+  <script src="scripts/tileTester/events.js"></script>
+  <script src="scripts/tileTester/modalManager.js"></script>
 
   <script src="scripts/main.js"></script>
   <script src="scripts/session.js"></script>
