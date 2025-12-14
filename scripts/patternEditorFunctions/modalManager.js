@@ -96,12 +96,6 @@ function saveEditedPattern() {
 }
 
 function setupPatternEditorButtons() {
-  // Close button
-  const closeBtn = document.getElementById('closePatternEditorBtn');
-  if (closeBtn) {
-    closeBtn.addEventListener('click', closePatternEditor);
-  }
-
   // Cancel button
   const cancelBtn = document.getElementById('cancelPatternEditorBtn');
   if (cancelBtn) {

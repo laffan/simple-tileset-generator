@@ -30,17 +30,14 @@ function resizePatternEditorCanvas() {
   const state = PatternEditorState;
   if (!state.editorCanvas) return;
 
-  const container = state.editorCanvas.parentElement;
-  const containerWidth = container.clientWidth;
-  const containerHeight = container.clientHeight;
-
-  // Set canvas to fill container
-  state.editorCanvas.width = containerWidth;
-  state.editorCanvas.height = containerHeight;
+  // Fixed canvas size
+  const canvasSize = 410;
+  state.editorCanvas.width = canvasSize;
+  state.editorCanvas.height = canvasSize;
 
   // Calculate offset to center the boundary
-  state.boundaryOffsetX = (containerWidth - state.BOUNDARY_SIZE) / 2;
-  state.boundaryOffsetY = (containerHeight - state.BOUNDARY_SIZE) / 2;
+  state.boundaryOffsetX = (canvasSize - state.BOUNDARY_SIZE) / 2;
+  state.boundaryOffsetY = (canvasSize - state.BOUNDARY_SIZE) / 2;
 
   // Calculate pixel size based on zoom
   // editorZoom is slider value, convert to actual multiplier
@@ -152,12 +149,11 @@ function updatePatternPreviewCanvas() {
   const sizeInput = document.getElementById('sizeInput');
   const tileSize = sizeInput ? parseInt(sizeInput.value) || 64 : 64;
 
-  // Get the preview container dimensions
-  const wrapper = state.previewCanvas.parentElement;
-  const containerHeight = wrapper.clientHeight;
-  const containerWidth = wrapper.clientWidth;
+  // Fixed preview dimensions
+  const containerWidth = 200;
+  const containerHeight = 432;
 
-  // Set canvas size to fill the container
+  // Set canvas size
   state.previewCanvas.width = containerWidth;
   state.previewCanvas.height = containerHeight;
 

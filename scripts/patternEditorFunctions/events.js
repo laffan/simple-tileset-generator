@@ -140,8 +140,13 @@ function resizePatternGrid(newSize) {
   for (let row = 0; row < newSize; row++) {
     newData[row] = [];
     for (let col = 0; col < newSize; col++) {
-      // Preserve existing data if within bounds
-      if (row < oldSize && col < oldSize && oldData[row]) {
+      if (newSize > oldSize && oldSize > 0) {
+        // When increasing size, tile the existing pattern
+        const srcRow = row % oldSize;
+        const srcCol = col % oldSize;
+        newData[row][col] = (oldData[srcRow] && oldData[srcRow][srcCol]) || 0;
+      } else if (row < oldSize && col < oldSize && oldData[row]) {
+        // When decreasing size, preserve existing data within bounds
         newData[row][col] = oldData[row][col] || 0;
       } else {
         newData[row][col] = 0;
