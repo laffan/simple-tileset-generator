@@ -7,16 +7,18 @@ var TileTesterState = {
   paletteCanvas: null,
   paletteCtx: null,
 
-  // Grid configuration
-  gridWidth: 16,    // Number of tiles horizontally
-  gridHeight: 12,   // Number of tiles vertically
+  // Grid configuration - calculated based on window size
+  gridWidth: 16,
+  gridHeight: 12,
 
-  // Tile data - 2D array storing tile references
-  // Each cell contains: { shapeIndex, colorIndex } or null
-  tiles: [],
+  // Layers - array of layer objects
+  // Each layer: { id, name, tiles: [][], opacity: 1, visible: true }
+  layers: [],
+  activeLayerId: null,
+  nextLayerId: 1,
 
   // Selected tile for painting
-  selectedTile: null,  // { type: 'shape'|'pattern', index: number, colorIndex: number }
+  selectedTile: null,  // { row, col }
 
   // Background color
   backgroundColor: '#d0d0d0',
@@ -27,27 +29,103 @@ var TileTesterState = {
 
   // Painting state
   isPainting: false,
-  lastPaintedCell: null,  // Prevent painting same cell repeatedly
+  lastPaintedCell: null,
 
-  // Cached tileset image data
+  // Cached tileset image data (without selection outline)
   tilesetImageData: null,
   tileSize: 64
 };
 
-// Initialize empty tiles grid
-function initTileTesterGrid() {
-  TileTesterState.tiles = [];
+// Create a new layer
+function createTileTesterLayer(name) {
+  const layer = {
+    id: TileTesterState.nextLayerId++,
+    name: name || 'Layer ' + TileTesterState.nextLayerId,
+    tiles: [],
+    opacity: 1,
+    visible: true
+  };
+
+  // Initialize empty tiles grid for this layer
   for (let y = 0; y < TileTesterState.gridHeight; y++) {
-    TileTesterState.tiles[y] = [];
+    layer.tiles[y] = [];
     for (let x = 0; x < TileTesterState.gridWidth; x++) {
-      TileTesterState.tiles[y][x] = null;
+      layer.tiles[y][x] = null;
     }
+  }
+
+  return layer;
+}
+
+// Initialize with default layer
+function initTileTesterLayers() {
+  TileTesterState.layers = [];
+  TileTesterState.nextLayerId = 1;
+  const layer = createTileTesterLayer('Layer 1');
+  TileTesterState.layers.push(layer);
+  TileTesterState.activeLayerId = layer.id;
+}
+
+// Get active layer
+function getActiveLayer() {
+  return TileTesterState.layers.find(l => l.id === TileTesterState.activeLayerId);
+}
+
+// Add a new layer
+function addTileTesterLayer() {
+  const layer = createTileTesterLayer('Layer ' + (TileTesterState.layers.length + 1));
+  TileTesterState.layers.push(layer);
+  TileTesterState.activeLayerId = layer.id;
+  renderLayersList();
+  renderTileTesterMainCanvas();
+}
+
+// Delete a layer
+function deleteTileTesterLayer(layerId) {
+  if (TileTesterState.layers.length <= 1) return; // Keep at least one layer
+
+  const index = TileTesterState.layers.findIndex(l => l.id === layerId);
+  if (index === -1) return;
+
+  TileTesterState.layers.splice(index, 1);
+
+  // Update active layer if needed
+  if (TileTesterState.activeLayerId === layerId) {
+    TileTesterState.activeLayerId = TileTesterState.layers[0].id;
+  }
+
+  renderLayersList();
+  renderTileTesterMainCanvas();
+}
+
+// Update layer opacity
+function setLayerOpacity(layerId, opacity) {
+  const layer = TileTesterState.layers.find(l => l.id === layerId);
+  if (layer) {
+    layer.opacity = Math.max(0, Math.min(1, opacity));
+    renderTileTesterMainCanvas();
   }
 }
 
-// Clear all tiles
+// Reorder layers (for drag and drop)
+function reorderLayers(fromIndex, toIndex) {
+  const layer = TileTesterState.layers.splice(fromIndex, 1)[0];
+  TileTesterState.layers.splice(toIndex, 0, layer);
+  renderLayersList();
+  renderTileTesterMainCanvas();
+}
+
+// Clear all tiles on active layer
 function clearTileTesterGrid() {
-  initTileTesterGrid();
+  const layer = getActiveLayer();
+  if (layer) {
+    for (let y = 0; y < TileTesterState.gridHeight; y++) {
+      layer.tiles[y] = [];
+      for (let x = 0; x < TileTesterState.gridWidth; x++) {
+        layer.tiles[y][x] = null;
+      }
+    }
+  }
   if (TileTesterState.mainCanvas) {
     renderTileTesterMainCanvas();
   }
@@ -56,7 +134,9 @@ function clearTileTesterGrid() {
 // Get tile tester data for session saving
 function getTileTesterData() {
   return {
-    tiles: JSON.parse(JSON.stringify(TileTesterState.tiles)),
+    layers: JSON.parse(JSON.stringify(TileTesterState.layers)),
+    activeLayerId: TileTesterState.activeLayerId,
+    nextLayerId: TileTesterState.nextLayerId,
     gridWidth: TileTesterState.gridWidth,
     gridHeight: TileTesterState.gridHeight,
     backgroundColor: TileTesterState.backgroundColor,
@@ -80,8 +160,14 @@ function loadTileTesterData(data) {
   if (data.paletteFitMode !== undefined) {
     TileTesterState.paletteFitMode = data.paletteFitMode;
   }
-  if (data.tiles !== undefined) {
-    TileTesterState.tiles = JSON.parse(JSON.stringify(data.tiles));
+  if (data.layers !== undefined) {
+    TileTesterState.layers = JSON.parse(JSON.stringify(data.layers));
+  }
+  if (data.activeLayerId !== undefined) {
+    TileTesterState.activeLayerId = data.activeLayerId;
+  }
+  if (data.nextLayerId !== undefined) {
+    TileTesterState.nextLayerId = data.nextLayerId;
   }
 }
 
@@ -91,4 +177,17 @@ function resetTileTesterState() {
   TileTesterState.isPainting = false;
   TileTesterState.lastPaintedCell = null;
   TileTesterState.tilesetImageData = null;
+}
+
+// Calculate grid size based on window dimensions
+function calculateGridSize() {
+  const tileSize = TileTesterState.tileSize;
+  const padding = 40; // Some padding from edges
+
+  TileTesterState.gridWidth = Math.floor((window.innerWidth - padding * 2) / tileSize);
+  TileTesterState.gridHeight = Math.floor((window.innerHeight - padding * 2) / tileSize);
+
+  // Ensure minimum size
+  TileTesterState.gridWidth = Math.max(8, TileTesterState.gridWidth);
+  TileTesterState.gridHeight = Math.max(6, TileTesterState.gridHeight);
 }
