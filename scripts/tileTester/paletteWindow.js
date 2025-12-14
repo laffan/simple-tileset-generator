@@ -26,6 +26,9 @@ function setupTileTesterPalette() {
   // Setup dragging for palette window
   setupPaletteWindowDrag();
 
+  // Setup resize handles
+  setupPaletteWindowResize();
+
   // Initial fit mode
   updatePaletteFitMode();
 }
@@ -213,4 +216,62 @@ function updateCursorPreview() {
   } else {
     mainCanvas.classList.remove('painting-mode');
   }
+}
+
+// Setup resize handles for palette window
+function setupPaletteWindowResize() {
+  const paletteWindow = document.getElementById('tileTesterPaletteWindow');
+  const resizeHandle = document.getElementById('tileTesterResizeHandle');
+  const sectionDivider = document.getElementById('tileTesterSectionDivider');
+  const paletteContainer = document.getElementById('tileTesterPaletteContainer');
+  const layersSection = document.getElementById('tileTesterLayersSection');
+
+  if (!paletteWindow || !resizeHandle || !sectionDivider) return;
+
+  // Bottom resize handle - resizes entire window height
+  let isResizingWindow = false;
+  let startHeight, startMouseY;
+
+  resizeHandle.addEventListener('mousedown', function(e) {
+    isResizingWindow = true;
+    startHeight = paletteWindow.offsetHeight;
+    startMouseY = e.clientY;
+    e.preventDefault();
+  });
+
+  // Section divider - resizes palette vs layers
+  let isResizingSection = false;
+  let startPaletteHeight, startLayersHeight, dividerStartY;
+
+  sectionDivider.addEventListener('mousedown', function(e) {
+    isResizingSection = true;
+    startPaletteHeight = paletteContainer.offsetHeight;
+    startLayersHeight = layersSection.offsetHeight;
+    dividerStartY = e.clientY;
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', function(e) {
+    if (isResizingWindow) {
+      const dy = e.clientY - startMouseY;
+      const newHeight = Math.max(200, Math.min(window.innerHeight * 0.9, startHeight + dy));
+      paletteWindow.style.height = newHeight + 'px';
+    }
+
+    if (isResizingSection && paletteContainer && layersSection) {
+      const dy = e.clientY - dividerStartY;
+      const newPaletteHeight = Math.max(80, startPaletteHeight + dy);
+      const newLayersHeight = Math.max(60, startLayersHeight - dy);
+
+      // Use flex-basis for controlled sizing
+      paletteContainer.style.flex = 'none';
+      paletteContainer.style.height = newPaletteHeight + 'px';
+      layersSection.style.height = newLayersHeight + 'px';
+    }
+  });
+
+  document.addEventListener('mouseup', function() {
+    isResizingWindow = false;
+    isResizingSection = false;
+  });
 }

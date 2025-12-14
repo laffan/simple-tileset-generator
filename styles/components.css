@@ -1406,8 +1406,10 @@
   border-radius: 8px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
   z-index: 50;
-  max-width: 350px;
-  max-height: 85vh;
+  width: 320px;
+  height: 500px;
+  min-height: 200px;
+  max-height: 90vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -1454,13 +1456,14 @@
   padding: 10px;
   overflow: auto;
   flex: 1;
+  min-height: 100px;
 }
 
 .tester-palette-wrapper {
   border: 1px solid #ddd;
   background: #fafafa;
   overflow: auto;
-  max-height: 300px;
+  height: 100%;
 }
 
 .tester-palette-wrapper.fit-mode {
@@ -1558,12 +1561,76 @@
 }
 
 /* =============================================
+   TILE TESTER RESIZE HANDLES
+   ============================================= */
+
+/* Section divider between palette and layers */
+.tester-section-divider {
+  height: 8px;
+  background: linear-gradient(to bottom, #e0e0e0, #ccc, #e0e0e0);
+  cursor: ns-resize;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.tester-section-divider::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 30px;
+  height: 3px;
+  background: #999;
+  border-radius: 2px;
+}
+
+.tester-section-divider:hover {
+  background: linear-gradient(to bottom, #d0d0d0, #bbb, #d0d0d0);
+}
+
+.tester-section-divider:hover::after {
+  background: #666;
+}
+
+/* Bottom resize handle for window height */
+.tester-resize-handle {
+  height: 8px;
+  background: linear-gradient(to bottom, #e0e0e0, #ccc);
+  cursor: ns-resize;
+  flex-shrink: 0;
+  border-radius: 0 0 8px 8px;
+  position: relative;
+}
+
+.tester-resize-handle::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 30px;
+  height: 3px;
+  background: #999;
+  border-radius: 2px;
+}
+
+.tester-resize-handle:hover {
+  background: linear-gradient(to bottom, #d0d0d0, #bbb);
+}
+
+.tester-resize-handle:hover::after {
+  background: #666;
+}
+
+/* =============================================
    TILE TESTER LAYERS SECTION
    ============================================= */
 
 .tester-layers-section {
-  border-top: 1px solid #ddd;
   padding: 10px;
+  flex-shrink: 0;
+  overflow: hidden;
 }
 
 .tester-layers-header {
