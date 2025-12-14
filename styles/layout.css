@@ -19,8 +19,6 @@ header h1 {
 
 .header-tile-size h3 {
   margin: 0;
-  font-size: 14px;
-  font-weight: 600;
   display: inline;
 }
 
@@ -31,11 +29,11 @@ header h1 {
 }
 
 .tile-size-btn {
-  padding: 0;
-  border: none;
+  padding: 0 4px;
+  border: 1px solid transparent;
   background: transparent;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 14px;
   border-radius: 0;
   min-width: 0;
   text-align: center;
@@ -51,6 +49,7 @@ header h1 {
   color: #333;
   font-weight: 600;
   text-decoration: none;
+  border: 1px solid #333;
 }
 
 .tile-size-btn.tile-size-custom {

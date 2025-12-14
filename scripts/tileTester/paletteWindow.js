@@ -13,8 +13,15 @@ function setupTileTesterPalette() {
   // Copy current tileset to palette
   copyTilesetToPalette();
 
-  // Setup zoom controls
-  setupPaletteZoomControls();
+  // Setup fit checkbox
+  const fitCheckbox = document.getElementById('tileTesterPaletteFit');
+  if (fitCheckbox) {
+    fitCheckbox.checked = TileTesterState.paletteFitMode;
+    fitCheckbox.addEventListener('change', function() {
+      TileTesterState.paletteFitMode = this.checked;
+      updatePaletteFitMode();
+    });
+  }
 
   // Setup hide button
   setupPaletteHideButton();
@@ -26,7 +33,7 @@ function setupTileTesterPalette() {
   setupPaletteWindowResize();
 
   // Initial fit mode
-  updatePaletteZoomMode('fit');
+  updatePaletteFitMode();
 }
 
 // Copy the current tileset canvas to the palette
@@ -83,23 +90,6 @@ function drawPaletteGridLines() {
   }
 }
 
-// Setup zoom controls
-function setupPaletteZoomControls() {
-  const zoomLinks = document.querySelectorAll('.tester-zoom-link');
-
-  zoomLinks.forEach(link => {
-    link.addEventListener('click', function(e) {
-      e.preventDefault();
-      const zoom = this.dataset.zoom;
-      updatePaletteZoomMode(zoom);
-
-      // Update active state
-      zoomLinks.forEach(l => l.classList.remove('active'));
-      this.classList.add('active');
-    });
-  });
-}
-
 // Setup hide button
 function setupPaletteHideButton() {
   const hideBtn = document.getElementById('tileTesterHideBtn');
@@ -114,23 +104,16 @@ function setupPaletteHideButton() {
   });
 }
 
-// Update palette zoom mode
-function updatePaletteZoomMode(zoom) {
+// Update palette fit mode
+function updatePaletteFitMode() {
   const paletteWrapper = document.getElementById('tileTesterPaletteWrapper');
   if (!paletteWrapper) return;
 
-  // Remove all zoom classes
-  paletteWrapper.classList.remove('fit-mode', 'zoom-1x', 'zoom-2x', 'zoom-3x', 'zoom-4x');
-
-  if (zoom === 'fit') {
+  if (TileTesterState.paletteFitMode) {
     paletteWrapper.classList.add('fit-mode');
-    TileTesterState.paletteFitMode = true;
   } else {
-    paletteWrapper.classList.add('zoom-' + zoom + 'x');
-    TileTesterState.paletteFitMode = false;
+    paletteWrapper.classList.remove('fit-mode');
   }
-
-  TileTesterState.paletteZoom = zoom;
 }
 
 // Update selected tile highlight on palette

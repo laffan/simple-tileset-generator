@@ -24,6 +24,8 @@ function setupTileTesterEvents() {
   setupMainCanvasEvents();
   setupPaletteCanvasEvents();
   setupControlButtonEvents();
+  setupZoomControls();
+  setupSpacePanning();
 }
 
 // Setup main canvas mouse events
@@ -209,5 +211,126 @@ function removeTileTesterEvents() {
     paletteCanvas.removeEventListener('click', tileTesterEventHandlers.paletteClick);
   }
 
+  // Reset zoom and pan
+  TileTesterState.canvasZoom = 1;
+  TileTesterState.canvasPan = { x: 0, y: 0 };
+  TileTesterState.isSpacePanning = false;
+
   tileTesterEventsInitialized = false;
+}
+
+// Setup zoom controls
+function setupZoomControls() {
+  const zoomLinks = document.querySelectorAll('.tester-zoom-link');
+
+  zoomLinks.forEach(link => {
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+      const zoom = parseInt(this.dataset.zoom, 10);
+      setCanvasZoom(zoom);
+
+      // Update active state
+      zoomLinks.forEach(l => l.classList.remove('active'));
+      this.classList.add('active');
+    });
+  });
+}
+
+// Set canvas zoom level
+function setCanvasZoom(zoom) {
+  TileTesterState.canvasZoom = zoom;
+  updateCanvasTransform();
+}
+
+// Update canvas transform based on zoom and pan
+function updateCanvasTransform() {
+  const container = document.querySelector('.tester-canvas-container');
+  const canvas = document.getElementById('tileTesterMainCanvas');
+
+  if (!container || !canvas) return;
+
+  const zoom = TileTesterState.canvasZoom;
+  const pan = TileTesterState.canvasPan;
+
+  canvas.style.transformOrigin = 'top left';
+  canvas.style.transform = `scale(${zoom}) translate(${pan.x}px, ${pan.y}px)`;
+
+  // Update container overflow based on zoom
+  if (zoom > 1) {
+    container.style.overflow = 'hidden';
+    container.style.cursor = TileTesterState.isSpacePanning ? 'grabbing' : 'auto';
+  } else {
+    container.style.overflow = 'visible';
+    container.style.cursor = 'auto';
+    // Reset pan when at 1x
+    TileTesterState.canvasPan = { x: 0, y: 0 };
+  }
+}
+
+// Setup space key panning
+function setupSpacePanning() {
+  let isPanning = false;
+  let panStart = { x: 0, y: 0 };
+  let panStartOffset = { x: 0, y: 0 };
+
+  // Key down - start space panning mode
+  document.addEventListener('keydown', function(e) {
+    if (e.code === 'Space' && !TileTesterState.isSpacePanning) {
+      const modal = document.getElementById('tileTesterModal');
+      if (!modal || !modal.classList.contains('active')) return;
+      if (TileTesterState.canvasZoom <= 1) return;
+
+      e.preventDefault();
+      TileTesterState.isSpacePanning = true;
+      updateCanvasTransform();
+    }
+  });
+
+  // Key up - end space panning mode
+  document.addEventListener('keyup', function(e) {
+    if (e.code === 'Space') {
+      TileTesterState.isSpacePanning = false;
+      isPanning = false;
+      updateCanvasTransform();
+    }
+  });
+
+  // Mouse events for panning
+  const container = document.querySelector('.tester-canvas-container');
+  if (!container) return;
+
+  container.addEventListener('mousedown', function(e) {
+    if (!TileTesterState.isSpacePanning) return;
+    if (TileTesterState.canvasZoom <= 1) return;
+
+    isPanning = true;
+    panStart = { x: e.clientX, y: e.clientY };
+    panStartOffset = { ...TileTesterState.canvasPan };
+    container.style.cursor = 'grabbing';
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', function(e) {
+    if (!isPanning || !TileTesterState.isSpacePanning) return;
+
+    const dx = (e.clientX - panStart.x) / TileTesterState.canvasZoom;
+    const dy = (e.clientY - panStart.y) / TileTesterState.canvasZoom;
+
+    TileTesterState.canvasPan = {
+      x: panStartOffset.x + dx,
+      y: panStartOffset.y + dy
+    };
+
+    updateCanvasTransform();
+  });
+
+  document.addEventListener('mouseup', function() {
+    if (isPanning) {
+      isPanning = false;
+      if (TileTesterState.isSpacePanning) {
+        const container = document.querySelector('.tester-canvas-container');
+        if (container) container.style.cursor = 'grab';
+      }
+    }
+  });
 }

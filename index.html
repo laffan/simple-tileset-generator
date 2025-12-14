@@ -61,11 +61,9 @@
       <h3 class="previewHeader">
         <span>Preview</span>
         <a href="#" id="testTilesetBtn" class="testLink">Test</a>
-        <div class="previewHeaderControls">
-          <label class="fitCheckboxLabel">
-            <input type="checkbox" id="fitPreview"> Fit
-          </label>
-        </div>
+        <label class="fitCheckboxLabel">
+          <input type="checkbox" id="fitPreview"> Fit
+        </label>
       </h3>
       <div class="PreviewBox" id="previewBox">
         <canvas id="canvas"></canvas>
@@ -94,23 +92,13 @@
 
       <!-- Color picker tabs -->
       <div class="color-tabs">
-        <button class="color-tab active" data-tab="swatches">Swatches</button>
-        <button class="color-tab" data-tab="wheel">Picker</button>
+        <button class="color-tab active" data-tab="wheel">Picker</button>
         <button class="color-tab" data-tab="palettes">Palettes</button>
+        <button class="color-tab" data-tab="swatches">Swatches</button>
       </div>
 
-      <!-- Swatches tab content -->
-      <div class="color-tab-content active" id="swatches-tab">
-        <div class="complexity_slider_wrapper">
-          <input type="range" id="paletteComplexity" min="14" max="128" value="40" class="complexity-slider">
-        </div>
-        <div id="paletteContainer">
-          <div class="palette" id="colorPalette"></div>
-        </div>
-      </div>
-
-      <!-- Wheel tab content -->
-      <div class="color-tab-content" id="wheel-tab">
+      <!-- Wheel tab content (Picker) -->
+      <div class="color-tab-content active" id="wheel-tab">
         <div class="color-wheel-container">
           <div class="wheel-sliders">
             <div class="wheel-slider-row">
@@ -136,6 +124,16 @@
       <!-- Palettes tab content -->
       <div class="color-tab-content" id="palettes-tab">
         <div id="palettesContainer"></div>
+      </div>
+
+      <!-- Swatches tab content -->
+      <div class="color-tab-content" id="swatches-tab">
+        <div class="complexity_slider_wrapper">
+          <input type="range" id="paletteComplexity" min="14" max="128" value="40" class="complexity-slider">
+        </div>
+        <div id="paletteContainer">
+          <div class="palette" id="colorPalette"></div>
+        </div>
       </div>
 
     </div>
@@ -385,13 +383,9 @@
         <div id="tileTesterPaletteHeader" class="tester-palette-header">
           <span>Tile Palette</span>
           <div class="tester-palette-controls">
-            <div class="tester-zoom-controls">
-              <a href="#" class="tester-zoom-link active" data-zoom="fit">Fit</a>
-              <a href="#" class="tester-zoom-link" data-zoom="1">1x</a>
-              <a href="#" class="tester-zoom-link" data-zoom="2">2x</a>
-              <a href="#" class="tester-zoom-link" data-zoom="3">3x</a>
-              <a href="#" class="tester-zoom-link" data-zoom="4">4x</a>
-            </div>
+            <label class="tester-fit-label">
+              <input type="checkbox" id="tileTesterPaletteFit"> Fit
+            </label>
             <a href="#" id="tileTesterHideBtn" class="tester-hide-link">Hide</a>
           </div>
         </div>
@@ -425,7 +419,15 @@
           <canvas id="tileTesterMainCanvas"></canvas>
         </div>
 
-        <!-- Bottom Controls -->
+        <!-- Bottom Left Zoom Controls -->
+        <div class="tester-zoom-controls">
+          <a href="#" class="tester-zoom-link active" data-zoom="1">1x</a>
+          <a href="#" class="tester-zoom-link" data-zoom="2">2x</a>
+          <a href="#" class="tester-zoom-link" data-zoom="3">3x</a>
+          <a href="#" class="tester-zoom-link" data-zoom="4">4x</a>
+        </div>
+
+        <!-- Bottom Right Controls -->
         <div class="tester-controls">
           <input type="color" id="tileTesterBgColorPicker" class="tester-color-picker-hidden">
           <button id="tileTesterBgColorBtn" class="tester-control-btn">Background</button>

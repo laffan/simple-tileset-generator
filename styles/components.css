@@ -1331,12 +1331,6 @@
    ============================================= */
 
 /* Test link in preview header */
-.previewHeaderControls {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
 .testLink {
   font-size: 12px;
   color: #666;
@@ -1437,29 +1431,17 @@
   gap: 12px;
 }
 
-.tester-zoom-controls {
+.tester-fit-label {
+  font-size: 11px;
+  color: #666;
+  cursor: pointer;
   display: flex;
+  align-items: center;
   gap: 4px;
 }
 
-.tester-zoom-link {
-  font-size: 11px;
-  color: #666;
-  text-decoration: underline;
-  cursor: pointer;
-  padding: 0;
-  background: transparent;
-  border: none;
-}
-
-.tester-zoom-link:hover {
-  color: #333;
-}
-
-.tester-zoom-link.active {
-  color: #333;
-  font-weight: 600;
-  text-decoration: none;
+.tester-fit-label input {
+  margin: 0;
 }
 
 .tester-hide-link {
@@ -1471,6 +1453,35 @@
 
 .tester-hide-link:hover {
   color: #333;
+}
+
+/* Zoom controls - bottom left of canvas */
+.tester-zoom-controls {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  display: flex;
+  gap: 8px;
+}
+
+.tester-zoom-link {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+  background: transparent;
+  border: none;
+}
+
+.tester-zoom-link:hover {
+  color: white;
+}
+
+.tester-zoom-link.active {
+  color: white;
+  font-weight: 600;
+  text-decoration: none;
 }
 
 /* Hidden state for palette window content */
@@ -1515,27 +1526,6 @@
   object-fit: contain;
 }
 
-/* Zoom levels for palette canvas */
-.tester-palette-wrapper.zoom-1x canvas {
-  transform-origin: top left;
-  transform: scale(1);
-}
-
-.tester-palette-wrapper.zoom-2x canvas {
-  transform-origin: top left;
-  transform: scale(2);
-}
-
-.tester-palette-wrapper.zoom-3x canvas {
-  transform-origin: top left;
-  transform: scale(3);
-}
-
-.tester-palette-wrapper.zoom-4x canvas {
-  transform-origin: top left;
-  transform: scale(4);
-}
-
 #tileTesterPaletteCanvas {
   display: block;
   cursor: pointer;
@@ -1558,6 +1548,17 @@
 
 .tester-canvas-container {
   /* Canvas fills based on calculated grid */
+  position: relative;
+  overflow: visible;
+}
+
+/* Space panning cursor */
+.tester-canvas-container.panning {
+  cursor: grab;
+}
+
+.tester-canvas-container.panning:active {
+  cursor: grabbing;
 }
 
 #tileTesterMainCanvas {
@@ -1577,10 +1578,6 @@
   right: 20px;
   display: flex;
   gap: 8px;
-  background: rgba(255, 255, 255, 0.95);
-  padding: 10px 15px;
-  border-radius: 6px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
 }
 
 .tester-control-btn {
