@@ -159,6 +159,7 @@ function eraseTileAt(gridX, gridY) {
 
   // Redraw canvas
   renderTileTesterMainCanvas();
+  updateLayerThumbnail(layer.id);
 }
 
 // Get grid position from canvas coordinates

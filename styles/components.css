@@ -1377,12 +1377,12 @@
   position: absolute;
   top: 15px;
   right: 20px;
-  background: rgba(255, 255, 255, 0.2);
-  border: none;
+  background: rgba(0, 0, 0, 0.5);
+  border: 2px solid white;
   color: white;
-  font-size: 28px;
-  width: 40px;
-  height: 40px;
+  font-size: 24px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   cursor: pointer;
   display: flex;
@@ -1390,10 +1390,11 @@
   justify-content: center;
   z-index: 100;
   transition: background 0.2s ease;
+  line-height: 1;
 }
 
 .tester-close-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(0, 0, 0, 0.7);
 }
 
 /* Floating Palette Window */
@@ -1406,9 +1407,10 @@
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
   z-index: 50;
   max-width: 350px;
-  max-height: 60vh;
+  max-height: 85vh;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .tester-palette-header {
@@ -1488,15 +1490,16 @@
   position: absolute;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
+  width: 100%;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
 }
 
 .tester-canvas-container {
-  /* No constraints - canvas fills based on calculated grid */
+  /* Canvas fills based on calculated grid */
 }
 
 #tileTesterMainCanvas {
@@ -1600,7 +1603,7 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  max-height: 150px;
+  max-height: 200px;
   overflow-y: auto;
 }
 
@@ -1608,7 +1611,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 8px;
+  padding: 4px 6px;
   background: #f9f9f9;
   border: 1px solid #e0e0e0;
   border-radius: 4px;
@@ -1642,58 +1645,43 @@
   color: #999;
   font-size: 10px;
   user-select: none;
+  padding: 0 2px;
 }
 
 .tester-layer-drag-handle:active {
   cursor: grabbing;
 }
 
-.tester-layer-info {
-  flex: 1;
-  min-width: 0;
+.tester-layer-thumbnail {
+  flex-shrink: 0;
 }
 
-.tester-layer-name {
-  font-size: 11px;
-  color: #333;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.tester-layer-thumbnail canvas {
+  display: block;
+  border: 1px solid #ccc;
+  border-radius: 2px;
+  background: #e0e0e0;
 }
 
 .tester-layer-controls {
   display: flex;
-  align-items: center;
-  gap: 6px;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
 }
 
-.tester-layer-opacity {
-  width: 50px;
-  height: 4px;
-  -webkit-appearance: none;
-  appearance: none;
-  background: #ddd;
-  border-radius: 2px;
+.tester-layer-opacity-input {
+  width: 42px;
+  padding: 2px 4px;
+  font-size: 10px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  text-align: center;
+}
+
+.tester-layer-opacity-input:focus {
   outline: none;
-}
-
-.tester-layer-opacity::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: #666;
-  cursor: pointer;
-}
-
-.tester-layer-opacity::-moz-range-thumb {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: #666;
-  cursor: pointer;
-  border: none;
+  border-color: #2196f3;
 }
 
 .tester-layer-delete {

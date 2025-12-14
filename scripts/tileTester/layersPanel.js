@@ -1,5 +1,9 @@
 /* Tile Tester Layers Panel - Layer management UI */
 
+// Thumbnail dimensions
+var LAYER_THUMB_WIDTH = 100;
+var LAYER_THUMB_HEIGHT = 50;
+
 // Setup the layers panel
 function setupLayersPanel() {
   renderLayersList();
@@ -21,6 +25,13 @@ function renderLayersList() {
     const layerEl = createLayerElement(layer, actualIndex);
     container.appendChild(layerEl);
   });
+
+  // Generate initial thumbnails
+  setTimeout(() => {
+    TileTesterState.layers.forEach(layer => {
+      updateLayerThumbnail(layer.id);
+    });
+  }, 100);
 }
 
 // Create a layer list item element
@@ -33,13 +44,13 @@ function createLayerElement(layer, index) {
 
   div.innerHTML = `
     <div class="tester-layer-drag-handle">&#x2630;</div>
-    <div class="tester-layer-info">
-      <span class="tester-layer-name">${layer.name}</span>
+    <div class="tester-layer-thumbnail">
+      <canvas id="layerThumb${layer.id}" width="${LAYER_THUMB_WIDTH}" height="${LAYER_THUMB_HEIGHT}"></canvas>
     </div>
     <div class="tester-layer-controls">
-      <input type="range" class="tester-layer-opacity"
+      <input type="number" class="tester-layer-opacity-input"
              min="0" max="100" value="${Math.round(layer.opacity * 100)}"
-             title="Opacity: ${Math.round(layer.opacity * 100)}%">
+             title="Opacity %">
       <button class="tester-layer-delete" title="Delete layer">&times;</button>
     </div>
   `;
@@ -52,12 +63,19 @@ function createLayerElement(layer, index) {
     renderLayersList();
   });
 
-  // Opacity slider
-  const opacitySlider = div.querySelector('.tester-layer-opacity');
-  opacitySlider.addEventListener('input', function(e) {
+  // Opacity input
+  const opacityInput = div.querySelector('.tester-layer-opacity-input');
+  opacityInput.addEventListener('input', function(e) {
     e.stopPropagation();
-    setLayerOpacity(layer.id, this.value / 100);
-    this.title = 'Opacity: ' + this.value + '%';
+    let val = parseInt(this.value) || 0;
+    val = Math.max(0, Math.min(100, val));
+    setLayerOpacity(layer.id, val / 100);
+  });
+  opacityInput.addEventListener('click', function(e) {
+    e.stopPropagation();
+  });
+  opacityInput.addEventListener('mousedown', function(e) {
+    e.stopPropagation();
   });
 
   // Delete button
@@ -70,6 +88,57 @@ function createLayerElement(layer, index) {
   });
 
   return div;
+}
+
+// Update a specific layer's thumbnail
+function updateLayerThumbnail(layerId) {
+  const layer = TileTesterState.layers.find(l => l.id === layerId);
+  if (!layer) return;
+
+  const thumbCanvas = document.getElementById('layerThumb' + layerId);
+  if (!thumbCanvas) return;
+
+  const ctx = thumbCanvas.getContext('2d');
+  const sourceCanvas = document.getElementById('canvas');
+  const tileSize = TileTesterState.tileSize;
+
+  // Clear thumbnail
+  ctx.fillStyle = '#e0e0e0';
+  ctx.fillRect(0, 0, LAYER_THUMB_WIDTH, LAYER_THUMB_HEIGHT);
+
+  if (!sourceCanvas) return;
+
+  // Calculate scale to fit layer content in thumbnail
+  const layerPixelWidth = TileTesterState.gridWidth * tileSize;
+  const layerPixelHeight = TileTesterState.gridHeight * tileSize;
+  const scale = Math.min(
+    LAYER_THUMB_WIDTH / layerPixelWidth,
+    LAYER_THUMB_HEIGHT / layerPixelHeight
+  );
+
+  const thumbTileSize = tileSize * scale;
+  const offsetX = (LAYER_THUMB_WIDTH - TileTesterState.gridWidth * thumbTileSize) / 2;
+  const offsetY = (LAYER_THUMB_HEIGHT - TileTesterState.gridHeight * thumbTileSize) / 2;
+
+  // Draw tiles for this layer only
+  for (let y = 0; y < TileTesterState.gridHeight; y++) {
+    for (let x = 0; x < TileTesterState.gridWidth; x++) {
+      const tile = layer.tiles[y] && layer.tiles[y][x];
+
+      if (tile) {
+        const srcX = tile.col * tileSize;
+        const srcY = tile.row * tileSize;
+        const destX = offsetX + x * thumbTileSize;
+        const destY = offsetY + y * thumbTileSize;
+
+        ctx.drawImage(
+          sourceCanvas,
+          srcX, srcY, tileSize, tileSize,
+          destX, destY, thumbTileSize, thumbTileSize
+        );
+      }
+    }
+  }
 }
 
 // Setup drag and drop for layer reordering
@@ -107,7 +176,6 @@ function setupLayersPanelEvents() {
       draggedIndex = null;
     }
 
-    // Remove any drop indicators
     container.querySelectorAll('.tester-layer-item').forEach(item => {
       item.classList.remove('drag-over-top', 'drag-over-bottom');
     });
@@ -120,12 +188,10 @@ function setupLayersPanelEvents() {
     const layerItem = e.target.closest('.tester-layer-item');
     if (!layerItem || layerItem === draggedItem) return;
 
-    // Remove previous indicators
     container.querySelectorAll('.tester-layer-item').forEach(item => {
       item.classList.remove('drag-over-top', 'drag-over-bottom');
     });
 
-    // Determine if dragging above or below
     const rect = layerItem.getBoundingClientRect();
     const midY = rect.top + rect.height / 2;
 
@@ -145,21 +211,16 @@ function setupLayersPanelEvents() {
     const targetIndex = parseInt(layerItem.dataset.index);
     if (targetIndex === draggedIndex) return;
 
-    // Determine drop position
     const rect = layerItem.getBoundingClientRect();
     const midY = rect.top + rect.height / 2;
 
-    // Since UI is reversed, we need to flip the logic
     let newIndex;
     if (e.clientY < midY) {
-      // Drop above (which is below in actual array since UI is reversed)
       newIndex = targetIndex + 1;
     } else {
-      // Drop below (which is above in actual array)
       newIndex = targetIndex;
     }
 
-    // Adjust for the removal of the original item
     if (draggedIndex < newIndex) {
       newIndex--;
     }

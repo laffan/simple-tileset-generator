@@ -3,8 +3,24 @@
 // Track if we're in erase mode during a drag
 var tileTesterEraseMode = false;
 
+// Track if events are already set up
+var tileTesterEventsInitialized = false;
+
+// Store event handler references for removal
+var tileTesterEventHandlers = {
+  mainCanvasMouseDown: null,
+  mainCanvasMouseMove: null,
+  mainCanvasMouseUp: null,
+  mainCanvasMouseLeave: null,
+  mainCanvasContextMenu: null,
+  paletteClick: null
+};
+
 // Setup all event listeners for tile tester
 function setupTileTesterEvents() {
+  if (tileTesterEventsInitialized) return;
+  tileTesterEventsInitialized = true;
+
   setupMainCanvasEvents();
   setupPaletteCanvasEvents();
   setupControlButtonEvents();
@@ -13,54 +29,46 @@ function setupTileTesterEvents() {
 // Setup main canvas mouse events
 function setupMainCanvasEvents() {
   const mainCanvas = document.getElementById('tileTesterMainCanvas');
-
   if (!mainCanvas) return;
 
   // Mouse down - start painting
-  mainCanvas.addEventListener('mousedown', function(e) {
-    if (e.button !== 0) return; // Left click only
+  tileTesterEventHandlers.mainCanvasMouseDown = function(e) {
+    if (e.button !== 0) return;
 
     TileTesterState.isPainting = true;
 
     const pos = getGridPositionFromCanvasClick(e);
     if (pos) {
       const layer = getActiveLayer();
-
-      // Check if there's already a tile at this position
       const existingTile = layer && layer.tiles[pos.gridY] && layer.tiles[pos.gridY][pos.gridX];
 
       if (e.shiftKey) {
-        // Shift held = always erase
         tileTesterEraseMode = true;
         eraseTileAt(pos.gridX, pos.gridY);
       } else if (existingTile) {
-        // Clicking on existing tile = erase mode for this drag
         tileTesterEraseMode = true;
         eraseTileAt(pos.gridX, pos.gridY);
       } else if (TileTesterState.selectedTile) {
-        // No existing tile = place mode for this drag
         tileTesterEraseMode = false;
         placeTileAtWithoutToggle(pos.gridX, pos.gridY);
       }
 
       TileTesterState.lastPaintedCell = { x: pos.gridX, y: pos.gridY };
     }
-  });
+  };
 
   // Mouse move - continue painting
-  mainCanvas.addEventListener('mousemove', function(e) {
+  tileTesterEventHandlers.mainCanvasMouseMove = function(e) {
     if (!TileTesterState.isPainting) return;
 
     const pos = getGridPositionFromCanvasClick(e);
     if (pos) {
-      // Prevent painting same cell repeatedly
       if (TileTesterState.lastPaintedCell &&
           TileTesterState.lastPaintedCell.x === pos.gridX &&
           TileTesterState.lastPaintedCell.y === pos.gridY) {
         return;
       }
 
-      // Continue in the mode we started (erase or place)
       if (tileTesterEraseMode) {
         eraseTileAt(pos.gridX, pos.gridY);
       } else if (TileTesterState.selectedTile) {
@@ -69,31 +77,36 @@ function setupMainCanvasEvents() {
 
       TileTesterState.lastPaintedCell = { x: pos.gridX, y: pos.gridY };
     }
-  });
+  };
 
   // Mouse up - stop painting
-  mainCanvas.addEventListener('mouseup', function() {
+  tileTesterEventHandlers.mainCanvasMouseUp = function() {
     TileTesterState.isPainting = false;
     TileTesterState.lastPaintedCell = null;
     tileTesterEraseMode = false;
-  });
+  };
 
   // Mouse leave - stop painting
-  mainCanvas.addEventListener('mouseleave', function() {
+  tileTesterEventHandlers.mainCanvasMouseLeave = function() {
     TileTesterState.isPainting = false;
     TileTesterState.lastPaintedCell = null;
     tileTesterEraseMode = false;
-  });
+  };
 
   // Context menu for erase
-  mainCanvas.addEventListener('contextmenu', function(e) {
+  tileTesterEventHandlers.mainCanvasContextMenu = function(e) {
     e.preventDefault();
-
     const pos = getGridPositionFromCanvasClick(e);
     if (pos) {
       eraseTileAt(pos.gridX, pos.gridY);
     }
-  });
+  };
+
+  mainCanvas.addEventListener('mousedown', tileTesterEventHandlers.mainCanvasMouseDown);
+  mainCanvas.addEventListener('mousemove', tileTesterEventHandlers.mainCanvasMouseMove);
+  mainCanvas.addEventListener('mouseup', tileTesterEventHandlers.mainCanvasMouseUp);
+  mainCanvas.addEventListener('mouseleave', tileTesterEventHandlers.mainCanvasMouseLeave);
+  mainCanvas.addEventListener('contextmenu', tileTesterEventHandlers.mainCanvasContextMenu);
 }
 
 // Place tile without toggle behavior (for drag painting)
@@ -101,39 +114,35 @@ function placeTileAtWithoutToggle(gridX, gridY) {
   const layer = getActiveLayer();
   if (!layer || !TileTesterState.selectedTile) return;
 
-  // Check bounds
   if (gridX < 0 || gridX >= TileTesterState.gridWidth ||
       gridY < 0 || gridY >= TileTesterState.gridHeight) {
     return;
   }
 
-  // Ensure row exists
   if (!layer.tiles[gridY]) {
     layer.tiles[gridY] = [];
   }
 
-  // Always place (no toggle)
   layer.tiles[gridY][gridX] = {
     row: TileTesterState.selectedTile.row,
     col: TileTesterState.selectedTile.col
   };
 
-  // Redraw canvas
   renderTileTesterMainCanvas();
+  updateLayerThumbnail(layer.id);
 }
 
 // Setup palette canvas events
 function setupPaletteCanvasEvents() {
   const paletteCanvas = document.getElementById('tileTesterPaletteCanvas');
-
   if (!paletteCanvas) return;
 
-  paletteCanvas.addEventListener('click', handlePaletteClick);
+  tileTesterEventHandlers.paletteClick = handlePaletteClick;
+  paletteCanvas.addEventListener('click', tileTesterEventHandlers.paletteClick);
 }
 
 // Setup control button events
 function setupControlButtonEvents() {
-  // Background color button
   const bgColorBtn = document.getElementById('tileTesterBgColorBtn');
   const bgColorPicker = document.getElementById('tileTesterBgColorPicker');
 
@@ -147,27 +156,24 @@ function setupControlButtonEvents() {
       renderTileTesterMainCanvas();
     });
 
-    // Initialize picker with current color
     bgColorPicker.value = TileTesterState.backgroundColor;
   }
 
-  // Clear button
   const clearBtn = document.getElementById('tileTesterClearBtn');
   if (clearBtn) {
     clearBtn.addEventListener('click', function() {
       if (confirm('Clear all tiles from the current layer?')) {
         clearTileTesterGrid();
+        updateLayerThumbnail(TileTesterState.activeLayerId);
       }
     });
   }
 
-  // Download button
   const downloadBtn = document.getElementById('tileTesterDownloadBtn');
   if (downloadBtn) {
     downloadBtn.addEventListener('click', downloadTileTesterCanvas);
   }
 
-  // Close button
   const closeBtn = document.getElementById('tileTesterCloseBtn');
   if (closeBtn) {
     closeBtn.addEventListener('click', closeTileTester);
@@ -177,4 +183,31 @@ function setupControlButtonEvents() {
 // Remove all event listeners (called when closing modal)
 function removeTileTesterEvents() {
   tileTesterEraseMode = false;
+
+  const mainCanvas = document.getElementById('tileTesterMainCanvas');
+  const paletteCanvas = document.getElementById('tileTesterPaletteCanvas');
+
+  if (mainCanvas) {
+    if (tileTesterEventHandlers.mainCanvasMouseDown) {
+      mainCanvas.removeEventListener('mousedown', tileTesterEventHandlers.mainCanvasMouseDown);
+    }
+    if (tileTesterEventHandlers.mainCanvasMouseMove) {
+      mainCanvas.removeEventListener('mousemove', tileTesterEventHandlers.mainCanvasMouseMove);
+    }
+    if (tileTesterEventHandlers.mainCanvasMouseUp) {
+      mainCanvas.removeEventListener('mouseup', tileTesterEventHandlers.mainCanvasMouseUp);
+    }
+    if (tileTesterEventHandlers.mainCanvasMouseLeave) {
+      mainCanvas.removeEventListener('mouseleave', tileTesterEventHandlers.mainCanvasMouseLeave);
+    }
+    if (tileTesterEventHandlers.mainCanvasContextMenu) {
+      mainCanvas.removeEventListener('contextmenu', tileTesterEventHandlers.mainCanvasContextMenu);
+    }
+  }
+
+  if (paletteCanvas && tileTesterEventHandlers.paletteClick) {
+    paletteCanvas.removeEventListener('click', tileTesterEventHandlers.paletteClick);
+  }
+
+  tileTesterEventsInitialized = false;
 }
