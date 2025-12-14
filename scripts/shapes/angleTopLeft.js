@@ -1,12 +1,8 @@
 /* Angle Top Left shape */
 
+// Renderer uses path data as single source of truth
 shapeRenderers.angleTopLeft = function(x, y, size, ctx) {
-  ctx.beginPath();
-  ctx.moveTo(x + size, y);
-  ctx.lineTo(x, y);
-  ctx.lineTo(x, y + size);
-  ctx.closePath();
-  ctx.fill();
+  drawShapeFromPath(x, y, size, ctx, shapePathData.angleTopLeft);
 };
 
 shapePathData.angleTopLeft = {

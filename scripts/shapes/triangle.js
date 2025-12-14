@@ -1,12 +1,8 @@
 /* Triangle shape */
 
+// Renderer uses path data as single source of truth
 shapeRenderers.triangle = function(x, y, size, ctx) {
-  ctx.beginPath();
-  ctx.moveTo(x + size / 2, y);
-  ctx.lineTo(x + size, y + size);
-  ctx.lineTo(x, y + size);
-  ctx.closePath();
-  ctx.fill();
+  drawShapeFromPath(x, y, size, ctx, shapePathData.triangle);
 };
 
 shapePathData.triangle = {

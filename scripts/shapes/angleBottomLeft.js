@@ -1,12 +1,8 @@
 /* Angle Bottom Left shape */
 
+// Renderer uses path data as single source of truth
 shapeRenderers.angleBottomLeft = function(x, y, size, ctx) {
-  ctx.beginPath();
-  ctx.moveTo(x + size, y + size);
-  ctx.lineTo(x, y + size);
-  ctx.lineTo(x, y);
-  ctx.closePath();
-  ctx.fill();
+  drawShapeFromPath(x, y, size, ctx, shapePathData.angleBottomLeft);
 };
 
 shapePathData.angleBottomLeft = {

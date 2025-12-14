@@ -1,9 +1,8 @@
 /* Small Circle shape */
 
+// Renderer uses path data as single source of truth
 shapeRenderers.smallCircle = function(x, y, size, ctx) {
-  ctx.beginPath();
-  ctx.arc(x + size / 2, y + size / 2, size / 4, 0, Math.PI * 2);
-  ctx.fill();
+  drawShapeFromPath(x, y, size, ctx, shapePathData.smallCircle);
 };
 
 shapePathData.smallCircle = {

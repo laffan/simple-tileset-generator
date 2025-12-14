@@ -1,7 +1,8 @@
 /* Square shape */
 
+// Renderer uses path data as single source of truth
 shapeRenderers.square = function(x, y, size, ctx) {
-  ctx.fillRect(x, y, size, size);
+  drawShapeFromPath(x, y, size, ctx, shapePathData.square);
 };
 
 shapePathData.square = {

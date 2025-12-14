@@ -1,13 +1,8 @@
 /* Quarter Circle Bottom Left shape */
 
+// Renderer uses path data as single source of truth
 shapeRenderers.quarterCircleBottomLeft = function(x, y, size, ctx) {
-  ctx.beginPath();
-  ctx.moveTo(x, y);
-  ctx.lineTo(x + size, y);
-  ctx.lineTo(x + size, y + size);
-  ctx.arc(x + size, y, size, 0.5 * Math.PI, Math.PI, false);
-  ctx.closePath();
-  ctx.fill();
+  drawShapeFromPath(x, y, size, ctx, shapePathData.quarterCircleBottomLeft);
 };
 
 // L-shape with curved corner toward bottom-left
