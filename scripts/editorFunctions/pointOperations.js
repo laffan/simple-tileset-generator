@@ -249,5 +249,7 @@ function togglePointCurve() {
     }
   });
 
+  // Flag the path vertices as changed to force Two.js to re-render
+  currentPath._flagVertices = true;
   createAnchorVisuals();
 }
