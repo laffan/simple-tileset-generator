@@ -5,9 +5,10 @@ shapeRenderers.donut = function(x, y, size, ctx) {
   drawShapeFromPath(x, y, size, ctx, shapePathData.donut);
 };
 
-// Donut with hole - uses evenodd fill rule to cut out inner circle
+// Donut with hole - uses holePathIndices for eraser-style hole cutting
 shapePathData.donut = {
   fillRule: 'evenodd',
+  holePathIndices: [1],  // Inner circle (index 1) is the hole
   paths: [
     // Outer circle (radius 0.4, center 0.5,0.5)
     {

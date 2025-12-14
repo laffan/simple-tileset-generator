@@ -162,25 +162,44 @@ function traceSinglePath(x, y, size, ctx, singlePath) {
 
 // Draw a shape from path data using Canvas 2D API
 // Supports both single-path shapes (vertices array) and multi-path shapes (paths array)
-// Supports fillRule: 'evenodd' for shapes with holes (like donut)
+// Supports holePathIndices for eraser-style holes using destination-out compositing
 function drawShapeFromPath(x, y, size, ctx, pathData) {
   if (!pathData) return;
 
   // Check if this is a multi-path shape
   if (pathData.paths && Array.isArray(pathData.paths)) {
-    // Check if using evenodd fill rule (for holes/cutouts)
-    if (pathData.fillRule === 'evenodd') {
-      // Draw all paths in a single beginPath/fill call for evenodd to work
+    const holeIndices = pathData.holePathIndices || [];
+
+    // If using legacy evenodd without explicit holePathIndices, fall back to old behavior
+    if (pathData.fillRule === 'evenodd' && holeIndices.length === 0) {
       ctx.beginPath();
       pathData.paths.forEach(singlePath => {
         traceSinglePath(x, y, size, ctx, singlePath);
       });
       ctx.fill('evenodd');
-    } else {
-      // Draw each path separately (default behavior)
-      pathData.paths.forEach(singlePath => {
+      return;
+    }
+
+    // New approach: draw non-holes first, then erase with holes
+    // First pass: draw all non-hole paths
+    pathData.paths.forEach((singlePath, index) => {
+      if (!holeIndices.includes(index)) {
         drawSinglePath(x, y, size, ctx, singlePath);
+      }
+    });
+
+    // Second pass: draw hole paths with destination-out to erase
+    if (holeIndices.length > 0) {
+      const savedComposite = ctx.globalCompositeOperation;
+      ctx.globalCompositeOperation = 'destination-out';
+
+      holeIndices.forEach(holeIndex => {
+        if (pathData.paths[holeIndex]) {
+          drawSinglePath(x, y, size, ctx, pathData.paths[holeIndex]);
+        }
       });
+
+      ctx.globalCompositeOperation = savedComposite;
     }
   } else if (pathData.vertices) {
     // Single path shape (backward compatible)
