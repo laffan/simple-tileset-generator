@@ -448,7 +448,7 @@
 
 /* Buttons */
 #downloadBtn {
-  background-color: black;
+  background-color: #dc3545;
   padding: 5px 10px;
   font-size: 17px;
   border: none;
@@ -458,7 +458,7 @@
 }
 
 #downloadBtn:hover {
-  background-color: gray;
+  background-color: #c82333;
 }
 
 /* Session buttons */
@@ -1233,4 +1233,95 @@
   background: #007bff;
   border-color: #007bff;
   color: white;
+}
+
+/* =============================================
+   HELP MODAL AND LINK STYLES
+   ============================================= */
+
+/* Shape editor modal sizing */
+.shape-editor-modal {
+  max-width: 550px;
+}
+
+/* Help modal styling */
+.help-modal {
+  max-width: 450px;
+}
+
+/* Help link in modal footer */
+.help-link {
+  font-size: 13px;
+  color: #007bff;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.help-link:hover {
+  text-decoration: underline;
+}
+
+/* Modal footer with help link */
+.modal-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 15px 20px;
+  border-top: 1px solid #eee;
+}
+
+.modal-footer-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+/* Help table styling */
+.help-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.help-table th,
+.help-table td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+.help-table th {
+  font-weight: 600;
+  color: #333;
+  background: #f8f9fa;
+}
+
+.help-table td:first-child {
+  font-weight: 500;
+  color: #333;
+}
+
+.help-table td:last-child {
+  color: #666;
+  font-family: monospace;
+  font-size: 12px;
+}
+
+.help-table tbody tr:hover {
+  background: #f8f9fa;
+}
+
+.help-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* =============================================
+   FOOTER TITLE STYLES
+   ============================================= */
+
+.footer__left h1 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
 }

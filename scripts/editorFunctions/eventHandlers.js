@@ -596,7 +596,6 @@ function setupKeyboardEvents() {
 
 // Set up editor button event listeners
 function setupEditorButtons() {
-  document.getElementById('closeEditorBtn').addEventListener('click', closeShapeEditor);
   document.getElementById('cancelEditorBtn').addEventListener('click', closeShapeEditor);
   document.getElementById('saveShapeBtn').addEventListener('click', saveEditedShape);
 
@@ -604,6 +603,22 @@ function setupEditorButtons() {
   document.getElementById('shapeEditorModal').addEventListener('click', (e) => {
     if (e.target.id === 'shapeEditorModal') {
       closeShapeEditor();
+    }
+  });
+
+  // Help modal handlers
+  document.getElementById('shapeEditorHelpLink').addEventListener('click', (e) => {
+    e.preventDefault();
+    document.getElementById('shapeEditorHelpModal').classList.add('active');
+  });
+
+  document.getElementById('closeShapeHelpBtn').addEventListener('click', () => {
+    document.getElementById('shapeEditorHelpModal').classList.remove('active');
+  });
+
+  document.getElementById('shapeEditorHelpModal').addEventListener('click', (e) => {
+    if (e.target.id === 'shapeEditorHelpModal') {
+      document.getElementById('shapeEditorHelpModal').classList.remove('active');
     }
   });
 }

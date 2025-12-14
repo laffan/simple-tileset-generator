@@ -9,7 +9,6 @@
 <body>
 
   <header>
-    <h1>Simple Tileset Generator</h1>
     <div class="header-tile-size">
       <label>Tile Size</label>
       <div class="tile-size-buttons">
@@ -140,22 +139,19 @@
   </div>
   <footer>
     <div class="footer__left">
+      <h1>Simple Tileset Generator</h1>
+    </div>
+    <div class="footer__right">
       <button id="saveSessionBtn" class="sessionBtn">Save Session</button>
       <button id="loadSessionBtn" class="sessionBtn">Load Session</button>
       <input type="file" id="loadSessionInput" accept=".json">
-    </div>
-    <div class="footer__right">
       <button id="downloadBtn">Download Tileset!</button>
     </div>
   </footer>
 
   <!-- Shape Editor Modal -->
   <div id="shapeEditorModal" class="modal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3>Edit Shape</h3>
-        <button id="closeEditorBtn" class="modal-close">&times;</button>
-      </div>
+    <div class="modal-content shape-editor-modal">
       <div class="modal-body">
         <div class="editor-workspace">
           <div class="shape-toolbar">
@@ -191,13 +187,67 @@
           </div>
           <div id="shapeEditorCanvas"></div>
         </div>
-        <div class="editor-instructions">
-          <small>CMD shows resize/rotate handles. Shift+drag constrains axis. Shift+resize locks aspect ratio. Shift+rotate snaps 45°. Option+drag duplicates. Shift+click multi-select. Click edge to add point.</small>
-        </div>
       </div>
       <div class="modal-footer">
-        <button id="cancelEditorBtn" class="sessionBtn">Cancel</button>
-        <button id="saveShapeBtn" class="editor-save-btn">Save Shape</button>
+        <a href="#" id="shapeEditorHelpLink" class="help-link">How to use</a>
+        <div class="modal-footer-buttons">
+          <button id="cancelEditorBtn" class="sessionBtn">Cancel</button>
+          <button id="saveShapeBtn" class="editor-save-btn">Save Shape</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Shape Editor Help Modal -->
+  <div id="shapeEditorHelpModal" class="modal">
+    <div class="modal-content help-modal">
+      <div class="modal-header">
+        <h3>How to use the Shape Editor</h3>
+        <button id="closeShapeHelpBtn" class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <table class="help-table">
+          <thead>
+            <tr>
+              <th>Action</th>
+              <th>How to</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Show resize/rotate handles</td>
+              <td>Hold CMD/Ctrl</td>
+            </tr>
+            <tr>
+              <td>Constrain to axis</td>
+              <td>Shift + drag</td>
+            </tr>
+            <tr>
+              <td>Lock aspect ratio while resizing</td>
+              <td>Shift + resize</td>
+            </tr>
+            <tr>
+              <td>Snap rotation to 45&deg;</td>
+              <td>Shift + rotate</td>
+            </tr>
+            <tr>
+              <td>Duplicate shape</td>
+              <td>Option/Alt + drag</td>
+            </tr>
+            <tr>
+              <td>Multi-select paths</td>
+              <td>Shift + click</td>
+            </tr>
+            <tr>
+              <td>Add point to path</td>
+              <td>Click on edge</td>
+            </tr>
+            <tr>
+              <td>Delete selected point</td>
+              <td>Backspace/Delete</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </div>
@@ -349,6 +399,12 @@
   <script src="scripts/patterns/crosshatch.js"></script>
   <script src="scripts/patterns/bricks.js"></script>
   <script src="scripts/patterns/zigzag.js"></script>
+  <script src="scripts/patterns/ditherLight.js"></script>
+  <script src="scripts/patterns/ditherMediumLight.js"></script>
+  <script src="scripts/patterns/ditherMedium.js"></script>
+  <script src="scripts/patterns/ditherMediumDense.js"></script>
+  <script src="scripts/patterns/ditherDense.js"></script>
+  <script src="scripts/patterns/ditherHeavy.js"></script>
 
   <!-- Core application scripts -->
   <script src="scripts/shapeData.js"></script>

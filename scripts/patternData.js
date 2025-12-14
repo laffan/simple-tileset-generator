@@ -10,7 +10,13 @@ const patterns = [
   "verticalStripes",
   "crosshatch",
   "bricks",
-  "zigzag"
+  "zigzag",
+  "ditherLight",
+  "ditherMediumLight",
+  "ditherMedium",
+  "ditherMediumDense",
+  "ditherDense",
+  "ditherHeavy"
 ];
 
 // Helper function to get pattern data, with fallback to checkerboard
