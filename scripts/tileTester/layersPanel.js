@@ -43,38 +43,38 @@ function createLayerElement(layer, index) {
   div.draggable = true;
 
   div.innerHTML = `
-    <div class="tester-layer-drag-handle">&#x2630;</div>
+    <div class="tester-layer-drag-handle" title="Drag to reorder">&#x2630;</div>
     <div class="tester-layer-thumbnail">
       <canvas id="layerThumb${layer.id}" width="${LAYER_THUMB_WIDTH}" height="${LAYER_THUMB_HEIGHT}"></canvas>
     </div>
-    <div class="tester-layer-controls">
-      <input type="number" class="tester-layer-opacity-input"
+    <div class="tester-layer-opacity-wrapper">
+      <input type="range" class="tester-layer-opacity-slider"
              min="0" max="100" value="${Math.round(layer.opacity * 100)}"
-             title="Opacity %">
-      <button class="tester-layer-delete" title="Delete layer">&times;</button>
+             title="Opacity: ${Math.round(layer.opacity * 100)}%">
     </div>
+    <button class="tester-layer-delete" title="Delete layer">&times;</button>
   `;
 
   // Click to select layer
   div.addEventListener('click', function(e) {
-    if (e.target.closest('.tester-layer-controls')) return;
+    if (e.target.closest('.tester-layer-opacity-wrapper')) return;
+    if (e.target.closest('.tester-layer-delete')) return;
     if (e.target.closest('.tester-layer-drag-handle')) return;
     TileTesterState.activeLayerId = layer.id;
     renderLayersList();
   });
 
-  // Opacity input
-  const opacityInput = div.querySelector('.tester-layer-opacity-input');
-  opacityInput.addEventListener('input', function(e) {
+  // Opacity slider - prevent drag conflicts
+  const opacitySlider = div.querySelector('.tester-layer-opacity-slider');
+  opacitySlider.addEventListener('input', function(e) {
     e.stopPropagation();
-    let val = parseInt(this.value) || 0;
-    val = Math.max(0, Math.min(100, val));
-    setLayerOpacity(layer.id, val / 100);
+    setLayerOpacity(layer.id, this.value / 100);
+    this.title = 'Opacity: ' + this.value + '%';
   });
-  opacityInput.addEventListener('click', function(e) {
+  opacitySlider.addEventListener('mousedown', function(e) {
     e.stopPropagation();
   });
-  opacityInput.addEventListener('mousedown', function(e) {
+  opacitySlider.addEventListener('pointerdown', function(e) {
     e.stopPropagation();
   });
 
@@ -176,8 +176,10 @@ function setupLayersPanelEvents() {
       draggedIndex = null;
     }
 
+    // Remove all drop indicators
+    container.querySelectorAll('.tester-layer-drop-indicator').forEach(el => el.remove());
     container.querySelectorAll('.tester-layer-item').forEach(item => {
-      item.classList.remove('drag-over-top', 'drag-over-bottom');
+      item.classList.remove('drag-over');
     });
   });
 
@@ -188,22 +190,49 @@ function setupLayersPanelEvents() {
     const layerItem = e.target.closest('.tester-layer-item');
     if (!layerItem || layerItem === draggedItem) return;
 
+    // Remove existing indicators
+    container.querySelectorAll('.tester-layer-drop-indicator').forEach(el => el.remove());
     container.querySelectorAll('.tester-layer-item').forEach(item => {
-      item.classList.remove('drag-over-top', 'drag-over-bottom');
+      item.classList.remove('drag-over');
     });
 
+    // Determine if dragging above or below
     const rect = layerItem.getBoundingClientRect();
     const midY = rect.top + rect.height / 2;
 
+    // Create drop indicator line
+    const indicator = document.createElement('div');
+    indicator.className = 'tester-layer-drop-indicator';
+
     if (e.clientY < midY) {
-      layerItem.classList.add('drag-over-top');
+      // Insert before this item
+      layerItem.parentNode.insertBefore(indicator, layerItem);
     } else {
-      layerItem.classList.add('drag-over-bottom');
+      // Insert after this item
+      layerItem.parentNode.insertBefore(indicator, layerItem.nextSibling);
+    }
+
+    layerItem.classList.add('drag-over');
+  });
+
+  container.addEventListener('dragleave', function(e) {
+    // Only remove if leaving the container entirely
+    if (!container.contains(e.relatedTarget)) {
+      container.querySelectorAll('.tester-layer-drop-indicator').forEach(el => el.remove());
+      container.querySelectorAll('.tester-layer-item').forEach(item => {
+        item.classList.remove('drag-over');
+      });
     }
   });
 
   container.addEventListener('drop', function(e) {
     e.preventDefault();
+
+    // Remove indicators
+    container.querySelectorAll('.tester-layer-drop-indicator').forEach(el => el.remove());
+    container.querySelectorAll('.tester-layer-item').forEach(item => {
+      item.classList.remove('drag-over');
+    });
 
     const layerItem = e.target.closest('.tester-layer-item');
     if (!layerItem || !draggedItem) return;

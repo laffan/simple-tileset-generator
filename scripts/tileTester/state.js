@@ -182,10 +182,10 @@ function resetTileTesterState() {
 // Calculate grid size based on window dimensions
 function calculateGridSize() {
   const tileSize = TileTesterState.tileSize;
-  const padding = 40; // Some padding from edges
 
-  TileTesterState.gridWidth = Math.floor((window.innerWidth - padding * 2) / tileSize);
-  TileTesterState.gridHeight = Math.floor((window.innerHeight - padding * 2) / tileSize);
+  // Fill entire window with no padding
+  TileTesterState.gridWidth = Math.floor(window.innerWidth / tileSize);
+  TileTesterState.gridHeight = Math.floor(window.innerHeight / tileSize);
 
   // Ensure minimum size
   TileTesterState.gridWidth = Math.max(8, TileTesterState.gridWidth);
