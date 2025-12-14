@@ -118,6 +118,12 @@ function setupEditorEvents() {
     const anchorHit = findAnchorAtPosition(x, y);
     if (anchorHit) {
       if (anchorHit.type === 'anchor') {
+        // Option+click toggles between curve and angle point
+        if (e.altKey) {
+          selectAnchor(anchorHit.data);
+          togglePointCurve();
+          return;
+        }
         // Handle shift+click for multi-select
         if (e.shiftKey) {
           toggleAnchorSelection(anchorHit.data);
