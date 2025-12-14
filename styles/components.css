@@ -674,18 +674,26 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 8px 4px;
+  padding: 6px 4px;
   cursor: pointer;
+  border: 1px solid #ccc;
+  background: white;
   border-radius: 4px;
-  transition: background-color 0.15s ease;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
 .toolbar-tool:hover {
   background: #e5e5e5;
+  border-color: #999;
+}
+
+.toolbar-tool:active {
+  background: #d5d5d5;
 }
 
 .toolbar-tool.active {
   background: #17a2b8;
+  border-color: #138496;
   color: white;
 }
 
