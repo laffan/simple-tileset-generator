@@ -693,6 +693,16 @@ function clipPathDataToBounds(pathData) {
     return pathData;
   }
 
+  // First check if any vertex is actually outside the 0-1 bounds
+  // If all vertices are within bounds, return original data (preserving control points)
+  const needsClipping = pathData.vertices.some(v =>
+    v.x < 0 || v.x > 1 || v.y < 0 || v.y > 1
+  );
+
+  if (!needsClipping) {
+    return pathData; // All within bounds, preserve original with control points
+  }
+
   // Convert vertices to simple polygon points
   const polygon = pathData.vertices.map(v => ({ x: v.x, y: v.y }));
 
@@ -705,7 +715,7 @@ function clipPathDataToBounds(pathData) {
     return pathData; // Keep original if clipping eliminates shape
   }
 
-  // Convert back to pathData format (note: control points are lost at clip boundaries)
+  // Convert back to pathData format (note: control points are lost when clipping occurs)
   return {
     vertices: clipped.map(p => ({ x: p.x, y: p.y })),
     closed: pathData.closed
