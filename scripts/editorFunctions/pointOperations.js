@@ -196,20 +196,56 @@ function undoLastNewShapePoint() {
 function togglePointCurve() {
   if (EditorState.selectedAnchors.length === 0) return;
 
+  const currentPath = getCurrentPath();
+  if (!currentPath) return;
+
   EditorState.selectedAnchors.forEach(anchorData => {
     const vertex = anchorData.vertex;
+    const index = anchorData.index;
+    const vertices = currentPath.vertices;
+    const numVertices = vertices.length;
+
+    // Get the next vertex (wrapping around for closed paths)
+    const nextIndex = (index + 1) % numVertices;
+    const nextVertex = vertices[nextIndex];
+
+    // Get the previous vertex (wrapping around for closed paths)
+    const prevIndex = (index - 1 + numVertices) % numVertices;
+    const prevVertex = vertices[prevIndex];
 
     if (vertex.controls.left.x === 0 && vertex.controls.left.y === 0 &&
         vertex.controls.right.x === 0 && vertex.controls.right.y === 0) {
       // Add curve handles
       vertex.controls.left.set(-30, 0);
       vertex.controls.right.set(30, 0);
+      // Set this vertex's command to curve (for ctrlLeft to take effect on incoming segment)
       vertex.command = Two.Commands.curve;
+      // Set the next vertex's command to curve (for ctrlRight to take effect on outgoing segment)
+      if (nextVertex && nextIndex !== 0) {
+        nextVertex.command = Two.Commands.curve;
+      } else if (nextVertex && currentPath.closed) {
+        // For closed paths, vertex 0's command affects the closing segment
+        nextVertex.command = Two.Commands.curve;
+      }
     } else {
       // Remove curve handles
       vertex.controls.left.set(0, 0);
       vertex.controls.right.set(0, 0);
-      vertex.command = Two.Commands.line;
+
+      // Determine if this vertex should be line or curve based on previous vertex's ctrlRight
+      const prevHasCtrlRight = prevVertex && prevVertex.controls &&
+        (prevVertex.controls.right.x !== 0 || prevVertex.controls.right.y !== 0);
+      vertex.command = prevHasCtrlRight ? Two.Commands.curve : Two.Commands.line;
+
+      // Update next vertex's command based on whether this vertex now has ctrlRight
+      if (nextVertex) {
+        const thisHasCtrlRight = vertex.controls.right.x !== 0 || vertex.controls.right.y !== 0;
+        const nextHasCtrlLeft = nextVertex.controls &&
+          (nextVertex.controls.left.x !== 0 || nextVertex.controls.left.y !== 0);
+        if (nextIndex !== 0 || currentPath.closed) {
+          nextVertex.command = (thisHasCtrlRight || nextHasCtrlLeft) ? Two.Commands.curve : Two.Commands.line;
+        }
+      }
     }
   });
 
