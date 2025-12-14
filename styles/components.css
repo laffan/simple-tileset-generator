@@ -1920,3 +1920,81 @@
   color: #dc3545;
   background: rgba(220, 53, 69, 0.1);
 }
+
+/* =============================================
+   FILE DROP UPLOAD STYLES
+   ============================================= */
+
+/* Drop zone overlay for shapes/patterns sections */
+.file-drop-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(23, 162, 184, 0.15);
+  border: 3px dashed #17a2b8;
+  border-radius: 8px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  pointer-events: none;
+}
+
+.file-drop-overlay.active {
+  display: flex;
+}
+
+.file-drop-overlay.active.hover {
+  background: rgba(23, 162, 184, 0.3);
+  border-color: #138496;
+}
+
+.file-drop-content {
+  text-align: center;
+  padding: 20px;
+}
+
+.file-drop-icon {
+  font-size: 36px;
+  color: #17a2b8;
+  margin-bottom: 10px;
+}
+
+.file-drop-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: #17a2b8;
+}
+
+/* Make shape/pattern selection containers positioned for overlay */
+#shapeSelection,
+#patternSelection {
+  position: relative;
+}
+
+/* Error notification toast */
+.drop-error-notification {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: #dc3545;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+  z-index: 1001;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.drop-error-notification.active {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
