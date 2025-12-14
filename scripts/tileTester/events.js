@@ -37,6 +37,9 @@ function setupMainCanvasEvents() {
   tileTesterEventHandlers.mainCanvasMouseDown = function(e) {
     if (e.button !== 0) return;
 
+    // Don't paint when space panning
+    if (TileTesterState.isSpacePanning) return;
+
     TileTesterState.isPainting = true;
 
     const pos = getGridPositionFromCanvasClick(e);
@@ -274,10 +277,8 @@ function updateCanvasTransform() {
   // Update container overflow based on zoom
   if (zoom > 1) {
     container.style.overflow = 'hidden';
-    container.style.cursor = TileTesterState.isSpacePanning ? 'grabbing' : 'auto';
   } else {
     container.style.overflow = 'visible';
-    container.style.cursor = 'auto';
     // Reset pan when at 1x
     TileTesterState.canvasPan = { x: 0, y: 0 };
     canvas.style.marginLeft = '0';
@@ -295,6 +296,9 @@ function setupSpacePanning() {
   let panStart = { x: 0, y: 0 };
   let panStartOffset = { x: 0, y: 0 };
 
+  const mainArea = document.querySelector('.tester-main-area');
+  const canvas = document.getElementById('tileTesterMainCanvas');
+
   // Key down - start space panning mode
   document.addEventListener('keydown', function(e) {
     if (e.code === 'Space' && !TileTesterState.isSpacePanning) {
@@ -304,7 +308,7 @@ function setupSpacePanning() {
 
       e.preventDefault();
       TileTesterState.isSpacePanning = true;
-      updateCanvasTransform();
+      if (canvas) canvas.style.cursor = 'grab';
     }
   });
 
@@ -313,23 +317,23 @@ function setupSpacePanning() {
     if (e.code === 'Space') {
       TileTesterState.isSpacePanning = false;
       isPanning = false;
-      updateCanvasTransform();
+      if (canvas) canvas.style.cursor = '';
     }
   });
 
-  // Mouse events for panning
-  const container = document.querySelector('.tester-canvas-container');
-  if (!container) return;
+  // Mouse events for panning - attach to main area to capture all events
+  if (!mainArea) return;
 
-  container.addEventListener('mousedown', function(e) {
+  mainArea.addEventListener('mousedown', function(e) {
     if (!TileTesterState.isSpacePanning) return;
     if (TileTesterState.canvasZoom <= 1) return;
 
     isPanning = true;
     panStart = { x: e.clientX, y: e.clientY };
     panStartOffset = { ...TileTesterState.canvasPan };
-    container.style.cursor = 'grabbing';
+    if (canvas) canvas.style.cursor = 'grabbing';
     e.preventDefault();
+    e.stopPropagation();
   });
 
   document.addEventListener('mousemove', function(e) {
@@ -349,9 +353,8 @@ function setupSpacePanning() {
   document.addEventListener('mouseup', function() {
     if (isPanning) {
       isPanning = false;
-      if (TileTesterState.isSpacePanning) {
-        const container = document.querySelector('.tester-canvas-container');
-        if (container) container.style.cursor = 'grab';
+      if (TileTesterState.isSpacePanning && canvas) {
+        canvas.style.cursor = 'grab';
       }
     }
   });
