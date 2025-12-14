@@ -591,6 +591,12 @@ function setupKeyboardEvents() {
         undoLastNewShapePoint();
       }
     }
+
+    // Cmd+D (or Ctrl+D) to duplicate current path in place
+    if ((e.metaKey || e.ctrlKey) && e.key === 'd') {
+      e.preventDefault();  // Prevent browser bookmark dialog
+      duplicateCurrentPath();
+    }
   });
 }
 

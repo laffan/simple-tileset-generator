@@ -220,6 +220,18 @@ function deleteSelectedPath() {
   // Adjust selection indices for paths after deleted one
   EditorState.selectedPathIndices = EditorState.selectedPathIndices.map(i => i > indexToDelete ? i - 1 : i);
 
+  // Update holePathIndices - remove if deleted, adjust indices for paths after deleted one
+  const holeIdx = EditorState.holePathIndices.indexOf(indexToDelete);
+  if (holeIdx >= 0) {
+    EditorState.holePathIndices.splice(holeIdx, 1);
+  }
+  EditorState.holePathIndices = EditorState.holePathIndices.map(i => i > indexToDelete ? i - 1 : i);
+
+  // Clear fillRule if no more holes
+  if (EditorState.holePathIndices.length === 0) {
+    EditorState.fillRule = null;
+  }
+
   // Update visuals
   updatePathStyles();
   createAnchorVisuals();
@@ -516,16 +528,58 @@ function toggleHole() {
   EditorState.two.update();
 }
 
-// Get polygon points from a path
-function getPathPolygon(path) {
+// Get polygon points from a path, sampling bezier curves for smooth results
+function getPathPolygon(path, samplesPerCurve = 8) {
   const points = [];
-  path.vertices.forEach(vertex => {
-    points.push({
-      x: vertex.x + path.translation.x,
-      y: vertex.y + path.translation.y
-    });
-  });
+  const vertices = path.vertices;
+  const tx = path.translation.x;
+  const ty = path.translation.y;
+
+  for (let i = 0; i < vertices.length; i++) {
+    const v = vertices[i];
+    const nextV = vertices[(i + 1) % vertices.length];
+
+    // Add current vertex
+    points.push({ x: v.x + tx, y: v.y + ty });
+
+    // Check if the segment to next vertex is a bezier curve
+    const hasCtrlOut = v.controls && (v.controls.right.x !== 0 || v.controls.right.y !== 0);
+    const hasCtrlIn = nextV.controls && (nextV.controls.left.x !== 0 || nextV.controls.left.y !== 0);
+
+    if (hasCtrlOut || hasCtrlIn) {
+      // Sample the bezier curve
+      const p0 = { x: v.x + tx, y: v.y + ty };
+      const p3 = { x: nextV.x + tx, y: nextV.y + ty };
+      const p1 = hasCtrlOut
+        ? { x: p0.x + v.controls.right.x, y: p0.y + v.controls.right.y }
+        : p0;
+      const p2 = hasCtrlIn
+        ? { x: p3.x + nextV.controls.left.x, y: p3.y + nextV.controls.left.y }
+        : p3;
+
+      // Add intermediate points along the curve (skip t=0 and t=1 as they're the endpoints)
+      for (let j = 1; j < samplesPerCurve; j++) {
+        const t = j / samplesPerCurve;
+        const point = cubicBezierPoint(p0, p1, p2, p3, t);
+        points.push(point);
+      }
+    }
+  }
   return points;
+}
+
+// Calculate a point on a cubic bezier curve at parameter t
+function cubicBezierPoint(p0, p1, p2, p3, t) {
+  const mt = 1 - t;
+  const mt2 = mt * mt;
+  const mt3 = mt2 * mt;
+  const t2 = t * t;
+  const t3 = t2 * t;
+
+  return {
+    x: mt3 * p0.x + 3 * mt2 * t * p1.x + 3 * mt * t2 * p2.x + t3 * p3.x,
+    y: mt3 * p0.y + 3 * mt2 * t * p1.y + 3 * mt * t2 * p2.y + t3 * p3.y
+  };
 }
 
 // Check if two polygons overlap
