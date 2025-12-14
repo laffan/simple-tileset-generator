@@ -1,10 +1,8 @@
 /* Donut shape */
 
+// Renderer uses path data as single source of truth
 shapeRenderers.donut = function(x, y, size, ctx) {
-  // Filled circle matching path data (outer circle only, no hole)
-  ctx.beginPath();
-  ctx.arc(x + size / 2, y + size / 2, size * 0.4, 0, Math.PI * 2);
-  ctx.fill();
+  drawShapeFromPath(x, y, size, ctx, shapePathData.donut);
 };
 
 // Outer circle only - inner would need separate path

@@ -1,11 +1,8 @@
 /* Half Circle Left shape */
 
+// Renderer uses path data as single source of truth
 shapeRenderers.halfCircleLeft = function(x, y, size, ctx) {
-  // Flat edge on left (x=0), curve bulging right to x=0.5
-  ctx.beginPath();
-  ctx.arc(x, y + size / 2, size / 2, -Math.PI / 2, Math.PI / 2, false);
-  ctx.closePath();
-  ctx.fill();
+  drawShapeFromPath(x, y, size, ctx, shapePathData.halfCircleLeft);
 };
 
 // Flat edge on left (x=0), curve bulging right (endcap for left side)

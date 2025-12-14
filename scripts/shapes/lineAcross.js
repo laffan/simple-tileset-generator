@@ -1,10 +1,8 @@
 /* Line Across (horizontal) shape */
 
+// Renderer uses path data as single source of truth
 shapeRenderers.lineAcross = function(x, y, size, ctx) {
-  // Horizontal line (full width, narrow height) matching path data
-  const lineHeight = size * 0.2;  // y: 0.4 to 0.6 = 0.2 height
-  const lineY = y + (size - lineHeight) / 2;  // centered vertically
-  ctx.fillRect(x, lineY, size, lineHeight);
+  drawShapeFromPath(x, y, size, ctx, shapePathData.lineAcross);
 };
 
 shapePathData.lineAcross = {

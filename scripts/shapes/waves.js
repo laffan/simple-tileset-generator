@@ -1,18 +1,8 @@
 /* Waves shape */
 
+// Renderer uses path data as single source of truth
 shapeRenderers.waves = function(x, y, size, ctx) {
-  ctx.beginPath();
-  const waveAmplitude = size / 4;
-  const waveFrequency = 2;
-  for (let waveX = 0; waveX <= size; waveX++) {
-    const waveY = Math.sin((waveX / size) * Math.PI * waveFrequency) * waveAmplitude + (size / 2);
-    if (waveX === 0) ctx.moveTo(x + waveX, y + waveY);
-    else ctx.lineTo(x + waveX, y + waveY);
-  }
-  ctx.lineTo(x + size, y + size);
-  ctx.lineTo(x, y + size);
-  ctx.closePath();
-  ctx.fill();
+  drawShapeFromPath(x, y, size, ctx, shapePathData.waves);
 };
 
 // Wave shape - sine wave on top, fills to bottom

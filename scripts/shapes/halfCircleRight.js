@@ -1,11 +1,8 @@
 /* Half Circle Right shape */
 
+// Renderer uses path data as single source of truth
 shapeRenderers.halfCircleRight = function(x, y, size, ctx) {
-  // Flat edge on right (x=1), curve bulging left to x=0.5
-  ctx.beginPath();
-  ctx.arc(x + size, y + size / 2, size / 2, Math.PI / 2, -Math.PI / 2, false);
-  ctx.closePath();
-  ctx.fill();
+  drawShapeFromPath(x, y, size, ctx, shapePathData.halfCircleRight);
 };
 
 // Flat edge on right (x=1), curve bulging left (endcap for right side)
