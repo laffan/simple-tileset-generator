@@ -40,10 +40,9 @@ function createLayerElement(layer, index) {
   div.className = 'tester-layer-item' + (layer.id === TileTesterState.activeLayerId ? ' active' : '');
   div.dataset.layerId = layer.id;
   div.dataset.index = index;
-  div.draggable = true;
 
   div.innerHTML = `
-    <div class="tester-layer-drag-handle" title="Drag to reorder">&#x2630;</div>
+    <div class="tester-layer-drag-handle" draggable="true" title="Drag to reorder">&#x2630;</div>
     <div class="tester-layer-thumbnail">
       <canvas id="layerThumb${layer.id}" width="${LAYER_THUMB_WIDTH}" height="${LAYER_THUMB_HEIGHT}"></canvas>
     </div>
@@ -158,6 +157,12 @@ function setupLayersPanelEvents() {
   let draggedIndex = null;
 
   container.addEventListener('dragstart', function(e) {
+    // Only allow drag from the drag handle
+    if (!e.target.classList.contains('tester-layer-drag-handle')) {
+      e.preventDefault();
+      return;
+    }
+
     const layerItem = e.target.closest('.tester-layer-item');
     if (!layerItem) return;
 
