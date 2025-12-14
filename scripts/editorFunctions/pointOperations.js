@@ -220,6 +220,10 @@ function togglePointCurve() {
       vertex.controls.right.set(30, 0);
       // Set this vertex's command to curve (for ctrlLeft to take effect on incoming segment)
       vertex.command = Two.Commands.curve;
+      // Set the previous vertex's command to curve (so ctrlLeft affects the incoming segment)
+      if (prevVertex) {
+        prevVertex.command = Two.Commands.curve;
+      }
       // Set the next vertex's command to curve (for ctrlRight to take effect on outgoing segment)
       if (nextVertex && nextIndex !== 0) {
         nextVertex.command = Two.Commands.curve;
@@ -236,6 +240,17 @@ function togglePointCurve() {
       const prevHasCtrlRight = prevVertex && prevVertex.controls &&
         (prevVertex.controls.right.x !== 0 || prevVertex.controls.right.y !== 0);
       vertex.command = prevHasCtrlRight ? Two.Commands.curve : Two.Commands.line;
+
+      // Update previous vertex's command based on whether it still has ctrlRight
+      if (prevVertex && prevIndex !== 0) {
+        const prevPrevIndex = (prevIndex - 1 + numVertices) % numVertices;
+        const prevPrevVertex = vertices[prevPrevIndex];
+        const prevPrevHasCtrlRight = prevPrevVertex && prevPrevVertex.controls &&
+          (prevPrevVertex.controls.right.x !== 0 || prevPrevVertex.controls.right.y !== 0);
+        const prevHasCtrlLeft = prevVertex.controls &&
+          (prevVertex.controls.left.x !== 0 || prevVertex.controls.left.y !== 0);
+        prevVertex.command = (prevPrevHasCtrlRight || prevHasCtrlLeft) ? Two.Commands.curve : Two.Commands.line;
+      }
 
       // Update next vertex's command based on whether this vertex now has ctrlRight
       if (nextVertex) {
