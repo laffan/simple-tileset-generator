@@ -1,541 +1,861 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
+    <head>
+        <title>Simple Tileset Generator</title>
+        <link rel="stylesheet" href="styles.css" />
+    </head>
 
-<head>
-  <title>Simple Tileset Generator</title>
-  <link rel="stylesheet" href="styles.css">
-</head>
-
-<body>
-
-  <header>
-    <div class="header-tile-size">
-      <h3>Tile Size</h3>
-      <div class="tile-size-buttons">
-        <button class="tile-size-btn" data-size="8">8</button>
-        <button class="tile-size-btn" data-size="16">16</button>
-        <button class="tile-size-btn" data-size="32">32</button>
-        <button class="tile-size-btn active" data-size="64">64</button>
-        <button class="tile-size-btn" data-size="128">128</button>
-        <button class="tile-size-btn" data-size="256">256</button>
-        <button class="tile-size-btn tile-size-custom" id="tileSizeCustomBtn">Custom</button>
-      </div>
-      <input type="hidden" id="sizeInput" value="64" />
-    </div>
-  </header>
-
-  <div class="Columns">
-    <div class="Column__Left">
-
-      <div>
-
-        <h3>Shapes
-          <div class="shapeToggle">
-            <a href="#" id="selectAllShapes">all</a> | <a href="#" id="deselectAllShapes">none</a>
-          </div>
-        </h3>
-
-        <div id="shapeSelection">
-        </div>
-      </div>
-
-      <div>
-
-        <h3>Patterns
-          <div class="patternToggle">
-            <a href="#" id="selectAllPatterns">all</a> | <a href="#" id="deselectAllPatterns">none</a>
-          </div>
-        </h3>
-
-        <div id="patternSelection">
-        </div>
-      </div>
-
-      <br />
-
-
-    </div>
-
-    <div class="Column__Right">
-
-      <h3 class="previewHeader">
-        <span>Preview</span>
-        <div class="previewHeaderControls">
-          <a href="#" id="testTilesetBtn" class="testLink">Test</a>
-          <label class="fitCheckboxLabel">
-            <input type="checkbox" id="fitPreview"> Fit
-          </label>
-        </div>
-      </h3>
-      <div class="PreviewBox" id="previewBox">
-        <canvas id="canvas"></canvas>
-      </div>
-
-
-      <div class="selected-colors-section">
-        <h3>Selected Colors</h3>
-        <!-- Selected colors tabs -->
-        <div class="selected-colors-tabs">
-          <button class="selected-colors-tab active" data-tab="selected-swatches">Swatches</button>
-          <button class="selected-colors-tab" data-tab="selected-hex">Hex Input</button>
-        </div>
-        <!-- Swatches tab content -->
-        <div class="selected-colors-tab-content active" id="selected-swatches-tab">
-          <small>Click color to remove</small>
-          <div id="colorsPreviewContainer"></div>
-        </div>
-        <!-- Hex input tab content -->
-        <div class="selected-colors-tab-content" id="selected-hex-tab">
-          <textarea id="colorInput" placeholder="Selected colors">FFFFFF, 000000, </textarea>
-        </div>
-      </div>
-
-      <h3>Add Colors</h3>
-
-      <!-- Color picker tabs -->
-      <div class="color-tabs">
-        <button class="color-tab active" data-tab="wheel">Picker</button>
-        <button class="color-tab" data-tab="palettes">Palettes</button>
-        <button class="color-tab" data-tab="swatches">Swatches</button>
-      </div>
-
-      <!-- Wheel tab content (Picker) -->
-      <div class="color-tab-content active" id="wheel-tab">
-        <div class="color-wheel-container">
-          <div class="wheel-sliders">
-            <div class="wheel-slider-row">
-              <label>Hue</label>
-              <input type="range" id="hueSlider" min="0" max="360" value="0" class="hue-slider">
+    <body>
+        <header>
+            <div class="header-tile-size">
+                <h3>Tile Size</h3>
+                <div class="tile-size-buttons">
+                    <button class="tile-size-btn" data-size="8">8</button>
+                    <button class="tile-size-btn" data-size="16">16</button>
+                    <button class="tile-size-btn" data-size="32">32</button>
+                    <button class="tile-size-btn active" data-size="64">
+                        64
+                    </button>
+                    <button class="tile-size-btn" data-size="128">128</button>
+                    <button class="tile-size-btn" data-size="256">256</button>
+                    <button
+                        class="tile-size-btn tile-size-custom"
+                        id="tileSizeCustomBtn"
+                    >
+                        Custom
+                    </button>
+                </div>
+                <input type="hidden" id="sizeInput" value="64" />
             </div>
-            <div class="wheel-slider-row">
-              <label>Opacity</label>
-              <input type="range" id="opacitySlider" min="0" max="100" value="100" class="opacity-slider">
+        </header>
+
+        <div class="Columns">
+            <div class="Column__Left">
+                <div>
+                    <h3>
+                        Shapes
+                        <div class="shapeToggle">
+                            <a href="#" id="selectAllShapes">all</a> |
+                            <a href="#" id="deselectAllShapes">none</a>
+                        </div>
+                    </h3>
+
+                    <div id="shapeSelection"></div>
+                </div>
+
+                <div>
+                    <h3>
+                        Patterns
+                        <div class="patternToggle">
+                            <a href="#" id="selectAllPatterns">all</a> |
+                            <a href="#" id="deselectAllPatterns">none</a>
+                        </div>
+                    </h3>
+
+                    <div id="patternSelection"></div>
+                </div>
+
+                <br />
             </div>
-          </div>
-          <div class="color-field-wrapper">
-            <canvas id="colorFieldCanvas" width="200" height="150"></canvas>
-            <div class="color-field-cursor" id="colorFieldCursor"></div>
-          </div>
-          <div class="wheel-preview-row">
-            <div class="wheel-color-preview" id="wheelColorPreview"></div>
-            <button class="wheel-add-btn" id="wheelAddBtn">Add Color</button>
-          </div>
-        </div>
-      </div>
 
-      <!-- Palettes tab content -->
-      <div class="color-tab-content" id="palettes-tab">
-        <div id="palettesContainer"></div>
-      </div>
+            <div class="Column__Right">
+                <h3 class="previewHeader">
+                    <span>Preview</span>
+                    <div class="previewHeaderControls">
+                        <a href="#" id="testTilesetBtn" class="testLink"
+                            >Test</a
+                        >
+                        <label class="fitCheckboxLabel">
+                            <input type="checkbox" id="fitPreview" /> Fit
+                        </label>
+                    </div>
+                </h3>
+                <div class="PreviewBox" id="previewBox">
+                    <canvas id="canvas"></canvas>
+                </div>
 
-      <!-- Swatches tab content -->
-      <div class="color-tab-content" id="swatches-tab">
-        <div class="complexity_slider_wrapper">
-          <input type="range" id="paletteComplexity" min="14" max="128" value="40" class="complexity-slider">
-        </div>
-        <div id="paletteContainer">
-          <div class="palette" id="colorPalette"></div>
-        </div>
-      </div>
+                <div class="selected-colors-section">
+                    <h3>Selected Colors</h3>
+                    <!-- Selected colors tabs -->
+                    <div class="selected-colors-tabs">
+                        <button
+                            class="selected-colors-tab active"
+                            data-tab="selected-swatches"
+                        >
+                            Swatches
+                        </button>
+                        <button
+                            class="selected-colors-tab"
+                            data-tab="selected-hex"
+                        >
+                            Hex Input
+                        </button>
+                    </div>
+                    <!-- Swatches tab content -->
+                    <div
+                        class="selected-colors-tab-content active"
+                        id="selected-swatches-tab"
+                    >
+                        <small>Click color to remove</small>
+                        <div id="colorsPreviewContainer"></div>
+                    </div>
+                    <!-- Hex input tab content -->
+                    <div
+                        class="selected-colors-tab-content"
+                        id="selected-hex-tab"
+                    >
+                        <textarea id="colorInput" placeholder="Selected colors">
+FFFFFF, 000000, </textarea
+                        >
+                    </div>
+                </div>
 
-    </div>
-  </div>
-  <footer>
-    <div class="footer__left">
-      <h1>Simple Tileset Generator</h1>
-    </div>
-    <div class="footer__right">
-      <button id="saveSessionBtn" class="sessionBtn">Save Session</button>
-      <button id="loadSessionBtn" class="sessionBtn">Load Session</button>
-      <input type="file" id="loadSessionInput" accept=".json">
-      <button id="downloadBtn">Download Tileset!</button>
-    </div>
-  </footer>
+                <h3>Add Colors</h3>
 
-  <!-- Shape Editor Modal -->
-  <div id="shapeEditorModal" class="modal">
-    <div class="modal-content shape-editor-modal">
-      <div class="modal-body">
-        <div class="editor-workspace">
-          <div class="shape-toolbar">
-            <div class="toolbar-tool" data-tool="add">
-              <span class="tool-label">Add</span>
-              <div class="tool-submenu">
-                <button class="tool-action" data-action="add-circle">Circle</button>
-                <button class="tool-action" data-action="add-square">Square</button>
-                <button class="tool-action" data-action="add-triangle">Triangle</button>
-                <button class="tool-action" data-action="add-hexagon">Hexagon</button>
-              </div>
+                <!-- Color picker tabs -->
+                <div class="color-tabs">
+                    <button class="color-tab active" data-tab="wheel">
+                        Picker
+                    </button>
+                    <button class="color-tab" data-tab="palettes">
+                        Palettes
+                    </button>
+                    <button class="color-tab" data-tab="swatches">
+                        Swatches
+                    </button>
+                </div>
+
+                <!-- Wheel tab content (Picker) -->
+                <div class="color-tab-content active" id="wheel-tab">
+                    <div class="color-wheel-container">
+                        <div class="wheel-sliders">
+                            <div class="wheel-slider-row">
+                                <label>Hue</label>
+                                <input
+                                    type="range"
+                                    id="hueSlider"
+                                    min="0"
+                                    max="360"
+                                    value="0"
+                                    class="hue-slider"
+                                />
+                            </div>
+                            <div class="wheel-slider-row">
+                                <label>Opacity</label>
+                                <input
+                                    type="range"
+                                    id="opacitySlider"
+                                    min="0"
+                                    max="100"
+                                    value="100"
+                                    class="opacity-slider"
+                                />
+                            </div>
+                        </div>
+                        <div class="color-field-wrapper">
+                            <canvas
+                                id="colorFieldCanvas"
+                                width="200"
+                                height="150"
+                            ></canvas>
+                            <div
+                                class="color-field-cursor"
+                                id="colorFieldCursor"
+                            ></div>
+                        </div>
+                        <div class="wheel-preview-row">
+                            <div
+                                class="wheel-color-preview"
+                                id="wheelColorPreview"
+                            ></div>
+                            <button class="wheel-add-btn" id="wheelAddBtn">
+                                Add Color
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Palettes tab content -->
+                <div class="color-tab-content" id="palettes-tab">
+                    <div id="palettesContainer"></div>
+                </div>
+
+                <!-- Swatches tab content -->
+                <div class="color-tab-content" id="swatches-tab">
+                    <div class="complexity_slider_wrapper">
+                        <input
+                            type="range"
+                            id="paletteComplexity"
+                            min="14"
+                            max="128"
+                            value="40"
+                            class="complexity-slider"
+                        />
+                    </div>
+                    <div id="paletteContainer">
+                        <div class="palette" id="colorPalette"></div>
+                    </div>
+                </div>
             </div>
-            <div class="toolbar-tool" data-tool="reflect">
-              <span class="tool-label">Reflect</span>
-              <div class="tool-submenu">
-                <button class="tool-action" data-action="reflect-horizontal">Horizontal</button>
-                <button class="tool-action" data-action="reflect-vertical">Vertical</button>
-              </div>
+        </div>
+        <footer>
+            <div class="footer__left">
+                <h1>Simple Tileset Generator</h1>
             </div>
-            <div class="toolbar-tool" data-tool="align">
-              <span class="tool-label">Align</span>
-              <div class="tool-submenu align-submenu">
-                <small class="submenu-hint">Shift+click paths to multi-select</small>
-                <button class="tool-action" data-action="align-center">Center</button>
-                <button class="tool-action" data-action="align-top">Top</button>
-                <button class="tool-action" data-action="align-bottom">Bottom</button>
-                <button class="tool-action" data-action="align-left">Left</button>
-                <button class="tool-action" data-action="align-right">Right</button>
-              </div>
+            <div class="footer__right">
+                <button id="saveSessionBtn" class="sessionBtn">
+                    Save Session
+                </button>
+                <button id="loadSessionBtn" class="sessionBtn">
+                    Load Session
+                </button>
+                <input type="file" id="loadSessionInput" accept=".json" />
+                <button id="downloadBtn">Download Tileset!</button>
             </div>
-            <div class="toolbar-tool" data-tool="cut">
-              <span class="tool-label">Cut</span>
-              <div class="tool-submenu">
-                <button class="tool-action" data-action="boolean-cut">Boolean Cut</button>
-                <button class="tool-action" data-action="toggle-hole">Toggle Hole</button>
-              </div>
+        </footer>
+
+        <!-- Shape Editor Modal -->
+        <div id="shapeEditorModal" class="modal">
+            <div class="modal-content shape-editor-modal">
+                <div class="modal-body">
+                    <div class="editor-workspace">
+                        <div class="shape-toolbar">
+                            <div class="toolbar-tool" data-tool="add">
+                                <span class="tool-label">Add</span>
+                                <div class="tool-submenu">
+                                    <button
+                                        class="tool-action"
+                                        data-action="add-circle"
+                                    >
+                                        Circle
+                                    </button>
+                                    <button
+                                        class="tool-action"
+                                        data-action="add-square"
+                                    >
+                                        Square
+                                    </button>
+                                    <button
+                                        class="tool-action"
+                                        data-action="add-triangle"
+                                    >
+                                        Triangle
+                                    </button>
+                                    <button
+                                        class="tool-action"
+                                        data-action="add-hexagon"
+                                    >
+                                        Hexagon
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="toolbar-tool" data-tool="reflect">
+                                <span class="tool-label">Reflect</span>
+                                <div class="tool-submenu">
+                                    <button
+                                        class="tool-action"
+                                        data-action="reflect-horizontal"
+                                    >
+                                        Horizontal
+                                    </button>
+                                    <button
+                                        class="tool-action"
+                                        data-action="reflect-vertical"
+                                    >
+                                        Vertical
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="toolbar-tool" data-tool="align">
+                                <span class="tool-label">Align</span>
+                                <div class="tool-submenu align-submenu">
+                                    <small class="submenu-hint"
+                                        >Shift+click paths to
+                                        multi-select</small
+                                    >
+                                    <button
+                                        class="tool-action"
+                                        data-action="align-center"
+                                    >
+                                        Center
+                                    </button>
+                                    <button
+                                        class="tool-action"
+                                        data-action="align-top"
+                                    >
+                                        Top
+                                    </button>
+                                    <button
+                                        class="tool-action"
+                                        data-action="align-bottom"
+                                    >
+                                        Bottom
+                                    </button>
+                                    <button
+                                        class="tool-action"
+                                        data-action="align-left"
+                                    >
+                                        Left
+                                    </button>
+                                    <button
+                                        class="tool-action"
+                                        data-action="align-right"
+                                    >
+                                        Right
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="toolbar-tool" data-tool="cut">
+                                <span class="tool-label">Cut</span>
+                                <div class="tool-submenu">
+                                    <button
+                                        class="tool-action"
+                                        data-action="boolean-cut"
+                                    >
+                                        Boolean Cut
+                                    </button>
+                                    <button
+                                        class="tool-action"
+                                        data-action="toggle-hole"
+                                    >
+                                        Toggle Hole
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="toolbar-divider"></div>
+                            <label class="toolbar-checkbox">
+                                <input
+                                    type="checkbox"
+                                    id="cropToBoundsCheckbox"
+                                    checked
+                                />
+                                <span>Crop</span>
+                            </label>
+                        </div>
+                        <div id="shapeEditorCanvas"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <a href="#" id="shapeEditorHelpLink" class="help-link"
+                        >How to use</a
+                    >
+                    <div class="modal-footer-buttons">
+                        <button id="cancelEditorBtn" class="sessionBtn">
+                            Cancel
+                        </button>
+                        <button id="saveShapeBtn" class="editor-save-btn">
+                            Save Shape
+                        </button>
+                    </div>
+                </div>
             </div>
-            <div class="toolbar-divider"></div>
-            <label class="toolbar-checkbox">
-              <input type="checkbox" id="cropToBoundsCheckbox" checked>
-              <span>Crop</span>
-            </label>
-          </div>
-          <div id="shapeEditorCanvas"></div>
         </div>
-      </div>
-      <div class="modal-footer">
-        <a href="#" id="shapeEditorHelpLink" class="help-link">How to use</a>
-        <div class="modal-footer-buttons">
-          <button id="cancelEditorBtn" class="sessionBtn">Cancel</button>
-          <button id="saveShapeBtn" class="editor-save-btn">Save Shape</button>
-        </div>
-      </div>
-    </div>
-  </div>
 
-  <!-- Shape Editor Help Modal -->
-  <div id="shapeEditorHelpModal" class="modal">
-    <div class="modal-content help-modal">
-      <div class="modal-header">
-        <h3>How to use the Shape Editor</h3>
-        <button id="closeShapeHelpBtn" class="modal-close">&times;</button>
-      </div>
-      <div class="modal-body">
-        <table class="help-table">
-          <thead>
-            <tr>
-              <th>Action</th>
-              <th>How to</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Show resize/rotate handles</td>
-              <td>Hold CMD/Ctrl</td>
-            </tr>
-            <tr>
-              <td>Constrain to axis</td>
-              <td>Shift + drag</td>
-            </tr>
-            <tr>
-              <td>Lock aspect ratio while resizing</td>
-              <td>Shift + resize</td>
-            </tr>
-            <tr>
-              <td>Snap rotation to 45&deg;</td>
-              <td>Shift + rotate</td>
-            </tr>
-            <tr>
-              <td>Duplicate shape</td>
-              <td>Option/Alt + drag</td>
-            </tr>
-            <tr>
-              <td>Duplicate in place</td>
-              <td>Shift + D</td>
-            </tr>
-            <tr>
-              <td>Multi-select paths</td>
-              <td>Shift + click</td>
-            </tr>
-            <tr>
-              <td>Add point to path</td>
-              <td>Click on edge</td>
-            </tr>
-            <tr>
-              <td>Delete selected point</td>
-              <td>Backspace/Delete</td>
-            </tr>
-            <tr>
-              <td>Toggle curve/angle point</td>
-              <td>Option/Alt + click point</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
-  <!-- Pattern Editor Modal -->
-  <div id="patternEditorModal" class="modal">
-    <div class="modal-content pattern-editor-modal">
-      <div class="modal-body">
-        <div class="pattern-editor-workspace">
-          <!-- Left side: Toolbar -->
-          <div class="pattern-toolbar">
-            <div class="pattern-size-control">
-              <span class="pattern-toolbar-label">Grid Size</span>
-              <div class="pattern-size-btn-group">
-                <button class="pattern-size-btn" data-size="4">4</button>
-                <button class="pattern-size-btn active" data-size="8">8</button>
-                <button class="pattern-size-btn" data-size="16">16</button>
-                <button class="pattern-size-btn" data-size="32">32</button>
-                <button class="pattern-size-btn pattern-size-custom-btn" id="patternSizeCustomBtn">Custom</button>
-              </div>
-              <input type="hidden" id="patternSizeInput" value="8">
+        <!-- Shape Editor Help Modal -->
+        <div id="shapeEditorHelpModal" class="modal">
+            <div class="modal-content help-modal">
+                <div class="modal-header">
+                    <h3>How to use the Shape Editor</h3>
+                    <button id="closeShapeHelpBtn" class="modal-close">
+                        &times;
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <table class="help-table">
+                        <thead>
+                            <tr>
+                                <th>Action</th>
+                                <th>How to</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Show resize/rotate handles</td>
+                                <td>Hold CMD/Ctrl</td>
+                            </tr>
+                            <tr>
+                                <td>Constrain to axis</td>
+                                <td>Shift + drag</td>
+                            </tr>
+                            <tr>
+                                <td>Lock aspect ratio while resizing</td>
+                                <td>Shift + resize</td>
+                            </tr>
+                            <tr>
+                                <td>Snap rotation to 45&deg;</td>
+                                <td>Shift + rotate</td>
+                            </tr>
+                            <tr>
+                                <td>Duplicate shape</td>
+                                <td>Option/Alt + drag</td>
+                            </tr>
+                            <tr>
+                                <td>Duplicate in place</td>
+                                <td>Shift + D</td>
+                            </tr>
+                            <tr>
+                                <td>Multi-select paths</td>
+                                <td>Shift + click</td>
+                            </tr>
+                            <tr>
+                                <td>Add point to path</td>
+                                <td>Click on edge</td>
+                            </tr>
+                            <tr>
+                                <td>Delete selected point</td>
+                                <td>Backspace/Delete</td>
+                            </tr>
+                            <tr>
+                                <td>Toggle curve/angle point</td>
+                                <td>Option/Alt + click point</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
-            <div class="pattern-toolbar-divider"></div>
-            <button id="patternInvertBtn" class="pattern-tool-btn" title="Invert pattern">Invert</button>
-            <button id="patternUploadBtn" class="pattern-tool-btn" title="Upload image">Upload</button>
-            <button id="patternDownloadBtn" class="pattern-tool-btn" title="Download pattern">Download</button>
-            <input type="file" id="patternUploadInput" accept="image/*" style="display: none;">
-          </div>
+        </div>
 
-          <!-- Center: Editor canvas -->
-          <div class="pattern-editor-container">
-            <div class="pattern-editor-zoom">
-              <span id="patternEditorZoomDisplay">1:1</span>
-              <input type="range" id="patternEditorZoom" min="1" max="100" value="100" step="1">
+        <!-- Pattern Editor Modal -->
+        <div id="patternEditorModal" class="modal">
+            <div class="modal-content pattern-editor-modal">
+                <div class="modal-body">
+                    <div class="pattern-editor-workspace">
+                        <!-- Left side: Toolbar -->
+                        <div class="pattern-toolbar">
+                            <div class="pattern-size-control">
+                                <span class="pattern-toolbar-label"
+                                    >Grid Size</span
+                                >
+                                <div class="pattern-size-btn-group">
+                                    <button
+                                        class="pattern-size-btn"
+                                        data-size="4"
+                                    >
+                                        4
+                                    </button>
+                                    <button
+                                        class="pattern-size-btn active"
+                                        data-size="8"
+                                    >
+                                        8
+                                    </button>
+                                    <button
+                                        class="pattern-size-btn"
+                                        data-size="16"
+                                    >
+                                        16
+                                    </button>
+                                    <button
+                                        class="pattern-size-btn"
+                                        data-size="32"
+                                    >
+                                        32
+                                    </button>
+                                    <button
+                                        class="pattern-size-btn pattern-size-custom-btn"
+                                        id="patternSizeCustomBtn"
+                                    >
+                                        Custom
+                                    </button>
+                                </div>
+                                <input
+                                    type="hidden"
+                                    id="patternSizeInput"
+                                    value="8"
+                                />
+                            </div>
+                            <div class="pattern-toolbar-divider"></div>
+                            <button
+                                id="patternInvertBtn"
+                                class="pattern-tool-btn"
+                                title="Invert pattern"
+                            >
+                                Invert
+                            </button>
+                            <button
+                                id="patternUploadBtn"
+                                class="pattern-tool-btn"
+                                title="Upload image"
+                            >
+                                Upload
+                            </button>
+                            <button
+                                id="patternDownloadBtn"
+                                class="pattern-tool-btn"
+                                title="Download pattern"
+                            >
+                                Download
+                            </button>
+                            <input
+                                type="file"
+                                id="patternUploadInput"
+                                accept="image/*"
+                                style="display: none"
+                            />
+                        </div>
+
+                        <!-- Center: Editor canvas -->
+                        <div class="pattern-editor-container">
+                            <div class="pattern-editor-zoom">
+                                <span id="patternEditorZoomDisplay">1:1</span>
+                                <input
+                                    type="range"
+                                    id="patternEditorZoom"
+                                    min="1"
+                                    max="100"
+                                    value="100"
+                                    step="1"
+                                />
+                            </div>
+                            <div class="pattern-canvas-wrapper">
+                                <canvas id="patternEditorCanvas"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Right side: Preview -->
+                        <div class="pattern-preview-container">
+                            <div class="pattern-preview-wrapper">
+                                <canvas id="patternPreviewCanvas"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="cancelPatternEditorBtn" class="sessionBtn">
+                        Cancel
+                    </button>
+                    <button id="savePatternBtn" class="editor-save-btn">
+                        Save Pattern
+                    </button>
+                </div>
             </div>
-            <div class="pattern-canvas-wrapper">
-              <canvas id="patternEditorCanvas"></canvas>
+        </div>
+
+        <!-- Custom Size Modal -->
+        <div id="customSizeModal" class="modal">
+            <div class="modal-content custom-size-modal">
+                <div class="modal-header">
+                    <h3>Custom Size</h3>
+                    <button id="closeCustomSizeBtn" class="modal-close">
+                        &times;
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="custom-size-warning">
+                        <strong>Warning: Anti-aliasing Ahead </strong>
+                        <p>
+                            Using a custom tile size that isn't cleanly
+                            divisible by your pattern grid means pattern tiles
+                            will have anti-aliased (blurry) edges. (It won't
+                            have any effect on shape tiles.)
+                        </p>
+                        <p>
+                            If you're after pixel-perfection, use one of the
+                            preset sizes (8, 16, 32, 64, 128, 256) which work
+                            nicely with the pattern grid sizes (8, 16, 32).
+                        </p>
+                    </div>
+                    <div class="custom-size-input-row">
+                        <label for="customSizeValue">Enter custom size:</label>
+                        <input
+                            type="number"
+                            id="customSizeValue"
+                            min="1"
+                            max="512"
+                            value="64"
+                        />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="cancelCustomSizeBtn" class="sessionBtn">
+                        Cancel
+                    </button>
+                    <button id="applyCustomSizeBtn" class="editor-save-btn">
+                        Apply
+                    </button>
+                </div>
             </div>
-          </div>
+        </div>
 
-          <!-- Right side: Preview -->
-          <div class="pattern-preview-container">
-            <div class="pattern-preview-wrapper">
-              <canvas id="patternPreviewCanvas"></canvas>
+        <!-- Custom Pattern Size Modal -->
+        <div id="customPatternSizeModal" class="modal">
+            <div class="modal-content custom-size-modal">
+                <div class="modal-header">
+                    <h3>Custom Grid Size</h3>
+                    <button id="closeCustomPatternSizeBtn" class="modal-close">
+                        &times;
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="custom-size-warning">
+                        <strong>Warning: Anti-aliasing Ahead </strong>
+                        <p>
+                            Using a custom grid size that doesn't divide evenly
+                            into your tile size will create anti-aliased
+                            (blurry) edges when the pattern is exported.
+                        </p>
+                        <p>
+                            If you're after pixel-perfection, use the preset
+                            options for both tile and grid sizes.
+                        </p>
+                    </div>
+                    <div class="custom-size-input-row">
+                        <label for="customPatternSizeValue"
+                            >Enter custom grid size:</label
+                        >
+                        <input
+                            type="number"
+                            id="customPatternSizeValue"
+                            min="2"
+                            max="64"
+                            value="8"
+                        />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="cancelCustomPatternSizeBtn" class="sessionBtn">
+                        Cancel
+                    </button>
+                    <button
+                        id="applyCustomPatternSizeBtn"
+                        class="editor-save-btn"
+                    >
+                        Apply
+                    </button>
+                </div>
             </div>
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button id="cancelPatternEditorBtn" class="sessionBtn">Cancel</button>
-        <button id="savePatternBtn" class="editor-save-btn">Save Pattern</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Custom Size Modal -->
-  <div id="customSizeModal" class="modal">
-    <div class="modal-content custom-size-modal">
-      <div class="modal-header">
-        <h3>Custom Size</h3>
-        <button id="closeCustomSizeBtn" class="modal-close">&times;</button>
-      </div>
-      <div class="modal-body">
-        <div class="custom-size-warning">
-          <strong>Warning: Anti-aliasing Issues</strong>
-          <p>Using a custom size that isn't cleanly divisible by your pattern grid size may result in blurry or anti-aliased edges in your tileset.</p>
-          <p>For crisp pixel-perfect results, use one of the preset sizes (8, 16, 32, 64, 128, 256) which are designed to work seamlessly with the pattern grid sizes (8, 16, 32).</p>
-        </div>
-        <div class="custom-size-input-row">
-          <label for="customSizeValue">Enter custom size:</label>
-          <input type="number" id="customSizeValue" min="1" max="512" value="64">
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button id="cancelCustomSizeBtn" class="sessionBtn">Cancel</button>
-        <button id="applyCustomSizeBtn" class="editor-save-btn">Apply</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Custom Pattern Size Modal -->
-  <div id="customPatternSizeModal" class="modal">
-    <div class="modal-content custom-size-modal">
-      <div class="modal-header">
-        <h3>Custom Grid Size</h3>
-        <button id="closeCustomPatternSizeBtn" class="modal-close">&times;</button>
-      </div>
-      <div class="modal-body">
-        <div class="custom-size-warning">
-          <strong>Warning: Anti-aliasing Issues</strong>
-          <p>Using a custom grid size that doesn't divide evenly into your tile size may result in blurry or anti-aliased edges when the pattern is rendered.</p>
-          <p>For crisp pixel-perfect results, use one of the preset grid sizes (8, 16, 32) which are designed to divide cleanly into tile sizes.</p>
-        </div>
-        <div class="custom-size-input-row">
-          <label for="customPatternSizeValue">Enter custom grid size:</label>
-          <input type="number" id="customPatternSizeValue" min="2" max="64" value="8">
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button id="cancelCustomPatternSizeBtn" class="sessionBtn">Cancel</button>
-        <button id="applyCustomPatternSizeBtn" class="editor-save-btn">Apply</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Tile Tester Modal -->
-  <div id="tileTesterModal" class="modal tester-modal">
-    <div class="tester-modal-content">
-      <!-- Close button -->
-      <button id="tileTesterCloseBtn" class="tester-close-btn">&times;</button>
-
-      <!-- Floating Palette Window -->
-      <div id="tileTesterPaletteWindow" class="tester-palette-window">
-        <div id="tileTesterPaletteHeader" class="tester-palette-header">
-          <span>Tile Palette</span>
-          <div class="tester-palette-controls">
-            <label class="tester-fit-label">
-              <input type="checkbox" id="tileTesterPaletteFit"> Fit
-            </label>
-            <a href="#" id="tileTesterHideBtn" class="tester-hide-link">Hide</a>
-          </div>
-        </div>
-        <div id="tileTesterPaletteContainer" class="tester-palette-container">
-          <div id="tileTesterPaletteWrapper" class="tester-palette-wrapper">
-            <canvas id="tileTesterPaletteCanvas"></canvas>
-          </div>
         </div>
 
-        <!-- Section Divider (resizes palette vs layers) -->
-        <div id="tileTesterSectionDivider" class="tester-section-divider"></div>
+        <!-- Tile Tester Modal -->
+        <div id="tileTesterModal" class="modal tester-modal">
+            <div class="tester-modal-content">
+                <!-- Close button -->
+                <button id="tileTesterCloseBtn" class="tester-close-btn">
+                    &times;
+                </button>
 
-        <!-- Layers Section -->
-        <div id="tileTesterLayersSection" class="tester-layers-section">
-          <div class="tester-layers-header">
-            <span>Layers</span>
-            <button id="tileTesterAddLayerBtn" class="tester-add-layer-btn">+</button>
-          </div>
-          <div id="tileTesterLayersList" class="tester-layers-list">
-            <!-- Layers will be rendered here dynamically -->
-          </div>
+                <!-- Floating Palette Window -->
+                <div id="tileTesterPaletteWindow" class="tester-palette-window">
+                    <div
+                        id="tileTesterPaletteHeader"
+                        class="tester-palette-header"
+                    >
+                        <span>Tile Palette</span>
+                        <div class="tester-palette-controls">
+                            <label class="tester-fit-label">
+                                <input
+                                    type="checkbox"
+                                    id="tileTesterPaletteFit"
+                                />
+                                Fit
+                            </label>
+                            <a
+                                href="#"
+                                id="tileTesterHideBtn"
+                                class="tester-hide-link"
+                                >Hide</a
+                            >
+                        </div>
+                    </div>
+                    <div
+                        id="tileTesterPaletteContainer"
+                        class="tester-palette-container"
+                    >
+                        <div
+                            id="tileTesterPaletteWrapper"
+                            class="tester-palette-wrapper"
+                        >
+                            <canvas id="tileTesterPaletteCanvas"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Section Divider (resizes palette vs layers) -->
+                    <div
+                        id="tileTesterSectionDivider"
+                        class="tester-section-divider"
+                    ></div>
+
+                    <!-- Layers Section -->
+                    <div
+                        id="tileTesterLayersSection"
+                        class="tester-layers-section"
+                    >
+                        <div class="tester-layers-header">
+                            <span>Layers</span>
+                            <button
+                                id="tileTesterAddLayerBtn"
+                                class="tester-add-layer-btn"
+                            >
+                                +
+                            </button>
+                        </div>
+                        <div
+                            id="tileTesterLayersList"
+                            class="tester-layers-list"
+                        >
+                            <!-- Layers will be rendered here dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Bottom Resize Handle (resizes entire window height) -->
+                    <div
+                        id="tileTesterResizeHandle"
+                        class="tester-resize-handle"
+                    ></div>
+                </div>
+
+                <!-- Main Canvas Area -->
+                <div class="tester-main-area">
+                    <div class="tester-canvas-container">
+                        <canvas id="tileTesterMainCanvas"></canvas>
+                        <div
+                            id="tileTesterGridOverlay"
+                            class="tester-grid-overlay"
+                        ></div>
+                    </div>
+
+                    <!-- Bottom Left Zoom Controls -->
+                    <div class="tester-zoom-controls">
+                        <a
+                            href="#"
+                            class="tester-zoom-link active"
+                            data-zoom="1"
+                            >1x</a
+                        >
+                        <a href="#" class="tester-zoom-link" data-zoom="2"
+                            >2x</a
+                        >
+                        <a href="#" class="tester-zoom-link" data-zoom="3"
+                            >3x</a
+                        >
+                        <a href="#" class="tester-zoom-link" data-zoom="4"
+                            >4x</a
+                        >
+                    </div>
+
+                    <!-- Bottom Right Controls -->
+                    <div class="tester-controls">
+                        <input
+                            type="color"
+                            id="tileTesterBgColorPicker"
+                            class="tester-color-picker-hidden"
+                        />
+                        <button
+                            id="tileTesterBgColorBtn"
+                            class="tester-control-btn"
+                        >
+                            Background
+                        </button>
+                        <button
+                            id="tileTesterClearBtn"
+                            class="tester-control-btn"
+                        >
+                            Clear
+                        </button>
+                        <button
+                            id="tileTesterDownloadBtn"
+                            class="tester-control-btn tester-download-btn"
+                        >
+                            Download
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <!-- Bottom Resize Handle (resizes entire window height) -->
-        <div id="tileTesterResizeHandle" class="tester-resize-handle"></div>
-      </div>
+        <!-- Scripts loaded in dependency order -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/two.js/0.8.10/two.min.js"></script>
+        <script src="scripts/config.js"></script>
 
-      <!-- Main Canvas Area -->
-      <div class="tester-main-area">
-        <div class="tester-canvas-container">
-          <canvas id="tileTesterMainCanvas"></canvas>
-          <div id="tileTesterGridOverlay" class="tester-grid-overlay"></div>
-        </div>
+        <!-- Shape registry and individual shape renderers -->
+        <script src="scripts/shapes/registry.js"></script>
 
-        <!-- Bottom Left Zoom Controls -->
-        <div class="tester-zoom-controls">
-          <a href="#" class="tester-zoom-link active" data-zoom="1">1x</a>
-          <a href="#" class="tester-zoom-link" data-zoom="2">2x</a>
-          <a href="#" class="tester-zoom-link" data-zoom="3">3x</a>
-          <a href="#" class="tester-zoom-link" data-zoom="4">4x</a>
-        </div>
+        <script src="scripts/shapes/square.js"></script>
+        <script src="scripts/shapes/circle.js"></script>
+        <script src="scripts/shapes/triangle.js"></script>
+        <script src="scripts/shapes/diamond.js"></script>
+        <script src="scripts/shapes/topTriangle.js"></script>
+        <script src="scripts/shapes/bottomTriangle.js"></script>
+        <script src="scripts/shapes/leftTriangle.js"></script>
+        <script src="scripts/shapes/rightTriangle.js"></script>
+        <script src="scripts/shapes/angleTopLeft.js"></script>
+        <script src="scripts/shapes/angleTopRight.js"></script>
+        <script src="scripts/shapes/angleBottomLeft.js"></script>
+        <script src="scripts/shapes/angleBottomRight.js"></script>
+        <script src="scripts/shapes/halfCircleBottom.js"></script>
+        <script src="scripts/shapes/halfCircleTop.js"></script>
+        <script src="scripts/shapes/halfCircleLeft.js"></script>
+        <script src="scripts/shapes/halfCircleRight.js"></script>
+        <script src="scripts/shapes/quarterCircleTopLeft.js"></script>
+        <script src="scripts/shapes/quarterCircleTopRight.js"></script>
+        <script src="scripts/shapes/quarterCircleBottomLeft.js"></script>
+        <script src="scripts/shapes/quarterCircleBottomRight.js"></script>
+        <script src="scripts/shapes/smallCircle.js"></script>
+        <script src="scripts/shapes/donut.js"></script>
+        <script src="scripts/shapes/bigDots.js"></script>
+        <script src="scripts/shapes/smallDots.js"></script>
+        <script src="scripts/shapes/lineUp.js"></script>
+        <script src="scripts/shapes/lineAcross.js"></script>
+        <script src="scripts/shapes/waves.js"></script>
+        <script src="scripts/shapes/wavesLow.js"></script>
+        <script src="scripts/shapes/spikes.js"></script>
 
-        <!-- Bottom Right Controls -->
-        <div class="tester-controls">
-          <input type="color" id="tileTesterBgColorPicker" class="tester-color-picker-hidden">
-          <button id="tileTesterBgColorBtn" class="tester-control-btn">Background</button>
-          <button id="tileTesterClearBtn" class="tester-control-btn">Clear</button>
-          <button id="tileTesterDownloadBtn" class="tester-control-btn tester-download-btn">Download</button>
-        </div>
-      </div>
-    </div>
-  </div>
+        <!-- Pattern registry and individual pattern renderers -->
+        <script src="scripts/patterns/registry.js"></script>
+        <script src="scripts/patterns/checkerboard.js"></script>
+        <script src="scripts/patterns/diagonalStripes.js"></script>
+        <script src="scripts/patterns/dots.js"></script>
+        <script src="scripts/patterns/horizontalStripes.js"></script>
+        <script src="scripts/patterns/verticalStripes.js"></script>
+        <script src="scripts/patterns/crosshatch.js"></script>
+        <script src="scripts/patterns/bricks.js"></script>
+        <script src="scripts/patterns/zigzag.js"></script>
+        <script src="scripts/patterns/ditherLight.js"></script>
+        <script src="scripts/patterns/ditherMediumLight.js"></script>
+        <script src="scripts/patterns/ditherMedium.js"></script>
+        <script src="scripts/patterns/ditherMediumDense.js"></script>
+        <script src="scripts/patterns/ditherDense.js"></script>
+        <script src="scripts/patterns/ditherHeavy.js"></script>
 
-  <!-- Scripts loaded in dependency order -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/two.js/0.8.10/two.min.js"></script>
-  <script src="scripts/config.js"></script>
+        <!-- Core application scripts -->
+        <script src="scripts/shapeData.js"></script>
+        <script src="scripts/patternData.js"></script>
+        <script src="scripts/shapes.js"></script>
+        <script src="scripts/patterns.js"></script>
+        <script src="scripts/canvas.js"></script>
+        <script src="scripts/sizeControls.js"></script>
+        <script src="scripts/colors.js"></script>
+        <script src="scripts/utils.js"></script>
 
-  <!-- Shape registry and individual shape renderers -->
-  <script src="scripts/shapes/registry.js"></script>
+        <!-- Shape Editor function modules (loaded in dependency order) -->
+        <script src="scripts/editorFunctions/state.js"></script>
+        <script src="scripts/editorFunctions/coordinates.js"></script>
+        <script src="scripts/editorFunctions/grid.js"></script>
+        <script src="scripts/editorFunctions/pathManagement.js"></script>
+        <script src="scripts/editorFunctions/anchorManagement.js"></script>
+        <script src="scripts/editorFunctions/pointOperations.js"></script>
+        <script src="scripts/editorFunctions/pathNavigation.js"></script>
+        <script src="scripts/editorFunctions/eventHandlers.js"></script>
+        <script src="scripts/editorFunctions/shapeToolbar.js"></script>
+        <script src="scripts/editorFunctions/modalManager.js"></script>
+        <script src="scripts/editor.js"></script>
 
-  <script src="scripts/shapes/square.js"></script>
-  <script src="scripts/shapes/circle.js"></script>
-  <script src="scripts/shapes/triangle.js"></script>
-  <script src="scripts/shapes/diamond.js"></script>
-  <script src="scripts/shapes/topTriangle.js"></script>
-  <script src="scripts/shapes/bottomTriangle.js"></script>
-  <script src="scripts/shapes/leftTriangle.js"></script>
-  <script src="scripts/shapes/rightTriangle.js"></script>
-  <script src="scripts/shapes/angleTopLeft.js"></script>
-  <script src="scripts/shapes/angleTopRight.js"></script>
-  <script src="scripts/shapes/angleBottomLeft.js"></script>
-  <script src="scripts/shapes/angleBottomRight.js"></script>
-  <script src="scripts/shapes/halfCircleBottom.js"></script>
-  <script src="scripts/shapes/halfCircleTop.js"></script>
-  <script src="scripts/shapes/halfCircleLeft.js"></script>
-  <script src="scripts/shapes/halfCircleRight.js"></script>
-  <script src="scripts/shapes/quarterCircleTopLeft.js"></script>
-  <script src="scripts/shapes/quarterCircleTopRight.js"></script>
-  <script src="scripts/shapes/quarterCircleBottomLeft.js"></script>
-  <script src="scripts/shapes/quarterCircleBottomRight.js"></script>
-  <script src="scripts/shapes/smallCircle.js"></script>
-  <script src="scripts/shapes/donut.js"></script>
-  <script src="scripts/shapes/bigDots.js"></script>
-  <script src="scripts/shapes/smallDots.js"></script>
-  <script src="scripts/shapes/lineUp.js"></script>
-  <script src="scripts/shapes/lineAcross.js"></script>
-  <script src="scripts/shapes/waves.js"></script>
-  <script src="scripts/shapes/wavesLow.js"></script>
-  <script src="scripts/shapes/spikes.js"></script>
+        <!-- Pattern Editor function modules -->
+        <script src="scripts/patternEditorFunctions/state.js"></script>
+        <script src="scripts/patternEditorFunctions/canvas.js"></script>
+        <script src="scripts/patternEditorFunctions/drawing.js"></script>
+        <script src="scripts/patternEditorFunctions/events.js"></script>
+        <script src="scripts/patternEditorFunctions/modalManager.js"></script>
 
-  <!-- Pattern registry and individual pattern renderers -->
-  <script src="scripts/patterns/registry.js"></script>
-  <script src="scripts/patterns/checkerboard.js"></script>
-  <script src="scripts/patterns/diagonalStripes.js"></script>
-  <script src="scripts/patterns/dots.js"></script>
-  <script src="scripts/patterns/horizontalStripes.js"></script>
-  <script src="scripts/patterns/verticalStripes.js"></script>
-  <script src="scripts/patterns/crosshatch.js"></script>
-  <script src="scripts/patterns/bricks.js"></script>
-  <script src="scripts/patterns/zigzag.js"></script>
-  <script src="scripts/patterns/ditherLight.js"></script>
-  <script src="scripts/patterns/ditherMediumLight.js"></script>
-  <script src="scripts/patterns/ditherMedium.js"></script>
-  <script src="scripts/patterns/ditherMediumDense.js"></script>
-  <script src="scripts/patterns/ditherDense.js"></script>
-  <script src="scripts/patterns/ditherHeavy.js"></script>
+        <!-- Tile Tester function modules -->
+        <script src="scripts/tileTester/state.js"></script>
+        <script src="scripts/tileTester/paletteWindow.js"></script>
+        <script src="scripts/tileTester/mainCanvas.js"></script>
+        <script src="scripts/tileTester/layersPanel.js"></script>
+        <script src="scripts/tileTester/events.js"></script>
+        <script src="scripts/tileTester/modalManager.js"></script>
 
-  <!-- Core application scripts -->
-  <script src="scripts/shapeData.js"></script>
-  <script src="scripts/patternData.js"></script>
-  <script src="scripts/shapes.js"></script>
-  <script src="scripts/patterns.js"></script>
-  <script src="scripts/canvas.js"></script>
-  <script src="scripts/sizeControls.js"></script>
-  <script src="scripts/colors.js"></script>
-  <script src="scripts/utils.js"></script>
-
-  <!-- Shape Editor function modules (loaded in dependency order) -->
-  <script src="scripts/editorFunctions/state.js"></script>
-  <script src="scripts/editorFunctions/coordinates.js"></script>
-  <script src="scripts/editorFunctions/grid.js"></script>
-  <script src="scripts/editorFunctions/pathManagement.js"></script>
-  <script src="scripts/editorFunctions/anchorManagement.js"></script>
-  <script src="scripts/editorFunctions/pointOperations.js"></script>
-  <script src="scripts/editorFunctions/pathNavigation.js"></script>
-  <script src="scripts/editorFunctions/eventHandlers.js"></script>
-  <script src="scripts/editorFunctions/shapeToolbar.js"></script>
-  <script src="scripts/editorFunctions/modalManager.js"></script>
-  <script src="scripts/editor.js"></script>
-
-  <!-- Pattern Editor function modules -->
-  <script src="scripts/patternEditorFunctions/state.js"></script>
-  <script src="scripts/patternEditorFunctions/canvas.js"></script>
-  <script src="scripts/patternEditorFunctions/drawing.js"></script>
-  <script src="scripts/patternEditorFunctions/events.js"></script>
-  <script src="scripts/patternEditorFunctions/modalManager.js"></script>
-
-  <!-- Tile Tester function modules -->
-  <script src="scripts/tileTester/state.js"></script>
-  <script src="scripts/tileTester/paletteWindow.js"></script>
-  <script src="scripts/tileTester/mainCanvas.js"></script>
-  <script src="scripts/tileTester/layersPanel.js"></script>
-  <script src="scripts/tileTester/events.js"></script>
-  <script src="scripts/tileTester/modalManager.js"></script>
-
-  <script src="scripts/main.js"></script>
-  <script src="scripts/session.js"></script>
-
-</body>
-
+        <script src="scripts/main.js"></script>
+        <script src="scripts/session.js"></script>
+    </body>
 </html>

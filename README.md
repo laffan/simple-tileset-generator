@@ -1,44 +1,14 @@
 # Simple Tileset Generator
 
-A browser-based tool for creating pixel art tilesets. Select shapes, patterns, and colors to generate tilesets for use in games or creative projects.
+A browser-based tool for creating tilesets.  
 
 [Try it out!](https://laffan.github.io/simple-tileset-generator/)
 
-## Getting Started
-
-Open `index.html` in a web browser. No installation required.
-
-## Features
+## Basics
 
 ### Tile Size
 
-Select from preset sizes (8, 16, 32, 64, 128, 256) or enter a custom size. Preset sizes work best with pattern grids.
-
-### Shapes
-
-The left panel contains available shapes. Each row in the generated tileset represents one selected shape, with columns for each color.
-
-**Shape Controls:**
-- Check/uncheck shapes to include them
-- Use "all" or "none" links for quick selection
-- Hover over a shape to reveal: duplicate (+), edit (pencil), delete (-), reorder (drag handle)
-
-### Patterns
-
-Patterns work like shapes but use pixel-based designs. They appear below shapes in the generated tileset.
-
-### Colors
-
-**Selected Colors:** View current colors as swatches (click to remove) or switch to Hex Input for manual entry.
-
-**Add Colors:**
-- **Picker** - HSL color wheel with hue/opacity sliders
-- **Palettes** - Pre-made color palettes from various sources
-- **Swatches** - Procedurally generated color grid
-
-### Preview
-
-The preview shows your generated tileset. Enable "Fit" to scale the preview to fit the available space.
+Select from preset sizes (8, 16, 32, 64, 128, 256) or enter a custom size. (Preset sizes work best if you're going to use pattern tiles and want to avoid anti-aliasing.)
 
 ### Tile Tester
 
@@ -72,16 +42,6 @@ Click the pencil icon on any pattern to open the pixel editor.
 - **Save Session** - Downloads your configuration as JSON
 - **Load Session** - Restores a saved session
 
-### Download
-
-Click "Download Tileset!" to save as PNG.
-
-## Tips
-
-- Use tile sizes divisible by pattern grid sizes for crisp results
-- Tileset width = colors × tile size
-- Tileset height = (shapes + patterns) × tile size
-
 ## Credits
 
-Designed by me, coded by ChatGPT
+Designed by me, coded by Claude.
