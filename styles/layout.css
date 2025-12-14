@@ -17,9 +17,11 @@ header h1 {
   gap: 10px;
 }
 
-.header-tile-size label {
+.header-tile-size h3 {
+  margin: 0;
   font-size: 14px;
-  color: #666;
+  font-weight: 600;
+  display: inline;
 }
 
 /* Tile size preset buttons */
@@ -29,41 +31,39 @@ header h1 {
 }
 
 .tile-size-btn {
-  padding: 6px 12px;
-  border: 1px solid #ccc;
-  background: #fff;
+  padding: 0;
+  border: none;
+  background: transparent;
   cursor: pointer;
   font-size: 13px;
-  border-radius: 4px;
-  min-width: 40px;
+  border-radius: 0;
+  min-width: 0;
   text-align: center;
-  transition: all 0.15s ease;
+  color: #666;
+  text-decoration: underline;
 }
 
 .tile-size-btn:hover {
-  background: #f0f0f0;
-  border-color: #999;
+  color: #333;
 }
 
 .tile-size-btn.active {
-  background: #007bff;
-  color: white;
-  border-color: #007bff;
+  color: #333;
+  font-weight: 600;
+  text-decoration: none;
 }
 
 .tile-size-btn.tile-size-custom {
-  min-width: 60px;
+  min-width: 0;
 }
 
 .tile-size-btn.tile-size-custom.has-value {
-  background: #6c757d;
-  color: white;
-  border-color: #6c757d;
+  color: #333;
+  font-weight: 600;
 }
 
 .tile-size-btn.tile-size-custom.has-value.active {
-  background: #007bff;
-  border-color: #007bff;
+  text-decoration: none;
 }
 
 .Columns {
@@ -78,8 +78,6 @@ header h1 {
   overflow: scroll;
   text-align: center;
   max-height: 300px;
-  max-width: 50vw;
-
 }
 
 footer {

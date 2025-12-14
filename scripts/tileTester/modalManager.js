@@ -1,5 +1,8 @@
 /* Tile Tester Modal Manager - Open/close modal and initialization */
 
+// Store resize handler reference
+var tileTesterResizeHandler = null;
+
 // Open the tile tester modal
 function openTileTester() {
   const modal = document.getElementById('tileTesterModal');
@@ -39,6 +42,23 @@ function openTileTester() {
     paletteWindow.style.left = '20px';
     paletteWindow.style.top = '20px';
   }
+
+  // Reset hide button state
+  const hideBtn = document.getElementById('tileTesterHideBtn');
+  if (hideBtn) {
+    hideBtn.textContent = 'Hide';
+  }
+  if (paletteWindow) {
+    paletteWindow.classList.remove('content-hidden');
+  }
+
+  // Setup window resize handler
+  tileTesterResizeHandler = function() {
+    calculateGridSize();
+    ensureLayerGridSize();
+    renderTileTesterMainCanvas();
+  };
+  window.addEventListener('resize', tileTesterResizeHandler);
 }
 
 // Ensure all layers have the correct grid size
@@ -71,6 +91,12 @@ function closeTileTester() {
   // Restore body scroll
   document.body.style.overflow = '';
 
+  // Remove resize handler
+  if (tileTesterResizeHandler) {
+    window.removeEventListener('resize', tileTesterResizeHandler);
+    tileTesterResizeHandler = null;
+  }
+
   // Clean up
   removeTileTesterEvents();
   resetTileTesterState();
@@ -81,7 +107,10 @@ function setupTileTesterButton() {
   const testBtn = document.getElementById('testTilesetBtn');
 
   if (testBtn) {
-    testBtn.addEventListener('click', openTileTester);
+    testBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      openTileTester();
+    });
   }
 }
 

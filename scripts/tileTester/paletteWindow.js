@@ -13,15 +13,11 @@ function setupTileTesterPalette() {
   // Copy current tileset to palette
   copyTilesetToPalette();
 
-  // Setup fit checkbox
-  const fitCheckbox = document.getElementById('tileTesterPaletteFit');
-  if (fitCheckbox) {
-    fitCheckbox.checked = TileTesterState.paletteFitMode;
-    fitCheckbox.addEventListener('change', function() {
-      TileTesterState.paletteFitMode = this.checked;
-      updatePaletteFitMode();
-    });
-  }
+  // Setup zoom controls
+  setupPaletteZoomControls();
+
+  // Setup hide button
+  setupPaletteHideButton();
 
   // Setup dragging for palette window
   setupPaletteWindowDrag();
@@ -30,7 +26,7 @@ function setupTileTesterPalette() {
   setupPaletteWindowResize();
 
   // Initial fit mode
-  updatePaletteFitMode();
+  updatePaletteZoomMode('fit');
 }
 
 // Copy the current tileset canvas to the palette
@@ -87,16 +83,54 @@ function drawPaletteGridLines() {
   }
 }
 
-// Update palette fit mode
-function updatePaletteFitMode() {
+// Setup zoom controls
+function setupPaletteZoomControls() {
+  const zoomLinks = document.querySelectorAll('.tester-zoom-link');
+
+  zoomLinks.forEach(link => {
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+      const zoom = this.dataset.zoom;
+      updatePaletteZoomMode(zoom);
+
+      // Update active state
+      zoomLinks.forEach(l => l.classList.remove('active'));
+      this.classList.add('active');
+    });
+  });
+}
+
+// Setup hide button
+function setupPaletteHideButton() {
+  const hideBtn = document.getElementById('tileTesterHideBtn');
+  const paletteWindow = document.getElementById('tileTesterPaletteWindow');
+
+  if (!hideBtn || !paletteWindow) return;
+
+  hideBtn.addEventListener('click', function(e) {
+    e.preventDefault();
+    const isHidden = paletteWindow.classList.toggle('content-hidden');
+    this.textContent = isHidden ? 'Show' : 'Hide';
+  });
+}
+
+// Update palette zoom mode
+function updatePaletteZoomMode(zoom) {
   const paletteWrapper = document.getElementById('tileTesterPaletteWrapper');
   if (!paletteWrapper) return;
 
-  if (TileTesterState.paletteFitMode) {
+  // Remove all zoom classes
+  paletteWrapper.classList.remove('fit-mode', 'zoom-1x', 'zoom-2x', 'zoom-3x', 'zoom-4x');
+
+  if (zoom === 'fit') {
     paletteWrapper.classList.add('fit-mode');
+    TileTesterState.paletteFitMode = true;
   } else {
-    paletteWrapper.classList.remove('fit-mode');
+    paletteWrapper.classList.add('zoom-' + zoom + 'x');
+    TileTesterState.paletteFitMode = false;
   }
+
+  TileTesterState.paletteZoom = zoom;
 }
 
 // Update selected tile highlight on palette

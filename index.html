@@ -10,7 +10,7 @@
 
   <header>
     <div class="header-tile-size">
-      <label>Tile Size</label>
+      <h3>Tile Size</h3>
       <div class="tile-size-buttons">
         <button class="tile-size-btn" data-size="8">8</button>
         <button class="tile-size-btn" data-size="16">16</button>
@@ -60,8 +60,8 @@
 
       <h3 class="previewHeader">
         <span>Preview</span>
+        <a href="#" id="testTilesetBtn" class="testLink">Test</a>
         <div class="previewHeaderControls">
-          <button id="testTilesetBtn" class="testBtn">Test</button>
           <label class="fitCheckboxLabel">
             <input type="checkbox" id="fitPreview"> Fit
           </label>
@@ -385,9 +385,14 @@
         <div id="tileTesterPaletteHeader" class="tester-palette-header">
           <span>Tile Palette</span>
           <div class="tester-palette-controls">
-            <label class="tester-fit-label">
-              <input type="checkbox" id="tileTesterPaletteFit"> Fit
-            </label>
+            <div class="tester-zoom-controls">
+              <a href="#" class="tester-zoom-link active" data-zoom="fit">Fit</a>
+              <a href="#" class="tester-zoom-link" data-zoom="1">1x</a>
+              <a href="#" class="tester-zoom-link" data-zoom="2">2x</a>
+              <a href="#" class="tester-zoom-link" data-zoom="3">3x</a>
+              <a href="#" class="tester-zoom-link" data-zoom="4">4x</a>
+            </div>
+            <a href="#" id="tileTesterHideBtn" class="tester-hide-link">Hide</a>
           </div>
         </div>
         <div id="tileTesterPaletteContainer" class="tester-palette-container">

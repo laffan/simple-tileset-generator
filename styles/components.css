@@ -1330,26 +1330,24 @@
    TILE TESTER STYLES
    ============================================= */
 
-/* Test button in preview header */
+/* Test link in preview header */
 .previewHeaderControls {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.testBtn {
-  padding: 4px 12px;
+.testLink {
   font-size: 12px;
-  background: #17a2b8;
-  color: white;
-  border: none;
-  border-radius: 3px;
+  color: #666;
+  text-decoration: underline;
   cursor: pointer;
-  font-weight: 500;
+  font-weight: normal;
+  margin-left: 8px;
 }
 
-.testBtn:hover {
-  background: #138496;
+.testLink:hover {
+  color: #333;
 }
 
 /* Tile tester modal - full screen */
@@ -1436,20 +1434,56 @@
 .tester-palette-controls {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
 }
 
-.tester-fit-label {
-  font-size: 11px;
-  color: #666;
-  cursor: pointer;
+.tester-zoom-controls {
   display: flex;
-  align-items: center;
   gap: 4px;
 }
 
-.tester-fit-label input {
-  margin: 0;
+.tester-zoom-link {
+  font-size: 11px;
+  color: #666;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+  background: transparent;
+  border: none;
+}
+
+.tester-zoom-link:hover {
+  color: #333;
+}
+
+.tester-zoom-link.active {
+  color: #333;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.tester-hide-link {
+  font-size: 11px;
+  color: #666;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.tester-hide-link:hover {
+  color: #333;
+}
+
+/* Hidden state for palette window content */
+.tester-palette-window.content-hidden .tester-palette-container,
+.tester-palette-window.content-hidden .tester-section-divider,
+.tester-palette-window.content-hidden .tester-layers-section,
+.tester-palette-window.content-hidden .tester-resize-handle {
+  display: none;
+}
+
+.tester-palette-window.content-hidden {
+  height: auto !important;
+  min-height: auto;
 }
 
 .tester-palette-container {
@@ -1475,10 +1509,31 @@
 
 .tester-palette-wrapper.fit-mode canvas {
   max-width: 100%;
-  max-height: 300px;
+  max-height: 100%;
   width: auto;
   height: auto;
   object-fit: contain;
+}
+
+/* Zoom levels for palette canvas */
+.tester-palette-wrapper.zoom-1x canvas {
+  transform-origin: top left;
+  transform: scale(1);
+}
+
+.tester-palette-wrapper.zoom-2x canvas {
+  transform-origin: top left;
+  transform: scale(2);
+}
+
+.tester-palette-wrapper.zoom-3x canvas {
+  transform-origin: top left;
+  transform: scale(3);
+}
+
+.tester-palette-wrapper.zoom-4x canvas {
+  transform-origin: top left;
+  transform: scale(4);
 }
 
 #tileTesterPaletteCanvas {

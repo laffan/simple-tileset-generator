@@ -25,7 +25,8 @@ var TileTesterState = {
 
   // Palette window state
   palettePosition: { x: 20, y: 20 },
-  paletteFitMode: false,
+  paletteFitMode: true,
+  paletteZoom: 'fit',
 
   // Painting state
   isPainting: false,
