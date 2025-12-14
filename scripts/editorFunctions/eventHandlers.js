@@ -592,9 +592,9 @@ function setupKeyboardEvents() {
       }
     }
 
-    // Cmd+D (or Ctrl+D) to duplicate current path in place
-    if ((e.metaKey || e.ctrlKey) && e.key === 'd') {
-      e.preventDefault();  // Prevent browser bookmark dialog
+    // Shift+D to duplicate current path in place
+    if (e.shiftKey && (e.key === 'd' || e.key === 'D')) {
+      e.preventDefault();
       duplicateCurrentPath();
     }
   });
