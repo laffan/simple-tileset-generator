@@ -12,10 +12,6 @@ function openPatternEditor(patternIndex) {
   state.patternSize = patternData.size || patternData.pixels.length;
   state.pixelData = copyPatternPixels(patternData.pixels);
 
-  // Reset zoom
-  state.editorZoom = 4;
-  state.previewZoom = 4;
-
   // Show modal
   const modal = document.getElementById('patternEditorModal');
   modal.classList.add('active');
@@ -37,18 +33,8 @@ function openPatternEditor(patternIndex) {
     updatePatternSizeButtonsForEditor(state.patternSize);
   }
 
-  // Update zoom sliders
-  const editorZoomSlider = document.getElementById('patternEditorZoom');
-  if (editorZoomSlider) {
-    editorZoomSlider.value = state.editorZoom;
-  }
-  const previewZoomSlider = document.getElementById('patternPreviewZoom');
-  if (previewZoomSlider) {
-    previewZoomSlider.value = state.previewZoom;
-  }
-
-  updateEditorZoomDisplay();
-  updatePreviewZoomDisplay();
+  // Set zoom so pattern fills the boundary
+  updateZoomForPatternSize(state.patternSize);
 
   // Setup events
   setupPatternEditorEvents();

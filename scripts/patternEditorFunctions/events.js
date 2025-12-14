@@ -25,17 +25,8 @@ function setupPatternEditorEvents() {
     });
   }
 
-  // Preview zoom slider
-  const previewZoomSlider = document.getElementById('patternPreviewZoom');
-  if (previewZoomSlider) {
-    previewZoomSlider.addEventListener('input', function(e) {
-      state.previewZoom = parseInt(e.target.value);
-      updatePatternPreviewCanvas();
-      updatePreviewZoomDisplay();
-    });
-  }
-
   // Note: Pattern size buttons are handled by sizeControls.js
+  // Note: Preview zoom removed - preview now uses main tile size
 
   // Toolbar buttons
   const invertBtn = document.getElementById('patternInvertBtn');
@@ -102,10 +93,20 @@ function getPixelFromEvent(e) {
   const x = e.clientX - rect.left;
   const y = e.clientY - rect.top;
 
-  const col = Math.floor(x / state.pixelSize);
-  const row = Math.floor(y / state.pixelSize);
+  // Calculate the primary tile position (same logic as in drawPatternEditorCanvas)
+  const patternPixelSize = state.patternSize * state.pixelSize;
+  const primaryTileX = state.boundaryOffsetX + (state.BOUNDARY_SIZE - patternPixelSize) / 2;
+  const primaryTileY = state.boundaryOffsetY + (state.BOUNDARY_SIZE - patternPixelSize) / 2;
 
-  return { row, col };
+  // Calculate which pixel was clicked relative to the primary tile
+  const col = Math.floor((x - primaryTileX) / state.pixelSize);
+  const row = Math.floor((y - primaryTileY) / state.pixelSize);
+
+  // Wrap to pattern bounds (so clicking on tiled copies still works)
+  const wrappedCol = ((col % state.patternSize) + state.patternSize) % state.patternSize;
+  const wrappedRow = ((row % state.patternSize) + state.patternSize) % state.patternSize;
+
+  return { row: wrappedRow, col: wrappedCol };
 }
 
 function isPixelInBounds(pixel) {
@@ -117,14 +118,13 @@ function isPixelInBounds(pixel) {
 function updateEditorZoomDisplay() {
   const display = document.getElementById('patternEditorZoomDisplay');
   if (display) {
-    display.textContent = `1:${PatternEditorState.editorZoom}`;
-  }
-}
-
-function updatePreviewZoomDisplay() {
-  const display = document.getElementById('patternPreviewZoomDisplay');
-  if (display) {
-    display.textContent = `1:${PatternEditorState.previewZoom}`;
+    // Convert slider value to actual zoom and display it
+    const zoom = sliderToZoom(PatternEditorState.editorZoom);
+    if (zoom < 1) {
+      display.textContent = `1:${zoom.toFixed(2)}`;
+    } else {
+      display.textContent = `1:${Math.round(zoom)}`;
+    }
   }
 }
 
@@ -157,6 +157,9 @@ function resizePatternGrid(newSize) {
   if (sizeInput) {
     sizeInput.value = newSize;
   }
+
+  // Reset zoom so pattern fills the boundary
+  updateZoomForPatternSize(newSize);
 
   resizePatternEditorCanvas();
   drawPatternEditorCanvas();
@@ -222,6 +225,14 @@ function loadPatternFromImage(img) {
   if (sizeInput) {
     sizeInput.value = size;
   }
+
+  // Update size buttons
+  if (typeof updatePatternSizeButtonsForEditor === 'function') {
+    updatePatternSizeButtonsForEditor(size);
+  }
+
+  // Reset zoom so pattern fills the boundary
+  updateZoomForPatternSize(size);
 
   resizePatternEditorCanvas();
   drawPatternEditorCanvas();

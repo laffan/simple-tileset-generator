@@ -12,9 +12,15 @@ const PatternEditorState = {
   patternSize: 8,
 
   // Editor settings
-  editorZoom: 4,
-  previewZoom: 4,
-  pixelSize: 40,
+  editorZoom: 4,        // This is now calculated, represents pixels per grid cell
+  pixelSize: 32,        // Actual pixel size on screen
+
+  // Fixed boundary size for the editable area (red border)
+  BOUNDARY_SIZE: 256,
+
+  // Editor canvas offset for centering
+  boundaryOffsetX: 0,
+  boundaryOffsetY: 0,
 
   // Interaction state
   isDrawing: false,
@@ -31,10 +37,8 @@ const PatternEditorState = {
 
   // Constants
   MIN_PATTERN_SIZE: 4,
-  MAX_PATTERN_SIZE: 32,
-  MIN_EDITOR_ZOOM: 2,
-  MAX_EDITOR_ZOOM: 20,
-  MIN_PREVIEW_ZOOM: 2,
-  MAX_PREVIEW_ZOOM: 20,
+  MAX_PATTERN_SIZE: 64,
+  MIN_EDITOR_ZOOM: 1,     // 1:0.25 (slider value 1 = 0.25 zoom)
+  MAX_EDITOR_ZOOM: 80,    // 1:20 (slider value 80 = 20 zoom)
   HOLD_THRESHOLD: 300 // ms to trigger line mode
 };

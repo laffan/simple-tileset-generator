@@ -1,5 +1,31 @@
 /* Pattern Editor Canvas - canvas rendering functions */
 
+// Calculate the zoom level needed to fit pattern in the boundary
+function calculateZoomForPatternSize(patternSize) {
+  const state = PatternEditorState;
+  // Calculate pixel size so pattern fits within boundary
+  return state.BOUNDARY_SIZE / patternSize;
+}
+
+// Convert slider value (1-80) to actual zoom multiplier
+// Slider 1 = 0.25x (very zoomed out), Slider 80 = 20x (very zoomed in)
+function sliderToZoom(sliderValue) {
+  // Map 1-80 to 0.25-20
+  // Using exponential mapping for smoother feel
+  const minZoom = 0.25;
+  const maxZoom = 20;
+  const t = (sliderValue - 1) / 79; // 0 to 1
+  return minZoom * Math.pow(maxZoom / minZoom, t);
+}
+
+// Convert zoom multiplier to slider value
+function zoomToSlider(zoom) {
+  const minZoom = 0.25;
+  const maxZoom = 20;
+  const t = Math.log(zoom / minZoom) / Math.log(maxZoom / minZoom);
+  return Math.round(1 + t * 79);
+}
+
 function resizePatternEditorCanvas() {
   const state = PatternEditorState;
   if (!state.editorCanvas) return;
@@ -8,24 +34,18 @@ function resizePatternEditorCanvas() {
   const containerWidth = container.clientWidth;
   const containerHeight = container.clientHeight;
 
+  // Set canvas to fill container
+  state.editorCanvas.width = containerWidth;
+  state.editorCanvas.height = containerHeight;
+
+  // Calculate offset to center the boundary
+  state.boundaryOffsetX = (containerWidth - state.BOUNDARY_SIZE) / 2;
+  state.boundaryOffsetY = (containerHeight - state.BOUNDARY_SIZE) / 2;
+
   // Calculate pixel size based on zoom
-  state.pixelSize = state.editorZoom * 8;
-
-  // Canvas size to show pattern with tiling
-  const patternPixelSize = state.patternSize * state.pixelSize;
-
-  // Calculate how many tiles we can show
-  const tilesX = Math.ceil(containerWidth / patternPixelSize) + 1;
-  const tilesY = Math.ceil(containerHeight / patternPixelSize) + 1;
-
-  // Set canvas to show multiple tiles
-  state.editorCanvas.width = tilesX * patternPixelSize;
-  state.editorCanvas.height = tilesY * patternPixelSize;
-
-  // Store for rendering
-  state.tilesX = tilesX;
-  state.tilesY = tilesY;
-  state.patternPixelSize = patternPixelSize;
+  // editorZoom is slider value, convert to actual multiplier
+  const zoomMultiplier = sliderToZoom(state.editorZoom);
+  state.pixelSize = zoomMultiplier * (state.BOUNDARY_SIZE / state.patternSize);
 }
 
 function drawPatternEditorCanvas() {
@@ -35,19 +55,43 @@ function drawPatternEditorCanvas() {
   const ctx = state.editorCtx;
   ctx.clearRect(0, 0, state.editorCanvas.width, state.editorCanvas.height);
 
-  // Draw multiple tiles
-  for (let ty = 0; ty < state.tilesY; ty++) {
-    for (let tx = 0; tx < state.tilesX; tx++) {
-      const offsetX = tx * state.patternPixelSize;
-      const offsetY = ty * state.patternPixelSize;
-      drawPatternEditorInstance(offsetX, offsetY, tx === 0 && ty === 0);
+  // Fill background
+  ctx.fillStyle = '#e0e0e0';
+  ctx.fillRect(0, 0, state.editorCanvas.width, state.editorCanvas.height);
+
+  // Calculate the pattern tile size in pixels
+  const patternPixelSize = state.patternSize * state.pixelSize;
+
+  // Calculate how the tiles are positioned relative to the boundary
+  // The primary tile (0,0) is positioned so that when zoom=1, it fills the boundary
+  const primaryTileX = state.boundaryOffsetX + (state.BOUNDARY_SIZE - patternPixelSize) / 2;
+  const primaryTileY = state.boundaryOffsetY + (state.BOUNDARY_SIZE - patternPixelSize) / 2;
+
+  // Calculate how many tiles we need to cover the entire canvas
+  const tilesLeft = Math.ceil((primaryTileX) / patternPixelSize) + 1;
+  const tilesRight = Math.ceil((state.editorCanvas.width - primaryTileX) / patternPixelSize) + 1;
+  const tilesUp = Math.ceil((primaryTileY) / patternPixelSize) + 1;
+  const tilesDown = Math.ceil((state.editorCanvas.height - primaryTileY) / patternPixelSize) + 1;
+
+  // Draw all visible tiles
+  for (let ty = -tilesUp; ty < tilesDown; ty++) {
+    for (let tx = -tilesLeft; tx < tilesRight; tx++) {
+      const offsetX = primaryTileX + tx * patternPixelSize;
+      const offsetY = primaryTileY + ty * patternPixelSize;
+      const isPrimary = (tx === 0 && ty === 0);
+      drawPatternEditorInstance(offsetX, offsetY, isPrimary);
     }
   }
 
-  // Draw border around the primary (editable) tile
+  // Draw the red boundary box (fixed position and size)
   ctx.strokeStyle = '#ff0000';
   ctx.lineWidth = 2;
-  ctx.strokeRect(0, 0, state.patternPixelSize, state.patternPixelSize);
+  ctx.strokeRect(
+    state.boundaryOffsetX,
+    state.boundaryOffsetY,
+    state.BOUNDARY_SIZE,
+    state.BOUNDARY_SIZE
+  );
 }
 
 function drawPatternEditorInstance(offsetX, offsetY, isPrimary) {
@@ -59,7 +103,7 @@ function drawPatternEditorInstance(offsetX, offsetY, isPrimary) {
       const x = offsetX + col * state.pixelSize;
       const y = offsetY + row * state.pixelSize;
 
-      // Check bounds
+      // Check bounds - skip if completely outside canvas
       if (x + state.pixelSize < 0 || y + state.pixelSize < 0) continue;
       if (x > state.editorCanvas.width || y > state.editorCanvas.height) continue;
 
@@ -90,10 +134,12 @@ function drawPatternEditorPixel(x, y, value, isPreview) {
 
   ctx.fillRect(x, y, state.pixelSize, state.pixelSize);
 
-  // Draw grid lines
-  ctx.strokeStyle = '#cccccc';
-  ctx.lineWidth = 1;
-  ctx.strokeRect(x, y, state.pixelSize, state.pixelSize);
+  // Draw grid lines (only if pixels are large enough)
+  if (state.pixelSize >= 4) {
+    ctx.strokeStyle = '#cccccc';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x, y, state.pixelSize, state.pixelSize);
+  }
 }
 
 function updatePatternPreviewCanvas() {
@@ -101,23 +147,37 @@ function updatePatternPreviewCanvas() {
   if (!state.previewCanvas || !state.previewCtx) return;
 
   const ctx = state.previewCtx;
-  const previewPixelSize = state.previewZoom;
 
-  // Set canvas size to show tiled pattern
-  const tileSize = state.patternSize * previewPixelSize;
-  const tilesX = Math.ceil(state.previewCanvas.width / tileSize);
-  const tilesY = Math.ceil(state.previewCanvas.height / tileSize);
+  // Get the main tile size from the page
+  const sizeInput = document.getElementById('sizeInput');
+  const tileSize = sizeInput ? parseInt(sizeInput.value) || 64 : 64;
 
-  ctx.clearRect(0, 0, state.previewCanvas.width, state.previewCanvas.height);
+  // Get the preview container dimensions
+  const wrapper = state.previewCanvas.parentElement;
+  const containerHeight = wrapper.clientHeight;
+  const containerWidth = wrapper.clientWidth;
+
+  // Set canvas size to fill the container
+  state.previewCanvas.width = containerWidth;
+  state.previewCanvas.height = containerHeight;
+
+  // Calculate how many tiles fit
+  const tilesX = Math.ceil(containerWidth / tileSize) + 1;
+  const tilesY = Math.ceil(containerHeight / tileSize) + 1;
+
+  // Calculate pixel size within each tile
+  const previewPixelSize = tileSize / state.patternSize;
+
+  ctx.clearRect(0, 0, containerWidth, containerHeight);
 
   // Fill with white background
   ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, state.previewCanvas.width, state.previewCanvas.height);
+  ctx.fillRect(0, 0, containerWidth, containerHeight);
 
   // Draw tiled pattern
   ctx.fillStyle = '#000000';
-  for (let ty = 0; ty <= tilesY; ty++) {
-    for (let tx = 0; tx <= tilesX; tx++) {
+  for (let ty = 0; ty < tilesY; ty++) {
+    for (let tx = 0; tx < tilesX; tx++) {
       for (let row = 0; row < state.patternSize; row++) {
         for (let col = 0; col < state.patternSize; col++) {
           if (state.pixelData[row] && state.pixelData[row][col] === 1) {
@@ -129,4 +189,24 @@ function updatePatternPreviewCanvas() {
       }
     }
   }
+}
+
+// Update zoom when pattern size changes to keep boundary filled
+function updateZoomForPatternSize(patternSize) {
+  const state = PatternEditorState;
+
+  // Set zoom so pattern fills the boundary (zoom = 1x)
+  const defaultZoom = 1; // 1x means pattern fits exactly in boundary
+  const sliderValue = zoomToSlider(defaultZoom);
+
+  state.editorZoom = sliderValue;
+
+  // Update the slider
+  const slider = document.getElementById('patternEditorZoom');
+  if (slider) {
+    slider.value = sliderValue;
+  }
+
+  // Update display
+  updateEditorZoomDisplay();
 }

@@ -202,6 +202,7 @@
             <div class="pattern-size-control">
               <span class="pattern-toolbar-label">Grid Size</span>
               <div class="pattern-size-btn-group">
+                <button class="pattern-size-btn" data-size="4">4</button>
                 <button class="pattern-size-btn active" data-size="8">8</button>
                 <button class="pattern-size-btn" data-size="16">16</button>
                 <button class="pattern-size-btn" data-size="32">32</button>
@@ -220,7 +221,7 @@
           <div class="pattern-editor-container">
             <div class="pattern-editor-zoom">
               <span id="patternEditorZoomDisplay">1:4</span>
-              <input type="range" id="patternEditorZoom" min="2" max="20" value="4">
+              <input type="range" id="patternEditorZoom" min="1" max="80" value="16" step="1">
             </div>
             <div class="pattern-canvas-wrapper">
               <canvas id="patternEditorCanvas"></canvas>
@@ -229,12 +230,8 @@
 
           <!-- Right side: Preview -->
           <div class="pattern-preview-container">
-            <div class="pattern-preview-zoom">
-              <span id="patternPreviewZoomDisplay">1:4</span>
-              <input type="range" id="patternPreviewZoom" min="2" max="20" value="4">
-            </div>
             <div class="pattern-preview-wrapper">
-              <canvas id="patternPreviewCanvas" width="200" height="200"></canvas>
+              <canvas id="patternPreviewCanvas"></canvas>
             </div>
           </div>
         </div>
