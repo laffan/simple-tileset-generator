@@ -71,6 +71,9 @@ function executeToolAction(actionType) {
     case 'boolean-cut':
       booleanCut();
       break;
+    case 'toggle-hole':
+      toggleHole();
+      break;
   }
 }
 
@@ -385,6 +388,43 @@ function booleanCut() {
   }
 
   createAnchorVisuals();
+  EditorState.two.update();
+}
+
+// ============================================
+// TOGGLE HOLE OPERATION
+// ============================================
+
+// Toggle whether the current path is a hole-cutting shape
+function toggleHole() {
+  const currentIndex = EditorState.currentPathIndex;
+  const currentPath = getCurrentPath();
+  if (!currentPath) return;
+
+  // Check if current path is already a hole
+  const holeIndex = EditorState.holePathIndices.indexOf(currentIndex);
+  const isCurrentlyHole = holeIndex >= 0;
+
+  if (isCurrentlyHole) {
+    // Remove from hole list - make it a normal shape
+    EditorState.holePathIndices.splice(holeIndex, 1);
+
+    // If no more holes, clear the fillRule
+    if (EditorState.holePathIndices.length === 0) {
+      EditorState.fillRule = null;
+    }
+  } else {
+    // Make it a hole
+    EditorState.holePathIndices.push(currentIndex);
+
+    // Set fillRule to evenodd if not already set
+    if (!EditorState.fillRule) {
+      EditorState.fillRule = 'evenodd';
+    }
+  }
+
+  // Update path visual styles
+  updatePathStyles();
   EditorState.two.update();
 }
 
