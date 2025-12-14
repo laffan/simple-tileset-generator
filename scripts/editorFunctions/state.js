@@ -11,7 +11,9 @@ const EditorState = {
   isDragging: false,
   newShapePoints: [],  // Points being created for a new shape
   ghostPoint: null,  // Preview point shown when hovering over edges
-  boundingBox: null  // Bounding box visuals for selected path
+  boundingBox: null,  // Bounding box visuals for selected path
+  fillRule: null,  // 'evenodd' for shapes with holes, null for normal
+  holePathIndices: []  // Indices of paths that are holes (for evenodd shapes)
 };
 
 // Constants
@@ -39,4 +41,6 @@ function resetEditorState() {
   EditorState.newShapePoints = [];
   EditorState.ghostPoint = null;
   EditorState.boundingBox = null;
+  EditorState.fillRule = null;
+  EditorState.holePathIndices = [];
 }

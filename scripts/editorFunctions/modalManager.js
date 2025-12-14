@@ -75,6 +75,11 @@ function saveEditedShape() {
       paths = paths.map(p => clipPathDataToBounds(p));
     }
     pathData = { paths };
+
+    // Preserve fillRule for shapes with holes
+    if (EditorState.fillRule) {
+      pathData.fillRule = EditorState.fillRule;
+    }
   }
 
   // Get the current shape name

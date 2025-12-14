@@ -1,7 +1,7 @@
 /* Editor Path Management - Path creation, loading, and conversion */
 
 // Create a Two.Path from single path data
-function createPathFromData(singlePathData, isSelected) {
+function createPathFromData(singlePathData, isSelected, isHole) {
   const vertices = singlePathData.vertices;
 
   const anchors = vertices.map((v, index) => {
@@ -39,8 +39,15 @@ function createPathFromData(singlePathData, isSelected) {
   // Create path using Two.Path constructor directly
   const path = new Two.Path(anchors);
   path.automatic = false;
-  path.fill = isSelected ? 'rgba(0, 0, 0, 0.8)' : 'rgba(0, 0, 0, 0.4)';
-  path.stroke = isSelected ? '#333' : '#666';
+
+  // Style hole paths differently (red border, transparent fill)
+  if (isHole) {
+    path.fill = isSelected ? 'rgba(255, 100, 100, 0.3)' : 'rgba(255, 100, 100, 0.15)';
+    path.stroke = isSelected ? '#cc0000' : '#ff6666';
+  } else {
+    path.fill = isSelected ? 'rgba(0, 0, 0, 0.8)' : 'rgba(0, 0, 0, 0.4)';
+    path.stroke = isSelected ? '#333' : '#666';
+  }
   path.linewidth = 2;
   path.closed = singlePathData.closed !== false;
 
@@ -60,18 +67,26 @@ function loadShapeIntoEditor(shapeName) {
   // Clear existing paths
   EditorState.paths = [];
   EditorState.currentPathIndex = 0;
+  EditorState.fillRule = shapeData.fillRule || null;
+  EditorState.holePathIndices = [];
 
   // Check if this is a multi-path shape
   if (shapeData.paths && Array.isArray(shapeData.paths)) {
-    // Multi-path shape
+    // Multi-path shape - for evenodd fill, paths after the first are holes
     shapeData.paths.forEach((singlePathData, index) => {
-      const path = createPathFromData(singlePathData, index === EditorState.currentPathIndex);
+      const isSelected = index === EditorState.currentPathIndex;
+      // For evenodd fill rule, paths after the first are considered holes
+      const isHole = EditorState.fillRule === 'evenodd' && index > 0;
+      if (isHole) {
+        EditorState.holePathIndices.push(index);
+      }
+      const path = createPathFromData(singlePathData, isSelected, isHole);
       EditorState.paths.push(path);
       EditorState.two.add(path);
     });
   } else if (shapeData.vertices && shapeData.vertices.length > 0) {
     // Single path shape
-    const path = createPathFromData(shapeData, true);
+    const path = createPathFromData(shapeData, true, false);
     EditorState.paths.push(path);
     EditorState.two.add(path);
   } else {
@@ -88,12 +103,15 @@ function loadShapeIntoEditor(shapeName) {
 // Update path visual styles based on selection
 function updatePathStyles() {
   EditorState.paths.forEach((path, index) => {
-    if (index === EditorState.currentPathIndex) {
-      path.fill = 'rgba(0, 0, 0, 0.8)';
-      path.stroke = '#333';
+    const isSelected = index === EditorState.currentPathIndex;
+    const isHole = EditorState.holePathIndices.includes(index);
+
+    if (isHole) {
+      path.fill = isSelected ? 'rgba(255, 100, 100, 0.3)' : 'rgba(255, 100, 100, 0.15)';
+      path.stroke = isSelected ? '#cc0000' : '#ff6666';
     } else {
-      path.fill = 'rgba(0, 0, 0, 0.4)';
-      path.stroke = '#666';
+      path.fill = isSelected ? 'rgba(0, 0, 0, 0.8)' : 'rgba(0, 0, 0, 0.4)';
+      path.stroke = isSelected ? '#333' : '#666';
     }
   });
   EditorState.two.update();
