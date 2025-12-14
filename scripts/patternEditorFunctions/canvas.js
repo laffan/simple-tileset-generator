@@ -80,14 +80,14 @@ function drawPatternEditorCanvas() {
     }
   }
 
-  // Draw the red boundary box (fixed position and size)
+  // Draw the red boundary box around the primary tile (follows zoom)
   ctx.strokeStyle = '#ff0000';
   ctx.lineWidth = 2;
   ctx.strokeRect(
-    state.boundaryOffsetX,
-    state.boundaryOffsetY,
-    state.BOUNDARY_SIZE,
-    state.BOUNDARY_SIZE
+    primaryTileX,
+    primaryTileY,
+    patternPixelSize,
+    patternPixelSize
   );
 }
 
