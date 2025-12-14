@@ -7,23 +7,22 @@ function calculateZoomForPatternSize(patternSize) {
   return state.BOUNDARY_SIZE / patternSize;
 }
 
-// Convert slider value (1-80) to actual zoom multiplier
-// Slider 1 = 0.25x (very zoomed out), Slider 80 = 20x (very zoomed in)
+// Convert slider value (1-100) to actual zoom multiplier
+// Slider 1 = 0.25x (zoomed out), Slider 100 = 1x (pattern fills boundary)
 function sliderToZoom(sliderValue) {
-  // Map 1-80 to 0.25-20
-  // Using exponential mapping for smoother feel
+  // Map 1-100 to 0.25-1 (linear mapping)
   const minZoom = 0.25;
-  const maxZoom = 20;
-  const t = (sliderValue - 1) / 79; // 0 to 1
-  return minZoom * Math.pow(maxZoom / minZoom, t);
+  const maxZoom = 1;
+  const t = (sliderValue - 1) / 99; // 0 to 1
+  return minZoom + t * (maxZoom - minZoom);
 }
 
 // Convert zoom multiplier to slider value
 function zoomToSlider(zoom) {
   const minZoom = 0.25;
-  const maxZoom = 20;
-  const t = Math.log(zoom / minZoom) / Math.log(maxZoom / minZoom);
-  return Math.round(1 + t * 79);
+  const maxZoom = 1;
+  const t = (zoom - minZoom) / (maxZoom - minZoom);
+  return Math.round(1 + t * 99);
 }
 
 function resizePatternEditorCanvas() {

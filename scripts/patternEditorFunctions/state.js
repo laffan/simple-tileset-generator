@@ -12,7 +12,7 @@ const PatternEditorState = {
   patternSize: 8,
 
   // Editor settings
-  editorZoom: 4,        // This is now calculated, represents pixels per grid cell
+  editorZoom: 100,      // Slider value (1-100), default to max (1:1 zoom)
   pixelSize: 32,        // Actual pixel size on screen
 
   // Fixed boundary size for the editable area (red border)
@@ -38,7 +38,7 @@ const PatternEditorState = {
   // Constants
   MIN_PATTERN_SIZE: 4,
   MAX_PATTERN_SIZE: 64,
-  MIN_EDITOR_ZOOM: 1,     // 1:0.25 (slider value 1 = 0.25 zoom)
-  MAX_EDITOR_ZOOM: 80,    // 1:20 (slider value 80 = 20 zoom)
+  MIN_EDITOR_ZOOM: 1,     // Slider value 1 = 0.25 zoom
+  MAX_EDITOR_ZOOM: 100,   // Slider value 100 = 1 zoom (pattern fills boundary)
   HOLD_THRESHOLD: 300 // ms to trigger line mode
 };
