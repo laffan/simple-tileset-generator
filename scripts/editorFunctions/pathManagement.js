@@ -25,7 +25,17 @@ function createPathFromData(singlePathData, isSelected, isHole) {
     // A segment is curved if prev has ctrlRight OR current has ctrlLeft
     let command;
     if (index === 0) {
-      command = Two.Commands.move;
+      // For closed paths, vertex 0's command determines the closing segment type
+      // Check if the closing segment (last -> first) should be curved
+      const isClosed = singlePathData.closed !== false;
+      if (isClosed && vertices.length > 1) {
+        const lastV = vertices[vertices.length - 1];
+        const lastHasCtrlRight = lastV.ctrlRight && (lastV.ctrlRight.x !== 0 || lastV.ctrlRight.y !== 0);
+        const firstHasCtrlLeft = v.ctrlLeft && (v.ctrlLeft.x !== 0 || v.ctrlLeft.y !== 0);
+        command = (lastHasCtrlRight || firstHasCtrlLeft) ? Two.Commands.curve : Two.Commands.move;
+      } else {
+        command = Two.Commands.move;
+      }
     } else {
       const prevV = vertices[index - 1];
       const prevHasCtrlRight = prevV.ctrlRight && (prevV.ctrlRight.x !== 0 || prevV.ctrlRight.y !== 0);

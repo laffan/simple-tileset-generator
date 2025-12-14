@@ -300,17 +300,11 @@ function closestPointOnSegment(px, py, x1, y1, x2, y2) {
 }
 
 // Find if click is on a path shape (not on anchors/controls)
-// Checks all paths and returns the clicked one (prioritizing current path)
+// Checks all paths in reverse z-order (topmost first) to properly handle overlapping paths
 function findPathAtPosition(x, y) {
-  // First check the current path (give it priority)
-  const currentPath = getCurrentPath();
-  if (currentPath && isPointInPath(currentPath, x, y)) {
-    return { type: 'path', path: currentPath, pathIndex: EditorState.currentPathIndex };
-  }
-
-  // Then check all other paths
-  for (let i = 0; i < EditorState.paths.length; i++) {
-    if (i === EditorState.currentPathIndex) continue; // Already checked
+  // Check paths in reverse order (topmost/last-added paths first)
+  // This ensures inner/hole paths (which are rendered on top) are detected before outer paths
+  for (let i = EditorState.paths.length - 1; i >= 0; i--) {
     const path = EditorState.paths[i];
     if (isPointInPath(path, x, y)) {
       return { type: 'path', path: path, pathIndex: i };
