@@ -60,10 +60,12 @@
 
       <h3 class="previewHeader">
         <span>Preview</span>
-        <a href="#" id="testTilesetBtn" class="testLink">Test</a>
-        <label class="fitCheckboxLabel">
-          <input type="checkbox" id="fitPreview"> Fit
-        </label>
+        <div class="previewHeaderControls">
+          <a href="#" id="testTilesetBtn" class="testLink">Test</a>
+          <label class="fitCheckboxLabel">
+            <input type="checkbox" id="fitPreview"> Fit
+          </label>
+        </div>
       </h3>
       <div class="PreviewBox" id="previewBox">
         <canvas id="canvas"></canvas>
@@ -417,6 +419,7 @@
       <div class="tester-main-area">
         <div class="tester-canvas-container">
           <canvas id="tileTesterMainCanvas"></canvas>
+          <div id="tileTesterGridOverlay" class="tester-grid-overlay"></div>
         </div>
 
         <!-- Bottom Left Zoom Controls -->

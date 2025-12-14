@@ -44,8 +44,8 @@ function renderTileTesterMainCanvas() {
     }
   }
 
-  // Draw grid lines (inside each cell)
-  drawMainCanvasGridLines();
+  // Update grid overlay
+  updateGridOverlay();
 }
 
 // Draw tiles for a specific layer
@@ -86,27 +86,29 @@ function drawLayerTiles(layer) {
   ctx.globalAlpha = 1;
 }
 
-// Draw grid lines inside each cell (inset borders)
-function drawMainCanvasGridLines() {
+// Update grid overlay to match canvas size and zoom
+function updateGridOverlay() {
   const canvas = TileTesterState.mainCanvas;
-  const ctx = TileTesterState.mainCtx;
+  const overlay = document.getElementById('tileTesterGridOverlay');
   const tileSize = TileTesterState.tileSize;
+  const zoom = TileTesterState.canvasZoom || 1;
 
-  if (!canvas || !ctx) return;
+  if (!canvas || !overlay) return;
 
-  ctx.strokeStyle = 'rgba(100, 100, 100, 0.3)';
-  ctx.lineWidth = 1;
+  const scaledTileSize = tileSize * zoom;
+  const width = canvas.width * zoom;
+  const height = canvas.height * zoom;
 
-  // Draw inset grid for each cell
-  for (let y = 0; y < TileTesterState.gridHeight; y++) {
-    for (let x = 0; x < TileTesterState.gridWidth; x++) {
-      const cellX = x * tileSize;
-      const cellY = y * tileSize;
+  overlay.style.width = width + 'px';
+  overlay.style.height = height + 'px';
 
-      // Draw inset rectangle (1px from edges)
-      ctx.strokeRect(cellX + 0.5, cellY + 0.5, tileSize - 1, tileSize - 1);
-    }
-  }
+  // Use CSS background for 1px grid lines
+  overlay.style.backgroundSize = scaledTileSize + 'px ' + scaledTileSize + 'px';
+  overlay.style.backgroundImage = `
+    linear-gradient(to right, rgba(100, 100, 100, 0.3) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(100, 100, 100, 0.3) 1px, transparent 1px)
+  `;
+  overlay.style.backgroundPosition = '0 0';
 }
 
 // Place or toggle a tile at grid position on active layer

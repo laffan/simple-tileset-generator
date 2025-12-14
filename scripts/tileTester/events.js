@@ -246,14 +246,30 @@ function setCanvasZoom(zoom) {
 function updateCanvasTransform() {
   const container = document.querySelector('.tester-canvas-container');
   const canvas = document.getElementById('tileTesterMainCanvas');
+  const overlay = document.getElementById('tileTesterGridOverlay');
 
   if (!container || !canvas) return;
 
   const zoom = TileTesterState.canvasZoom;
   const pan = TileTesterState.canvasPan;
 
-  canvas.style.transformOrigin = 'top left';
-  canvas.style.transform = `scale(${zoom}) translate(${pan.x}px, ${pan.y}px)`;
+  // Use CSS width/height for pixel-perfect scaling (no anti-aliasing)
+  const baseWidth = canvas.width;
+  const baseHeight = canvas.height;
+
+  canvas.style.width = (baseWidth * zoom) + 'px';
+  canvas.style.height = (baseHeight * zoom) + 'px';
+  canvas.style.marginLeft = (pan.x * zoom) + 'px';
+  canvas.style.marginTop = (pan.y * zoom) + 'px';
+
+  // Update grid overlay to match canvas position and zoom
+  if (overlay) {
+    overlay.style.marginLeft = (pan.x * zoom) + 'px';
+    overlay.style.marginTop = (pan.y * zoom) + 'px';
+  }
+
+  // Update grid overlay size
+  updateGridOverlay();
 
   // Update container overflow based on zoom
   if (zoom > 1) {
@@ -264,6 +280,12 @@ function updateCanvasTransform() {
     container.style.cursor = 'auto';
     // Reset pan when at 1x
     TileTesterState.canvasPan = { x: 0, y: 0 };
+    canvas.style.marginLeft = '0';
+    canvas.style.marginTop = '0';
+    if (overlay) {
+      overlay.style.marginLeft = '0';
+      overlay.style.marginTop = '0';
+    }
   }
 }
 
