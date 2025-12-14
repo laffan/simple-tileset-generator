@@ -47,6 +47,18 @@ function closeAllSubmenus() {
 // Execute a tool action
 function executeToolAction(actionType) {
   switch (actionType) {
+    case 'add-circle':
+      addPrimitiveShape('circle');
+      break;
+    case 'add-square':
+      addPrimitiveShape('square');
+      break;
+    case 'add-triangle':
+      addPrimitiveShape('triangle');
+      break;
+    case 'add-hexagon':
+      addPrimitiveShape('hexagon');
+      break;
     case 'reflect-horizontal':
       reflectPath('horizontal');
       break;
@@ -84,6 +96,82 @@ function getSelectedPaths() {
   }
   const current = getCurrentPath();
   return current ? [current] : [];
+}
+
+// ============================================
+// ADD PRIMITIVE SHAPES
+// ============================================
+
+// Add a primitive shape at the center of the canvas
+function addPrimitiveShape(shapeType) {
+  const centerX = EDITOR_SIZE / 2;
+  const centerY = EDITOR_SIZE / 2;
+  const size = EDITOR_SHAPE_SIZE * 0.4; // 40% of the shape area
+
+  let anchors = [];
+
+  switch (shapeType) {
+    case 'circle':
+      // Circle using bezier curves (4 points)
+      const bc = 0.552284749831 * size; // Bezier circle constant
+      anchors = [
+        new Two.Anchor(centerX, centerY - size, -bc, 0, bc, 0, Two.Commands.curve),
+        new Two.Anchor(centerX + size, centerY, 0, -bc, 0, bc, Two.Commands.curve),
+        new Two.Anchor(centerX, centerY + size, bc, 0, -bc, 0, Two.Commands.curve),
+        new Two.Anchor(centerX - size, centerY, 0, bc, 0, -bc, Two.Commands.curve)
+      ];
+      break;
+
+    case 'square':
+      anchors = [
+        new Two.Anchor(centerX - size, centerY - size, 0, 0, 0, 0, Two.Commands.move),
+        new Two.Anchor(centerX + size, centerY - size, 0, 0, 0, 0, Two.Commands.line),
+        new Two.Anchor(centerX + size, centerY + size, 0, 0, 0, 0, Two.Commands.line),
+        new Two.Anchor(centerX - size, centerY + size, 0, 0, 0, 0, Two.Commands.line)
+      ];
+      break;
+
+    case 'triangle':
+      // Equilateral triangle pointing up
+      const h = size * Math.sqrt(3); // Height of equilateral triangle
+      anchors = [
+        new Two.Anchor(centerX, centerY - h * 0.6, 0, 0, 0, 0, Two.Commands.move),
+        new Two.Anchor(centerX + size, centerY + h * 0.4, 0, 0, 0, 0, Two.Commands.line),
+        new Two.Anchor(centerX - size, centerY + h * 0.4, 0, 0, 0, 0, Two.Commands.line)
+      ];
+      break;
+
+    case 'hexagon':
+      // Regular hexagon
+      for (let i = 0; i < 6; i++) {
+        const angle = (Math.PI / 3) * i - Math.PI / 2; // Start from top
+        const x = centerX + size * Math.cos(angle);
+        const y = centerY + size * Math.sin(angle);
+        const command = i === 0 ? Two.Commands.move : Two.Commands.line;
+        anchors.push(new Two.Anchor(x, y, 0, 0, 0, 0, command));
+      }
+      break;
+  }
+
+  if (anchors.length === 0) return;
+
+  // Create new path
+  const path = new Two.Path(anchors);
+  path.automatic = false;
+  path.fill = 'rgba(0, 0, 0, 0.4)';
+  path.stroke = '#666';
+  path.linewidth = 2;
+  path.closed = true;
+
+  // Add to scene and paths array
+  EditorState.paths.push(path);
+  EditorState.two.add(path);
+
+  // Select the new path
+  EditorState.currentPathIndex = EditorState.paths.length - 1;
+  updatePathStyles();
+  createAnchorVisuals();
+  EditorState.two.update();
 }
 
 // Toggle path selection (for shift+click)

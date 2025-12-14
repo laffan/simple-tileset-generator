@@ -76,9 +76,12 @@ function saveEditedShape() {
     }
     pathData = { paths };
 
-    // Preserve fillRule for shapes with holes
+    // Preserve fillRule and holePathIndices for shapes with holes
     if (EditorState.fillRule) {
       pathData.fillRule = EditorState.fillRule;
+    }
+    if (EditorState.holePathIndices && EditorState.holePathIndices.length > 0) {
+      pathData.holePathIndices = [...EditorState.holePathIndices];
     }
   }
 

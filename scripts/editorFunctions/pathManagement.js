@@ -82,11 +82,22 @@ function loadShapeIntoEditor(shapeName) {
 
   // Check if this is a multi-path shape
   if (shapeData.paths && Array.isArray(shapeData.paths)) {
-    // Multi-path shape - for evenodd fill, paths after the first are holes
+    // Multi-path shape - check for explicit holePathIndices or fall back to legacy behavior
+    const savedHoleIndices = shapeData.holePathIndices || null;
+
     shapeData.paths.forEach((singlePathData, index) => {
       const isSelected = index === EditorState.currentPathIndex;
-      // For evenodd fill rule, paths after the first are considered holes
-      const isHole = EditorState.fillRule === 'evenodd' && index > 0;
+
+      // Determine if this path is a hole:
+      // 1. Use saved holePathIndices if available
+      // 2. Fall back to legacy behavior (index > 0 when fillRule is evenodd)
+      let isHole;
+      if (savedHoleIndices) {
+        isHole = savedHoleIndices.includes(index);
+      } else {
+        isHole = EditorState.fillRule === 'evenodd' && index > 0;
+      }
+
       if (isHole) {
         EditorState.holePathIndices.push(index);
       }
