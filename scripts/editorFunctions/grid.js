@@ -30,15 +30,18 @@ function drawEditorGrid() {
   gridGroup.add(centerH);
 
   // Draw red boundary showing the save area
-  const boundary = EditorState.two.makeRectangle(
-    EDITOR_SIZE / 2,  // center x
-    EDITOR_SIZE / 2,  // center y
-    EDITOR_SHAPE_SIZE,  // width
-    EDITOR_SHAPE_SIZE   // height
-  );
-  boundary.fill = 'transparent';
-  boundary.stroke = '#dc3545';
-  boundary.linewidth = 2;
-  boundary.dashes = [8, 4];
-  gridGroup.add(boundary);
+  // Skip for combination mode - it uses its own dynamic boundary overlay
+  if (EditorState.editorMode !== 'combination') {
+    const boundary = EditorState.two.makeRectangle(
+      EDITOR_SIZE / 2,  // center x
+      EDITOR_SIZE / 2,  // center y
+      EDITOR_SHAPE_SIZE,  // width
+      EDITOR_SHAPE_SIZE   // height
+    );
+    boundary.fill = 'transparent';
+    boundary.stroke = '#dc3545';
+    boundary.linewidth = 2;
+    boundary.dashes = [8, 4];
+    gridGroup.add(boundary);
+  }
 }

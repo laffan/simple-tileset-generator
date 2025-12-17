@@ -88,38 +88,7 @@
 
                 <div class="selected-colors-section">
                     <h3>Selected Colors</h3>
-                    <!-- Selected colors tabs -->
-                    <div class="selected-colors-tabs">
-                        <button
-                            class="selected-colors-tab active"
-                            data-tab="selected-swatches"
-                        >
-                            Swatches
-                        </button>
-                        <button
-                            class="selected-colors-tab"
-                            data-tab="selected-hex"
-                        >
-                            Hex Input
-                        </button>
-                    </div>
-                    <!-- Swatches tab content -->
-                    <div
-                        class="selected-colors-tab-content active"
-                        id="selected-swatches-tab"
-                    >
-                        <small>Click color to remove</small>
-                        <div id="colorsPreviewContainer"></div>
-                    </div>
-                    <!-- Hex input tab content -->
-                    <div
-                        class="selected-colors-tab-content"
-                        id="selected-hex-tab"
-                    >
-                        <textarea id="colorInput" placeholder="Selected colors">
-FFFFFF, 000000, </textarea
-                        >
-                    </div>
+                    <div id="colorsPreviewContainer"></div>
                 </div>
 
                 <h3>Add Colors</h3>
@@ -134,6 +103,9 @@ FFFFFF, 000000, </textarea
                     </button>
                     <button class="color-tab" data-tab="swatches">
                         Swatches
+                    </button>
+                    <button class="color-tab" data-tab="hex-input">
+                        Hex Input
                     </button>
                 </div>
 
@@ -209,6 +181,11 @@ FFFFFF, 000000, </textarea
                     <div id="paletteContainer">
                         <div class="palette" id="colorPalette"></div>
                     </div>
+                </div>
+
+                <!-- Hex Input tab content -->
+                <div class="color-tab-content" id="hex-input-tab">
+                    <textarea id="colorInput" placeholder="Enter hex colors (e.g. FFFFFF, 000000)">FFFFFF, 000000, </textarea>
                 </div>
             </div>
         </div>

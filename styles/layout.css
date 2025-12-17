@@ -71,12 +71,19 @@ header h1 {
   gap: 30px;
 }
 
+.Column__Right {
+  min-width: 0;
+  overflow: hidden;
+}
+
 .PreviewBox {
   background: #eeeeee;
   padding: 20px;
-  overflow: scroll;
+  overflow: auto;
   text-align: center;
   max-height: 300px;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 footer {

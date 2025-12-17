@@ -59,26 +59,6 @@ function initColorTabs() {
   });
 }
 
-// Initialize selected colors tabs
-function initSelectedColorsTabs() {
-  const tabs = document.querySelectorAll('.selected-colors-tab');
-  const contents = document.querySelectorAll('.selected-colors-tab-content');
-
-  tabs.forEach(tab => {
-    tab.addEventListener('click', () => {
-      const targetTab = tab.getAttribute('data-tab');
-
-      // Update active tab
-      tabs.forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
-
-      // Update active content
-      contents.forEach(c => c.classList.remove('active'));
-      document.getElementById(`${targetTab}-tab`).classList.add('active');
-    });
-  });
-}
-
 // Palettes data cache
 let palettesLoaded = false;
 const paletteSources = [
@@ -336,7 +316,6 @@ function initColorWheel() {
 
   // Initialize tabs
   initColorTabs();
-  initSelectedColorsTabs();
 
   // Initialize color field on initial load (wheel tab is active by default)
   initColorField();
@@ -355,7 +334,7 @@ function updateColorsPreview() {
     const button = document.createElement('button');
     button.className = 'colorPreviewButton';
     button.style.backgroundColor = `#${color}`;
-    button.setAttribute('title', `#${color}`); // Optional: shows color code on hover
+    button.setAttribute('title', `#${color} (Click to remove)`); // Shows color code and action hint
 
     // Remove the color from the input when the button is clicked
     button.addEventListener('click', function () {
