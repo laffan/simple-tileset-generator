@@ -61,6 +61,15 @@ simple-tileset-generator/
 │   │   ├── drawing.js
 │   │   ├── events.js
 │   │   └── modalManager.js
+│   ├── combinationEditorFunctions/  # Combination editor modules
+│   │   ├── state.js        # CombinationEditorState object
+│   │   ├── modalManager.js # Modal open/close, grid overlay, save
+│   │   ├── shapeEditor.js  # Shape editing functions
+│   │   ├── preview.js      # Live preview rendering
+│   │   ├── events.js       # Event handlers
+│   │   └── patternEditor.js # Pattern selection for paths
+│   ├── combinations.js     # Combination list UI, selection
+│   ├── combinationData.js  # Combination registry, rendering
 │   └── tileTester/         # Tile tester modules
 │       ├── state.js        # TileTesterState object
 │       ├── mainCanvas.js   # Main canvas rendering
@@ -341,7 +350,74 @@ const PatternEditorState = {
 - Download pattern as image
 - Live preview tiling
 
-### 7. Tile Tester (`tileTester/`)
+### 7. Combination Editor (`combinationEditorFunctions/`)
+
+The combination editor allows creating multi-tile shapes that span multiple tiles in a grid.
+
+#### State (`combinationEditorFunctions/state.js`)
+
+```javascript
+var CombinationEditorState = {
+  currentEditingCombinationIndex: null,
+  combinationData: null,       // Working copy of combination
+  tileRows: 2,                 // Grid height in tiles (1-8)
+  tileCols: 2,                 // Grid width in tiles (1-8)
+
+  // Per-path pattern data
+  selectedPatternName: null,
+  selectedPatternSize: 16,
+  selectedPatternInvert: false,
+  pathPatterns: {},            // { pathIndex: { patternName, patternSize, patternInvert } }
+
+  // Preview
+  previewCanvas: null,
+  previewCtx: null
+};
+```
+
+#### Combination Data Structure
+
+```javascript
+{
+  id: 'combination_123...',
+  name: 'My Combination',
+  tileRows: 2,
+  tileCols: 2,
+  shapeData: [/* path vertices */],
+  pathPatterns: {              // Per-path pattern assignments
+    0: { patternName: 'dots', patternSize: 16, patternInvert: false }
+  }
+}
+```
+
+#### Features
+
+- **Grid Size Control**: Adjustable tile rows/columns (1-8 each) with +/- stepper buttons
+- **Shape Palette**: Drag existing shapes into the editor to add them
+- **Pattern Palette**: Apply patterns per-path with size and invert options
+- **Live Preview**: Shows how the combination will render in the tileset
+- **Red Dashed Grid Overlay**: Visualizes tile boundaries while editing
+
+#### How Combinations Render
+
+When the tileset is generated, combinations are rendered as multi-tile units:
+
+1. The full shape is rendered to a temporary canvas at the combined tile dimensions
+2. Each tile position extracts its portion from the temporary canvas
+3. Tiles appear in sequence in the tileset output
+
+#### Module Responsibilities
+
+| Module | Responsibility |
+|--------|---------------|
+| `state.js` | CombinationEditorState, constants, helper functions |
+| `modalManager.js` | Modal open/close, grid overlay, coordinate conversion, save |
+| `shapeEditor.js` | Two.js shape editing (reuses EditorState with mode='combination') |
+| `preview.js` | Live preview canvas rendering with bezier support |
+| `events.js` | Mouse/keyboard event handlers |
+| `patternEditor.js` | Pattern palette and per-path pattern selection |
+
+### 8. Tile Tester (`tileTester/`)
 
 Full-screen modal for testing tileset appearance.
 
@@ -386,11 +462,11 @@ Each layer contains:
 
 Saves and loads complete application state as JSON.
 
-#### Session Data Structure (v5)
+#### Session Data Structure (v6)
 
 ```javascript
 {
-  version: 5,
+  version: 6,
   colors: "FFFFFF, 000000",
   tileSize: "64",
   paletteComplexity: "40",
@@ -398,9 +474,20 @@ Saves and loads complete application state as JSON.
   selectedIndices: [0, 2],
   patternOrder: ["checkerboard", "dots"],
   selectedPatternIndices: [0],
+  combinationOrder: ["combination_789..."],
+  selectedCombinationIndices: [0],
   fitPreview: false,
   customShapes: { "custom_123...": { paths: [...] } },
   customPatterns: { "custom_456...": { size: 8, pixels: [...] } },
+  customCombinations: {
+    "combination_789...": {
+      id: "combination_789...",
+      tileRows: 2,
+      tileCols: 2,
+      shapeData: [...],
+      pathPatterns: { 0: { patternName: "dots", patternSize: 16, patternInvert: false } }
+    }
+  },
   tileTester: { layers: [...], backgroundColor: "#d0d0d0" }
 }
 ```
@@ -432,6 +519,23 @@ function registerCustomShape(shapeId, pathData) {
 2. Modifications saved as `custom_<timestamp>_<random>` patterns
 3. Custom patterns stored in `customPatternRegistry`
 
+#### Creating Custom Combinations
+
+1. Click "New Combination" or edit an existing combination
+2. Draw or add shapes from the shape palette
+3. Adjust grid size (rows × columns) using +/- buttons
+4. Optionally apply patterns to individual paths
+5. Combinations saved as `combination_<timestamp>_<random>`
+6. Custom combinations stored in `customCombinationRegistry`
+
+**Registration (`combinationData.js`):**
+
+```javascript
+function registerCustomCombination(combinationId, combinationData) {
+  customCombinationRegistry[combinationId] = combinationData;
+}
+```
+
 ## Script Loading Order
 
 Scripts must be loaded in dependency order (see `index.html`):
@@ -442,12 +546,13 @@ Scripts must be loaded in dependency order (see `index.html`):
 4. **shapes/*.js** - Individual shapes
 5. **patterns/registry.js** - Registries
 6. **patterns/*.js** - Individual patterns
-7. **Core scripts** - shapeData, patternData, shapes, patterns, canvas, sizeControls, colors, utils
+7. **Core scripts** - shapeData, patternData, combinationData, shapes, patterns, combinations, canvas, sizeControls, colors, utils
 8. **Editor modules** - editorFunctions/*.js, then editor.js
 9. **Pattern editor modules** - patternEditorFunctions/*.js
-10. **Tile tester modules** - tileTester/*.js
-11. **main.js** - Entry point
-12. **session.js** - Must be last (uses all above)
+10. **Combination editor modules** - combinationEditorFunctions/*.js
+11. **Tile tester modules** - tileTester/*.js
+12. **main.js** - Entry point
+13. **session.js** - Must be last (uses all above)
 
 ## Global Variables
 
@@ -461,12 +566,16 @@ Due to vanilla JS architecture, these are globally accessible:
 | `patternPixelData` | patterns/registry.js | Pattern pixel definitions |
 | `shapeOrder` | shapes.js | Current shape order array |
 | `patternOrder` | patterns.js | Current pattern order array |
+| `combinationOrder` | combinations.js | Current combination order array |
 | `EditorState` | editorFunctions/state.js | Shape editor state |
 | `PatternEditorState` | patternEditorFunctions/state.js | Pattern editor state |
+| `CombinationEditorState` | combinationEditorFunctions/state.js | Combination editor state |
 | `TileTesterState` | tileTester/state.js | Tile tester state |
+| `customCombinationRegistry` | combinationData.js | Custom combination storage |
 | `canvas`, `ctx` | index.html | Main tileset canvas |
 | `shapes` | Referenced in shapes.js | Default shapes list |
 | `patterns` | Referenced in patterns.js | Default patterns list |
+| `combinations` | Referenced in combinations.js | Default combinations list |
 
 ## Adding New Shapes
 
