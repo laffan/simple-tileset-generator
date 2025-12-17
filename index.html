@@ -917,8 +917,15 @@ FFFFFF, 000000, </textarea
                                     <span>Crop</span>
                                 </label>
                             </div>
-                            <!-- Shape editor canvas (Two.js) -->
-                            <div id="combinationShapeEditorCanvas" class="combination-shape-canvas"></div>
+                            <!-- Shape editor canvas and palette -->
+                            <div class="combination-shape-editor-row">
+                                <div id="combinationShapeEditorCanvas" class="combination-shape-canvas"></div>
+                                <!-- Shape palette for drag-drop -->
+                                <div class="combination-shape-palette-container">
+                                    <div class="combination-palette-label">Shapes</div>
+                                    <div id="combinationShapePalette" class="combination-shape-palette"></div>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Pattern Editor Tab Content -->

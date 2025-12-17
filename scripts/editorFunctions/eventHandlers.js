@@ -2,7 +2,9 @@
 
 // Set up mouse event handlers
 function setupEditorEvents() {
-  const container = document.getElementById('shapeEditorCanvas');
+  const container = getActiveEditorCanvas();
+  if (!container) return;
+
   const svg = container.querySelector('svg');
   if (!svg) return;
 
@@ -16,9 +18,10 @@ function setupEditorEvents() {
 
   // Track CMD key for showing/hiding bounding box and anchor points
   document.addEventListener('keydown', (e) => {
-    // Only handle if the editor modal is visible
-    const modal = document.getElementById('shapeEditorModal');
-    if (!modal || !modal.classList.contains('active')) return;
+    // Only handle if the active editor modal is visible
+    if (!isActiveEditorOpen()) return;
+    // For combination editor, only handle in shape tab
+    if (EditorState.editorMode === 'combination' && CombinationEditorState.activeTab !== 'shape') return;
 
     if (e.metaKey || e.ctrlKey) {
       if (EditorState.paths.length > 0 && !EditorState.boundingBox) {
@@ -32,9 +35,10 @@ function setupEditorEvents() {
   });
 
   document.addEventListener('keyup', (e) => {
-    // Only handle if the editor modal is visible
-    const modal = document.getElementById('shapeEditorModal');
-    if (!modal || !modal.classList.contains('active')) return;
+    // Only handle if the active editor modal is visible
+    if (!isActiveEditorOpen()) return;
+    // For combination editor, only handle in shape tab
+    if (EditorState.editorMode === 'combination' && CombinationEditorState.activeTab !== 'shape') return;
 
     // Check if the released key is Meta or Control
     if (e.key === 'Meta' || e.key === 'Control') {
@@ -552,6 +556,11 @@ function setupEditorEvents() {
     resizeStartData = null;
     constrainedAxis = null;
     svg.style.cursor = 'default';
+
+    // Update combination preview if in combination editor mode
+    if (EditorState.editorMode === 'combination' && typeof updateCombinationPreview === 'function') {
+      updateCombinationPreview();
+    }
   });
 
   svg.addEventListener('mouseleave', () => {
@@ -571,9 +580,10 @@ function setupEditorEvents() {
 // Set up keyboard event handlers
 function setupKeyboardEvents() {
   document.addEventListener('keydown', (e) => {
-    // Only handle if the editor modal is visible
-    const modal = document.getElementById('shapeEditorModal');
-    if (!modal || !modal.classList.contains('active')) return;
+    // Only handle if the active editor modal is visible
+    if (!isActiveEditorOpen()) return;
+    // For combination editor, only handle in shape tab
+    if (EditorState.editorMode === 'combination' && CombinationEditorState.activeTab !== 'shape') return;
 
     // Delete or Backspace to delete selected points or current path
     if (e.key === 'Delete' || e.key === 'Backspace') {

@@ -193,7 +193,17 @@ function loadCombShapeData(shapeData) {
 }
 
 // Get shape data from the editor
+// Uses shared EditorState when in combination mode (for shared editor functionality)
 function getCombShapeData() {
+  // When using shared EditorState (new approach)
+  if (EditorState.editorMode === 'combination' && EditorState.paths && EditorState.paths.length > 0) {
+    // Use the getCombinationShapeData() from modalManager.js which reads from EditorState
+    if (typeof getCombinationShapeData === 'function') {
+      return getCombinationShapeData();
+    }
+  }
+
+  // Fallback to CombinationEditorState (legacy approach)
   const state = CombinationEditorState;
   if (!state.paths || state.paths.length === 0) return null;
 
