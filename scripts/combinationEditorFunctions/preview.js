@@ -101,37 +101,37 @@ function renderCombinationShapeToTiles(ctx, tileSize, rows, cols) {
   });
 }
 
-// Get scaled and inverted pattern data for a specific path's pattern settings
+// Get pattern data for a specific path's pattern settings
+// Returns the ORIGINAL pattern (not scaled) plus the grid size
 function getPatternDataForPath(pathPattern) {
   if (!pathPattern || !pathPattern.patternName) return null;
 
   const patternData = getPatternPixelData(pathPattern.patternName);
   if (!patternData) return null;
 
-  const targetSize = pathPattern.patternSize || 16;
-  const sourceSize = patternData.size || 8;
+  const gridSize = pathPattern.patternSize || 16;
   const shouldInvert = pathPattern.patternInvert || false;
 
-  // Scale pattern to target size
-  const scaledPixels = [];
-  for (let y = 0; y < targetSize; y++) {
-    scaledPixels[y] = [];
-    for (let x = 0; x < targetSize; x++) {
-      const srcX = Math.floor(x * sourceSize / targetSize);
-      const srcY = Math.floor(y * sourceSize / targetSize);
-      let pixelValue = (patternData.pixels[srcY] && patternData.pixels[srcY][srcX]) ? 1 : 0;
+  // Return original pattern with grid size info
+  // Don't scale the pattern - let the mask function handle the grid size
+  let pixels = patternData.pixels;
 
-      if (shouldInvert) {
-        pixelValue = pixelValue === 1 ? 0 : 1;
+  // Apply invert if needed
+  if (shouldInvert) {
+    pixels = [];
+    for (let y = 0; y < patternData.size; y++) {
+      pixels[y] = [];
+      for (let x = 0; x < patternData.size; x++) {
+        const val = (patternData.pixels[y] && patternData.pixels[y][x]) ? 1 : 0;
+        pixels[y][x] = val === 1 ? 0 : 1;
       }
-
-      scaledPixels[y][x] = pixelValue;
     }
   }
 
   return {
-    size: targetSize,
-    pixels: scaledPixels
+    size: patternData.size,  // Original pattern size (e.g., 8)
+    gridSize: gridSize,       // User-selected grid size (e.g., 4, 8, 16, 32)
+    pixels: pixels
   };
 }
 
@@ -193,10 +193,12 @@ function renderNormalizedShapeToCanvas(ctx, shapeData, width, height) {
 // Apply pattern as a mask to the canvas
 // Dark pixels (1) = keep shape, White pixels (0) = remove shape
 // The pattern tiles per individual tile (based on tileSize), not stretched across the whole canvas
+// gridSize controls how many cells per tile (pattern wraps/samples as needed)
 function applyPatternMask(ctx, patternData, width, height, tileSize) {
   if (!patternData || !patternData.pixels) return;
 
-  const patternSize = patternData.size;
+  const patternSize = patternData.size;      // Original pattern dimensions (e.g., 8)
+  const gridSize = patternData.gridSize || patternSize;  // User-selected grid size (e.g., 4, 8, 16, 32)
   const pixels = patternData.pixels;
 
   // Get the current canvas image data
@@ -206,17 +208,21 @@ function applyPatternMask(ctx, patternData, width, height, tileSize) {
   // If no tileSize provided, use width (single tile behavior)
   const effectiveTileSize = tileSize || width;
 
-  // Calculate pattern cell size based on individual tile size
-  // This makes the pattern repeat for each tile in the combination
-  const cellWidth = effectiveTileSize / patternSize;
-  const cellHeight = effectiveTileSize / patternSize;
+  // Calculate cell size based on GRID SIZE (user selection), not pattern size
+  // This determines how many cells fit per tile
+  const cellWidth = effectiveTileSize / gridSize;
+  const cellHeight = effectiveTileSize / gridSize;
 
   // For each pixel in the canvas, determine if it should be masked
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
-      // Calculate which pattern cell this pixel falls into (with tiling)
-      const px = Math.floor((x % effectiveTileSize) / cellWidth) % patternSize;
-      const py = Math.floor((y % effectiveTileSize) / cellHeight) % patternSize;
+      // Calculate which grid cell this pixel falls into
+      const gridX = Math.floor((x % effectiveTileSize) / cellWidth);
+      const gridY = Math.floor((y % effectiveTileSize) / cellHeight);
+
+      // Sample from the original pattern (with wrapping if gridSize > patternSize)
+      const px = gridX % patternSize;
+      const py = gridY % patternSize;
 
       const patternPixel = pixels[py] && pixels[py][px];
 
