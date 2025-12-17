@@ -464,7 +464,8 @@ function setupCombShapeToolbar() {
         case 'comb-align-left': alignCombLeft(); break;
         case 'comb-align-right': alignCombRight(); break;
         case 'comb-boolean-cut': combBooleanCut(); break;
-        case 'comb-toggle-hole': combToggleHole(); break;
+        // comb-toggle-hole handled by executeCombinationToolAction in modalManager.js
+        // using the shape editor's toggleHole() which already works with EditorState
       }
     });
   });
