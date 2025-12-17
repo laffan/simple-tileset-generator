@@ -212,7 +212,22 @@ function loadCombinationShapeData(shapeData) {
         ctrlRightY = v.ctrlRight.y * bounds.height;
       }
 
-      const command = i === 0 ? Two.Commands.move : Two.Commands.line;
+      // Determine command based on control points
+      let command;
+      if (i === 0) {
+        // First vertex - check if last vertex has ctrlRight or this has ctrlLeft (for closed paths)
+        const lastV = vertices[vertices.length - 1];
+        const lastHasCtrlRight = lastV.ctrlRight && (lastV.ctrlRight.x !== 0 || lastV.ctrlRight.y !== 0);
+        const firstHasCtrlLeft = v.ctrlLeft && (v.ctrlLeft.x !== 0 || v.ctrlLeft.y !== 0);
+        command = (lastHasCtrlRight || firstHasCtrlLeft) ? Two.Commands.curve : Two.Commands.move;
+      } else {
+        // Other vertices - use curve if prev has ctrlRight or current has ctrlLeft
+        const prevV = vertices[i - 1];
+        const prevHasCtrlRight = prevV.ctrlRight && (prevV.ctrlRight.x !== 0 || prevV.ctrlRight.y !== 0);
+        const currentHasCtrlLeft = v.ctrlLeft && (v.ctrlLeft.x !== 0 || v.ctrlLeft.y !== 0);
+        command = (prevHasCtrlRight || currentHasCtrlLeft) ? Two.Commands.curve : Two.Commands.line;
+      }
+
       return new Two.Anchor(x, y, ctrlLeftX, ctrlLeftY, ctrlRightX, ctrlRightY, command);
     });
 
