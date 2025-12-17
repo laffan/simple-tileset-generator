@@ -830,97 +830,90 @@ FFFFFF, 000000, </textarea
         <div id="combinationEditorModal" class="modal">
             <div class="modal-content combination-editor-modal">
                 <div class="modal-body">
-                    <div class="combination-editor-workspace">
-                        <!-- Shape Editor Tab Content -->
-                        <div id="combinationShapeTab" class="combination-tab-content active">
-                            <!-- Toolbar (same as shape editor) -->
-                            <div class="shape-toolbar combination-shape-toolbar">
-                                <div class="toolbar-tool" data-tool="add">
-                                    <span class="tool-label">Add</span>
-                                    <div class="tool-submenu">
-                                        <button class="tool-action" data-action="comb-add-circle">Circle</button>
-                                        <button class="tool-action" data-action="comb-add-square">Square</button>
-                                        <button class="tool-action" data-action="comb-add-triangle">Triangle</button>
-                                        <button class="tool-action" data-action="comb-add-hexagon">Hexagon</button>
-                                    </div>
+                    <div class="combination-editor-layout">
+                        <!-- Toolbar (same as shape editor) -->
+                        <div class="shape-toolbar combination-shape-toolbar">
+                            <div class="toolbar-tool" data-tool="add">
+                                <span class="tool-label">Add</span>
+                                <div class="tool-submenu">
+                                    <button class="tool-action" data-action="comb-add-circle">Circle</button>
+                                    <button class="tool-action" data-action="comb-add-square">Square</button>
+                                    <button class="tool-action" data-action="comb-add-triangle">Triangle</button>
+                                    <button class="tool-action" data-action="comb-add-hexagon">Hexagon</button>
                                 </div>
-                                <div class="toolbar-tool" data-tool="reflect">
-                                    <span class="tool-label">Reflect</span>
-                                    <div class="tool-submenu">
-                                        <button class="tool-action" data-action="comb-reflect-horizontal">Horizontal</button>
-                                        <button class="tool-action" data-action="comb-reflect-vertical">Vertical</button>
-                                    </div>
-                                </div>
-                                <div class="toolbar-tool" data-tool="align">
-                                    <span class="tool-label">Align</span>
-                                    <div class="tool-submenu align-submenu">
-                                        <small class="submenu-hint">Shift+click paths to multi-select</small>
-                                        <button class="tool-action" data-action="comb-align-center">Center</button>
-                                        <button class="tool-action" data-action="comb-align-top">Top</button>
-                                        <button class="tool-action" data-action="comb-align-bottom">Bottom</button>
-                                        <button class="tool-action" data-action="comb-align-left">Left</button>
-                                        <button class="tool-action" data-action="comb-align-right">Right</button>
-                                    </div>
-                                </div>
-                                <div class="toolbar-tool" data-tool="cut">
-                                    <span class="tool-label">Cut</span>
-                                    <div class="tool-submenu">
-                                        <button class="tool-action" data-action="comb-boolean-cut">Boolean Cut</button>
-                                        <button class="tool-action" data-action="comb-toggle-hole">Toggle Hole</button>
-                                    </div>
-                                </div>
-                                <div class="toolbar-spacer"></div>
-                                <button id="combShapeUploadBtn" class="toolbar-btn" title="Upload SVG">Upload</button>
-                                <button id="combShapeDownloadBtn" class="toolbar-btn" title="Download SVG">Download</button>
-                                <input type="file" id="combShapeUploadInput" accept=".svg,image/svg+xml" style="display: none" />
-                                <div class="toolbar-divider"></div>
-                                <label class="toolbar-checkbox">
-                                    <input type="checkbox" id="combCropToBoundsCheckbox" checked />
-                                    <span>Crop</span>
-                                </label>
                             </div>
-                            <!-- Shape editor canvas and palette -->
-                            <div class="combination-shape-editor-row">
-                                <div id="combinationShapeEditorCanvas" class="combination-shape-canvas"></div>
-                                <!-- Tabbed palette for shapes and patterns -->
-                                <div class="combination-palette-container">
-                                    <div class="combination-palette-tabs">
-                                        <button class="combination-palette-tab active" data-palette-tab="shapes">Shapes</button>
-                                        <button class="combination-palette-tab" data-palette-tab="patterns">Patterns</button>
+                            <div class="toolbar-tool" data-tool="reflect">
+                                <span class="tool-label">Reflect</span>
+                                <div class="tool-submenu">
+                                    <button class="tool-action" data-action="comb-reflect-horizontal">Horizontal</button>
+                                    <button class="tool-action" data-action="comb-reflect-vertical">Vertical</button>
+                                </div>
+                            </div>
+                            <div class="toolbar-tool" data-tool="align">
+                                <span class="tool-label">Align</span>
+                                <div class="tool-submenu align-submenu">
+                                    <small class="submenu-hint">Shift+click paths to multi-select</small>
+                                    <button class="tool-action" data-action="comb-align-center">Center</button>
+                                    <button class="tool-action" data-action="comb-align-top">Top</button>
+                                    <button class="tool-action" data-action="comb-align-bottom">Bottom</button>
+                                    <button class="tool-action" data-action="comb-align-left">Left</button>
+                                    <button class="tool-action" data-action="comb-align-right">Right</button>
+                                </div>
+                            </div>
+                            <div class="toolbar-tool" data-tool="cut">
+                                <span class="tool-label">Cut</span>
+                                <div class="tool-submenu">
+                                    <button class="tool-action" data-action="comb-boolean-cut">Boolean Cut</button>
+                                    <button class="tool-action" data-action="comb-toggle-hole">Toggle Hole</button>
+                                </div>
+                            </div>
+                            <div class="toolbar-spacer"></div>
+                            <button id="combShapeUploadBtn" class="toolbar-btn" title="Upload SVG">Upload</button>
+                            <button id="combShapeDownloadBtn" class="toolbar-btn" title="Download SVG">Download</button>
+                            <input type="file" id="combShapeUploadInput" accept=".svg,image/svg+xml" style="display: none" />
+                            <div class="toolbar-divider"></div>
+                            <label class="toolbar-checkbox">
+                                <input type="checkbox" id="combCropToBoundsCheckbox" checked />
+                                <span>Crop</span>
+                            </label>
+                        </div>
+                        <!-- Shape editor canvas -->
+                        <div id="combinationShapeEditorCanvas" class="combination-shape-canvas"></div>
+                        <!-- Tabbed palette for shapes and patterns -->
+                        <div class="combination-palette-container">
+                            <div class="combination-palette-tabs">
+                                <button class="combination-palette-tab active" data-palette-tab="shapes">Shapes</button>
+                                <button class="combination-palette-tab" data-palette-tab="patterns">Patterns</button>
+                            </div>
+                            <div id="combinationShapePaletteContent" class="combination-palette-content active">
+                                <div id="combinationShapePalette" class="combination-shape-palette"></div>
+                            </div>
+                            <div id="combinationPatternPaletteContent" class="combination-palette-content">
+                                <div id="combinationPatternPalette" class="combination-pattern-palette"></div>
+                            </div>
+                        </div>
+                        <!-- Preview column (right side) -->
+                        <div class="combination-preview-column">
+                            <!-- Grid size controls -->
+                            <div class="combination-grid-size-controls">
+                                <div class="grid-size-label">Grid Size</div>
+                                <div class="grid-size-row">
+                                    <div class="grid-size-control">
+                                        <button class="grid-size-btn" data-action="rows-dec">-</button>
+                                        <span id="combinationRowsDisplay" class="grid-size-value">2</span>
+                                        <button class="grid-size-btn" data-action="rows-inc">+</button>
                                     </div>
-                                    <!-- Shapes palette content -->
-                                    <div id="combinationShapePaletteContent" class="combination-palette-content active">
-                                        <div id="combinationShapePalette" class="combination-shape-palette"></div>
-                                    </div>
-                                    <!-- Patterns palette content -->
-                                    <div id="combinationPatternPaletteContent" class="combination-palette-content">
-                                        <div id="combinationPatternPalette" class="combination-pattern-palette"></div>
+                                    <span class="grid-size-x">x</span>
+                                    <div class="grid-size-control">
+                                        <button class="grid-size-btn" data-action="cols-dec">-</button>
+                                        <span id="combinationColsDisplay" class="grid-size-value">2</span>
+                                        <button class="grid-size-btn" data-action="cols-inc">+</button>
                                     </div>
                                 </div>
-                                <!-- Preview column (right side) -->
-                                <div class="combination-preview-column">
-                                    <!-- Grid size controls -->
-                                    <div class="combination-grid-size-controls">
-                                        <div class="grid-size-label">Grid Size</div>
-                                        <div class="grid-size-row">
-                                            <span id="combinationRowsDisplay" class="grid-size-value">2</span>
-                                            <div class="grid-size-btn-col">
-                                                <button class="grid-size-btn" data-action="rows-inc">+</button>
-                                                <button class="grid-size-btn" data-action="rows-dec">-</button>
-                                            </div>
-                                            <span class="grid-size-x">x</span>
-                                            <span id="combinationColsDisplay" class="grid-size-value">2</span>
-                                            <div class="grid-size-btn-col">
-                                                <button class="grid-size-btn" data-action="cols-inc">+</button>
-                                                <button class="grid-size-btn" data-action="cols-dec">-</button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <!-- Preview -->
-                                    <div class="combination-preview-wrapper">
-                                        <canvas id="combinationPreviewCanvas"></canvas>
-                                    </div>
-                                </div>
+                            </div>
+                            <!-- Preview -->
+                            <div class="combination-preview-wrapper">
+                                <canvas id="combinationPreviewCanvas"></canvas>
                             </div>
                         </div>
                     </div>
