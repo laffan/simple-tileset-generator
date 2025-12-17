@@ -649,47 +649,47 @@ function closeCombinationSubmenus() {
 function executeCombinationToolAction(actionType) {
   switch (actionType) {
     case 'comb-add-circle':
-      addCircleShape();
+      addPrimitiveShape('circle');
       updateCombinationPreview();
       break;
     case 'comb-add-square':
-      addSquareShape();
+      addPrimitiveShape('square');
       updateCombinationPreview();
       break;
     case 'comb-add-triangle':
-      addTriangleShape();
+      addPrimitiveShape('triangle');
       updateCombinationPreview();
       break;
     case 'comb-add-hexagon':
-      addHexagonShape();
+      addPrimitiveShape('hexagon');
       updateCombinationPreview();
       break;
     case 'comb-reflect-horizontal':
-      reflectHorizontal();
+      reflectPath('horizontal');
       updateCombinationPreview();
       break;
     case 'comb-reflect-vertical':
-      reflectVertical();
+      reflectPath('vertical');
       updateCombinationPreview();
       break;
     case 'comb-align-center':
-      alignCenter();
+      alignPaths('center');
       updateCombinationPreview();
       break;
     case 'comb-align-top':
-      alignTop();
+      alignPaths('top');
       updateCombinationPreview();
       break;
     case 'comb-align-bottom':
-      alignBottom();
+      alignPaths('bottom');
       updateCombinationPreview();
       break;
     case 'comb-align-left':
-      alignLeft();
+      alignPaths('left');
       updateCombinationPreview();
       break;
     case 'comb-align-right':
-      alignRight();
+      alignPaths('right');
       updateCombinationPreview();
       break;
     case 'comb-boolean-cut':
@@ -697,7 +697,7 @@ function executeCombinationToolAction(actionType) {
       updateCombinationPreview();
       break;
     case 'comb-toggle-hole':
-      toggleHolePath();
+      toggleHole();
       updateCombinationPreview();
       break;
   }

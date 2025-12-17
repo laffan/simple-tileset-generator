@@ -2249,16 +2249,8 @@
 
 /* Shape editor toolbar - reuses shape editor styles */
 .combination-shape-toolbar {
-  margin-bottom: 10px;
-  flex-direction: row;
-  width: auto;
-  flex-wrap: wrap;
-}
-
-/* Override submenu positioning for horizontal toolbar */
-.combination-shape-toolbar .tool-submenu {
-  left: 0;
-  top: 100%;
+  margin-bottom: 0;
+  margin-right: 10px;
 }
 
 /* Shape editor canvas container */
