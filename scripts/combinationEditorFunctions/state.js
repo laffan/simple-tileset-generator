@@ -3,7 +3,7 @@
  * The combination editor allows creating shapes that span multiple tiles.
  * A single shape is edited (like the shape editor) and divided into tiles
  * based on the tile rows/columns settings. An optional pattern can be
- * applied as a mask (dark areas kept, white areas removed).
+ * selected from the pattern palette to apply as a mask.
  */
 
 var CombinationEditorState = {
@@ -11,15 +11,15 @@ var CombinationEditorState = {
   currentEditingCombinationIndex: null,
 
   // Combination data (working copy)
-  // Contains: { id, name, tileRows, tileCols, shapeData, patternData }
   combinationData: null,
-
-  // Active editor tab: 'shape' or 'pattern'
-  activeTab: 'shape',
 
   // Tile grid dimensions (how the shape is divided)
   tileRows: 2,
   tileCols: 2,
+
+  // Selected pattern (from palette, not edited)
+  selectedPatternName: null,
+  selectedPatternSize: 8,
 
   // Shape editor state (Two.js instance for combination shape)
   two: null,

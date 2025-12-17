@@ -831,22 +831,9 @@ FFFFFF, 000000, </textarea
             <div class="modal-content combination-editor-modal">
                 <div class="modal-body">
                     <div class="combination-editor-workspace">
-                        <!-- Tab bar with tile size controls -->
+                        <!-- Header with tile size controls -->
                         <div class="combination-editor-header">
-                            <div class="combination-editor-tabs">
-                                <button
-                                    id="combinationTabShape"
-                                    class="combination-tab active"
-                                >
-                                    Edit Shape
-                                </button>
-                                <button
-                                    id="combinationTabPattern"
-                                    class="combination-tab"
-                                >
-                                    Edit Pattern
-                                </button>
-                            </div>
+                            <div class="combination-editor-title">Edit Combination</div>
                             <div class="combination-tile-size">
                                 <span class="combination-tile-size-label">Tile Size:</span>
                                 <input
@@ -920,43 +907,20 @@ FFFFFF, 000000, </textarea
                             <!-- Shape editor canvas and palette -->
                             <div class="combination-shape-editor-row">
                                 <div id="combinationShapeEditorCanvas" class="combination-shape-canvas"></div>
-                                <!-- Shape palette for drag-drop -->
-                                <div class="combination-shape-palette-container">
-                                    <div class="combination-palette-label">Shapes</div>
-                                    <div id="combinationShapePalette" class="combination-shape-palette"></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Pattern Editor Tab Content -->
-                        <div id="combinationPatternTab" class="combination-tab-content" style="display: none;">
-                            <!-- Toolbar (same as pattern editor) -->
-                            <div class="pattern-toolbar combination-pattern-toolbar">
-                                <div class="pattern-size-control">
-                                    <span class="pattern-toolbar-label">Grid Size</span>
-                                    <div class="pattern-size-btn-group">
-                                        <button class="pattern-size-btn comb-pattern-size-btn" data-size="4">4</button>
-                                        <button class="pattern-size-btn comb-pattern-size-btn active" data-size="8">8</button>
-                                        <button class="pattern-size-btn comb-pattern-size-btn" data-size="16">16</button>
-                                        <button class="pattern-size-btn comb-pattern-size-btn" data-size="32">32</button>
-                                        <button class="pattern-size-btn comb-pattern-size-btn pattern-size-custom-btn" id="combPatternSizeCustomBtn">Custom</button>
+                                <!-- Tabbed palette for shapes and patterns -->
+                                <div class="combination-palette-container">
+                                    <div class="combination-palette-tabs">
+                                        <button class="combination-palette-tab active" data-palette-tab="shapes">Shapes</button>
+                                        <button class="combination-palette-tab" data-palette-tab="patterns">Patterns</button>
                                     </div>
-                                    <input type="hidden" id="combPatternSizeInput" value="8" />
-                                </div>
-                                <div class="pattern-toolbar-divider"></div>
-                                <button id="combPatternInvertBtn" class="pattern-tool-btn" title="Invert pattern">Invert</button>
-                                <button id="combPatternUploadBtn" class="pattern-tool-btn" title="Upload image">Upload</button>
-                                <button id="combPatternDownloadBtn" class="pattern-tool-btn" title="Download pattern">Download</button>
-                                <input type="file" id="combPatternUploadInput" accept="image/*" style="display: none" />
-                            </div>
-                            <!-- Pattern editor canvas -->
-                            <div class="pattern-editor-container combination-pattern-container">
-                                <div class="pattern-editor-zoom">
-                                    <span id="combPatternEditorZoomDisplay">1:1</span>
-                                    <input type="range" id="combPatternEditorZoom" min="1" max="100" value="100" step="1" />
-                                </div>
-                                <div class="pattern-canvas-wrapper">
-                                    <canvas id="combinationPatternEditorCanvas"></canvas>
+                                    <!-- Shapes palette content -->
+                                    <div id="combinationShapePaletteContent" class="combination-palette-content active">
+                                        <div id="combinationShapePalette" class="combination-shape-palette"></div>
+                                    </div>
+                                    <!-- Patterns palette content -->
+                                    <div id="combinationPatternPaletteContent" class="combination-palette-content">
+                                        <div id="combinationPatternPalette" class="combination-pattern-palette"></div>
+                                    </div>
                                 </div>
                             </div>
                         </div>

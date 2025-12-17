@@ -2330,6 +2330,13 @@
    COMBINATION SHAPE EDITOR WITH PALETTE
    ============================================= */
 
+/* Combination editor title */
+.combination-editor-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
 /* Horizontal layout for shape editor canvas and palette */
 .combination-shape-editor-row {
   display: flex;
@@ -2337,9 +2344,9 @@
   align-items: flex-start;
 }
 
-/* Shape palette container - right side */
-.combination-shape-palette-container {
-  width: 120px;
+/* Tabbed palette container - right side */
+.combination-palette-container {
+  width: 140px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
@@ -2349,15 +2356,47 @@
   overflow: hidden;
 }
 
-/* Palette label */
-.combination-palette-label {
+/* Palette tabs */
+.combination-palette-tabs {
+  display: flex;
+  border-bottom: 1px solid #ddd;
+}
+
+.combination-palette-tab {
+  flex: 1;
+  padding: 8px 4px;
   font-size: 11px;
   font-weight: 600;
   color: #666;
-  padding: 8px 10px;
   background: #f0f0f0;
-  border-bottom: 1px solid #ddd;
-  text-align: center;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.combination-palette-tab:first-child {
+  border-right: 1px solid #ddd;
+}
+
+.combination-palette-tab:hover {
+  background: #e5e5e5;
+  color: #333;
+}
+
+.combination-palette-tab.active {
+  background: white;
+  color: #007bff;
+  border-bottom: 2px solid #007bff;
+  margin-bottom: -1px;
+}
+
+/* Palette content areas */
+.combination-palette-content {
+  display: none;
+}
+
+.combination-palette-content.active {
+  display: block;
 }
 
 /* Scrollable palette area */
@@ -2397,4 +2436,110 @@
   display: block;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
+}
+
+/* Patterns palette */
+.combination-pattern-palette {
+  padding: 8px;
+  max-height: 360px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Pattern item with preview and grid size buttons */
+.combination-pattern-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+
+.combination-pattern-item:hover {
+  border-color: #999;
+}
+
+.combination-pattern-item.selected {
+  border-color: #007bff;
+  background: #e5f3ff;
+}
+
+/* Pattern preview row */
+.combination-pattern-preview-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.combination-pattern-preview-row canvas {
+  display: block;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  border: 1px solid #ddd;
+  border-radius: 2px;
+}
+
+.combination-pattern-name {
+  font-size: 10px;
+  color: #666;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Grid size buttons */
+.combination-pattern-sizes {
+  display: flex;
+  gap: 2px;
+}
+
+.combination-pattern-size-btn {
+  flex: 1;
+  padding: 3px 2px;
+  font-size: 9px;
+  background: #f0f0f0;
+  border: 1px solid #ccc;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.combination-pattern-size-btn:hover {
+  background: #e5e5e5;
+}
+
+.combination-pattern-size-btn.active {
+  background: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+/* No pattern option */
+.combination-no-pattern {
+  padding: 8px;
+  text-align: center;
+  font-size: 11px;
+  color: #666;
+  background: #f9f9f9;
+  border: 1px dashed #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.combination-no-pattern:hover {
+  background: #f0f0f0;
+  border-color: #999;
+}
+
+.combination-no-pattern.selected {
+  background: #e5f3ff;
+  border-color: #007bff;
+  color: #007bff;
 }

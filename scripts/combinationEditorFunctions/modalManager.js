@@ -2,6 +2,46 @@
  * Uses the shared EditorState with mode='combination' to reuse shape editor functionality
  */
 
+// Calculate the shape bounds for combination editor (always square tiles)
+// Returns { startX, startY, width, height, tileSize }
+function getCombinationShapeBounds() {
+  const rows = EditorState.combinationTileRows || 2;
+  const cols = EditorState.combinationTileCols || 2;
+
+  // Calculate tile size based on fitting into the available space
+  // Each tile must be square, so use the smaller dimension
+  const maxDimension = Math.max(rows, cols);
+  const tileSize = EDITOR_SHAPE_SIZE / maxDimension;
+
+  // Calculate shape area dimensions (rectangular if rows != cols)
+  const shapeWidth = tileSize * cols;
+  const shapeHeight = tileSize * rows;
+
+  // Center the shape area in the canvas
+  const startX = (EDITOR_SIZE - shapeWidth) / 2;
+  const startY = (EDITOR_SIZE - shapeHeight) / 2;
+
+  return { startX, startY, width: shapeWidth, height: shapeHeight, tileSize, rows, cols };
+}
+
+// Convert normalized coordinates (0-1) to combination editor coordinates
+function combinationNormalizedToEditor(normalizedX, normalizedY) {
+  const bounds = getCombinationShapeBounds();
+  return {
+    x: bounds.startX + normalizedX * bounds.width,
+    y: bounds.startY + normalizedY * bounds.height
+  };
+}
+
+// Convert combination editor coordinates to normalized (0-1)
+function combinationEditorToNormalized(editorX, editorY) {
+  const bounds = getCombinationShapeBounds();
+  return {
+    x: (editorX - bounds.startX) / bounds.width,
+    y: (editorY - bounds.startY) / bounds.height
+  };
+}
+
 // Open the combination editor
 function openCombinationEditor(combinationIndex) {
   // Set editor mode to combination
@@ -26,12 +66,15 @@ function openCombinationEditor(combinationIndex) {
   EditorState.combinationTileCols = combinationData.tileCols || 2;
   EditorState.combinationPatternData = combinationData.patternData || null;
 
-  // Also update CombinationEditorState for pattern tab
+  // Also update CombinationEditorState
   CombinationEditorState.currentEditingCombinationIndex = combinationIndex;
   CombinationEditorState.combinationData = copyCombinationData(combinationData);
-  CombinationEditorState.activeTab = 'shape';
   CombinationEditorState.tileRows = EditorState.combinationTileRows;
   CombinationEditorState.tileCols = EditorState.combinationTileCols;
+
+  // Initialize pattern selection from saved data
+  CombinationEditorState.selectedPatternName = combinationData.selectedPatternName || null;
+  CombinationEditorState.selectedPatternSize = combinationData.selectedPatternSize || 8;
 
   // Show modal
   const modal = document.getElementById('combinationEditorModal');
@@ -65,16 +108,6 @@ function openCombinationEditor(combinationIndex) {
   // Setup event handlers (shared with shape editor)
   setupEditorEvents();
 
-  // Initialize pattern editor
-  initCombinationPatternEditor();
-
-  // Load pattern data if exists
-  if (combinationData.patternData) {
-    loadCombPatternData(combinationData.patternData);
-  } else {
-    createEmptyCombPattern();
-  }
-
   // Initialize preview
   initCombinationPreviewCanvas();
   updateCombinationPreview();
@@ -82,11 +115,9 @@ function openCombinationEditor(combinationIndex) {
   // Setup combination-specific UI events
   setupCombinationEditorUI();
 
-  // Build shape palette
+  // Build palettes
   buildCombinationShapePalette();
-
-  // Ensure shape tab is active
-  switchCombinationEditorTab('shape');
+  buildCombinationPatternPalette();
 }
 
 // Initialize Two.js in the combination editor canvas
@@ -114,6 +145,9 @@ function loadCombinationShapeData(shapeData) {
   EditorState.currentPathIndex = 0;
   EditorState.fillRule = shapeData.fillRule || null;
   EditorState.holePathIndices = [];
+
+  // Get the rectangular bounds for this tile configuration
+  const bounds = getCombinationShapeBounds();
 
   // Handle both simple array format [[x,y], ...] and complex object format
   let pathsData;
@@ -151,18 +185,18 @@ function loadCombinationShapeData(shapeData) {
     }
 
     const anchors = vertices.map((v, i) => {
-      // Convert from normalized (0-1) to editor coordinates
-      const x = normalizedToEditor(v.x);
-      const y = normalizedToEditor(v.y);
+      // Convert from normalized (0-1) to editor coordinates using rectangular bounds
+      const x = bounds.startX + v.x * bounds.width;
+      const y = bounds.startY + v.y * bounds.height;
 
       let ctrlLeftX = 0, ctrlLeftY = 0, ctrlRightX = 0, ctrlRightY = 0;
       if (v.ctrlLeft) {
-        ctrlLeftX = normalizedControlToEditor(v.ctrlLeft.x);
-        ctrlLeftY = normalizedControlToEditor(v.ctrlLeft.y);
+        ctrlLeftX = v.ctrlLeft.x * bounds.width;
+        ctrlLeftY = v.ctrlLeft.y * bounds.height;
       }
       if (v.ctrlRight) {
-        ctrlRightX = normalizedControlToEditor(v.ctrlRight.x);
-        ctrlRightY = normalizedControlToEditor(v.ctrlRight.y);
+        ctrlRightX = v.ctrlRight.x * bounds.width;
+        ctrlRightY = v.ctrlRight.y * bounds.height;
       }
 
       const command = i === 0 ? Two.Commands.move : Two.Commands.line;
@@ -192,19 +226,18 @@ function loadCombinationShapeData(shapeData) {
   EditorState.two.update();
 }
 
-// Create default shape (square filling the shape area)
+// Create default shape (rectangle filling the shape area based on tile dimensions)
 function createDefaultCombinationShape() {
   if (!EditorState.two) return;
 
-  const halfSize = EDITOR_SHAPE_SIZE / 2;
-  const centerX = EDITOR_SIZE / 2;
-  const centerY = EDITOR_SIZE / 2;
+  // Get the rectangular bounds for this tile configuration
+  const bounds = getCombinationShapeBounds();
 
   const anchors = [
-    new Two.Anchor(centerX - halfSize, centerY - halfSize, 0, 0, 0, 0, Two.Commands.move),
-    new Two.Anchor(centerX + halfSize, centerY - halfSize, 0, 0, 0, 0, Two.Commands.line),
-    new Two.Anchor(centerX + halfSize, centerY + halfSize, 0, 0, 0, 0, Two.Commands.line),
-    new Two.Anchor(centerX - halfSize, centerY + halfSize, 0, 0, 0, 0, Two.Commands.line)
+    new Two.Anchor(bounds.startX, bounds.startY, 0, 0, 0, 0, Two.Commands.move),
+    new Two.Anchor(bounds.startX + bounds.width, bounds.startY, 0, 0, 0, 0, Two.Commands.line),
+    new Two.Anchor(bounds.startX + bounds.width, bounds.startY + bounds.height, 0, 0, 0, 0, Two.Commands.line),
+    new Two.Anchor(bounds.startX, bounds.startY + bounds.height, 0, 0, 0, 0, Two.Commands.line)
   ];
 
   const path = new Two.Path(anchors);
@@ -222,6 +255,43 @@ function createDefaultCombinationShape() {
   EditorState.two.update();
 }
 
+// Convert a path to normalized coordinates using combination rectangular bounds
+function combinationPathToNormalizedData(path) {
+  const bounds = getCombinationShapeBounds();
+  const tx = path.translation ? path.translation.x : 0;
+  const ty = path.translation ? path.translation.y : 0;
+
+  const vertices = path.vertices.map(v => {
+    // Convert from editor coordinates to normalized (0-1) using rectangular bounds
+    const absX = v.x + tx;
+    const absY = v.y + ty;
+    const normalizedX = (absX - bounds.startX) / bounds.width;
+    const normalizedY = (absY - bounds.startY) / bounds.height;
+
+    const vertex = { x: normalizedX, y: normalizedY };
+
+    // Handle control points
+    if (v.controls) {
+      if (v.controls.left && (v.controls.left.x !== 0 || v.controls.left.y !== 0)) {
+        vertex.ctrlLeft = {
+          x: v.controls.left.x / bounds.width,
+          y: v.controls.left.y / bounds.height
+        };
+      }
+      if (v.controls.right && (v.controls.right.x !== 0 || v.controls.right.y !== 0)) {
+        vertex.ctrlRight = {
+          x: v.controls.right.x / bounds.width,
+          y: v.controls.right.y / bounds.height
+        };
+      }
+    }
+
+    return vertex;
+  });
+
+  return { vertices, closed: path.closed };
+}
+
 // Get shape data from editor (converts to normalized format for saving)
 function getCombinationShapeData() {
   if (!EditorState.paths || EditorState.paths.length === 0) return null;
@@ -229,7 +299,7 @@ function getCombinationShapeData() {
   const shouldCrop = isCropEnabled();
 
   if (EditorState.paths.length === 1) {
-    const pathData = pathToNormalizedData(EditorState.paths[0]);
+    const pathData = combinationPathToNormalizedData(EditorState.paths[0]);
     // Convert to simple array format [x - 0.5, y - 0.5] for combination storage
     let points = pathData.vertices.map(v => [v.x - 0.5, v.y - 0.5]);
     if (shouldCrop) {
@@ -239,7 +309,7 @@ function getCombinationShapeData() {
   } else {
     // Multi-path
     let paths = EditorState.paths.map(path => {
-      const pd = pathToNormalizedData(path);
+      const pd = combinationPathToNormalizedData(path);
       return pd.vertices.map(v => [v.x - 0.5, v.y - 0.5]);
     });
     if (shouldCrop) {
@@ -256,7 +326,7 @@ function getCombinationShapeData() {
   }
 }
 
-// Draw red tile grid overlay showing divisions
+// Draw red tile grid overlay showing divisions (with square tiles)
 function drawCombinationTileGridOverlay() {
   const container = document.getElementById('combinationShapeEditorCanvas');
   if (!container) return;
@@ -267,10 +337,9 @@ function drawCombinationTileGridOverlay() {
     oldOverlay.remove();
   }
 
-  const rows = EditorState.combinationTileRows;
-  const cols = EditorState.combinationTileCols;
-
-  if (rows <= 1 && cols <= 1) return; // No divisions needed
+  // Get bounds with square tiles
+  const bounds = getCombinationShapeBounds();
+  const { startX, startY, width, height, tileSize, rows, cols } = bounds;
 
   // Create SVG overlay
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -282,32 +351,39 @@ function drawCombinationTileGridOverlay() {
   svg.style.left = '0';
   svg.style.pointerEvents = 'none';
 
-  const tileWidth = EDITOR_SHAPE_SIZE / cols;
-  const tileHeight = EDITOR_SHAPE_SIZE / rows;
-  const startX = EDITOR_MARGIN;
-  const startY = EDITOR_MARGIN;
+  // Draw outer boundary rectangle (red dashed)
+  const boundary = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  boundary.setAttribute('x', startX);
+  boundary.setAttribute('y', startY);
+  boundary.setAttribute('width', width);
+  boundary.setAttribute('height', height);
+  boundary.setAttribute('fill', 'none');
+  boundary.setAttribute('stroke', '#dc3545');
+  boundary.setAttribute('stroke-width', '2');
+  boundary.setAttribute('stroke-dasharray', '8,4');
+  svg.appendChild(boundary);
 
-  // Draw vertical division lines
+  // Draw vertical division lines (only if more than 1 column)
   for (let i = 1; i < cols; i++) {
-    const x = startX + i * tileWidth;
+    const x = startX + i * tileSize;
     const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
     line.setAttribute('x1', x);
     line.setAttribute('y1', startY);
     line.setAttribute('x2', x);
-    line.setAttribute('y2', startY + EDITOR_SHAPE_SIZE);
+    line.setAttribute('y2', startY + height);
     line.setAttribute('stroke', '#dc3545');
     line.setAttribute('stroke-width', '2');
     line.setAttribute('stroke-dasharray', '6,4');
     svg.appendChild(line);
   }
 
-  // Draw horizontal division lines
+  // Draw horizontal division lines (only if more than 1 row)
   for (let i = 1; i < rows; i++) {
-    const y = startY + i * tileHeight;
+    const y = startY + i * tileSize;
     const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
     line.setAttribute('x1', startX);
     line.setAttribute('y1', y);
-    line.setAttribute('x2', startX + EDITOR_SHAPE_SIZE);
+    line.setAttribute('x2', startX + width);
     line.setAttribute('y2', y);
     line.setAttribute('stroke', '#dc3545');
     line.setAttribute('stroke-width', '2');
@@ -351,20 +427,18 @@ function saveCombinationEditor() {
   // Get shape data from editor
   const shapeData = getCombinationShapeData();
 
-  // Get pattern data
-  const patternData = getCombPatternData();
-
   // Get the current combination name
   const currentCombinationName = combinationOrder[combinationIndex];
 
-  // Create saved data
+  // Create saved data (with pattern reference instead of pattern data)
   const savedData = {
     id: currentCombinationName,
     name: CombinationEditorState.combinationData?.name || currentCombinationName,
     tileRows: EditorState.combinationTileRows,
     tileCols: EditorState.combinationTileCols,
     shapeData: shapeData,
-    patternData: patternData
+    selectedPatternName: CombinationEditorState.selectedPatternName || null,
+    selectedPatternSize: CombinationEditorState.selectedPatternSize || 8
   };
 
   // Update the registry
@@ -376,20 +450,6 @@ function saveCombinationEditor() {
   // Rebuild combination list and regenerate tileset
   rebuildCombinationList();
   generateTileset();
-}
-
-// Initialize pattern editor
-function initCombinationPatternEditor() {
-  const state = CombinationEditorState;
-
-  state.patternCanvas = document.getElementById('combinationPatternEditorCanvas');
-  if (!state.patternCanvas) return;
-
-  state.patternCtx = state.patternCanvas.getContext('2d');
-
-  // Set canvas size
-  state.patternCanvas.width = 512;
-  state.patternCanvas.height = 512;
 }
 
 // Initialize preview canvas
@@ -404,16 +464,14 @@ function initCombinationPreviewCanvas() {
 
 // Setup combination-specific UI events
 function setupCombinationEditorUI() {
-  // Tab buttons
-  const shapeTab = document.getElementById('combinationTabShape');
-  const patternTab = document.getElementById('combinationTabPattern');
-
-  if (shapeTab) {
-    shapeTab.onclick = () => switchCombinationEditorTab('shape');
-  }
-  if (patternTab) {
-    patternTab.onclick = () => switchCombinationEditorTab('pattern');
-  }
+  // Palette tab switching (Shapes / Patterns)
+  const paletteTabs = document.querySelectorAll('.combination-palette-tab');
+  paletteTabs.forEach(tab => {
+    tab.onclick = function() {
+      const tabName = this.dataset.paletteTab;
+      switchCombinationPaletteTab(tabName);
+    };
+  });
 
   // Tile size inputs
   const rowsInput = document.getElementById('combinationTileRows');
@@ -472,9 +530,25 @@ function setupCombinationEditorUI() {
 
   // Setup toolbar buttons (uses shape editor toolbar functions)
   setupCombinationShapeToolbar();
+}
 
-  // Setup pattern toolbar
-  setupCombPatternToolbar();
+// Switch between palette tabs (Shapes / Patterns)
+function switchCombinationPaletteTab(tabName) {
+  // Update tab buttons
+  document.querySelectorAll('.combination-palette-tab').forEach(tab => {
+    tab.classList.toggle('active', tab.dataset.paletteTab === tabName);
+  });
+
+  // Update content visibility
+  const shapesContent = document.getElementById('combinationShapePaletteContent');
+  const patternsContent = document.getElementById('combinationPatternPaletteContent');
+
+  if (shapesContent) {
+    shapesContent.classList.toggle('active', tabName === 'shapes');
+  }
+  if (patternsContent) {
+    patternsContent.classList.toggle('active', tabName === 'patterns');
+  }
 }
 
 // Setup combination shape toolbar
@@ -543,34 +617,6 @@ function setupCombinationShapeToolbar() {
   });
 }
 
-// Switch between tabs
-function switchCombinationEditorTab(tabName) {
-  CombinationEditorState.activeTab = tabName;
-
-  // Update tab buttons
-  const shapeTab = document.getElementById('combinationTabShape');
-  const patternTab = document.getElementById('combinationTabPattern');
-
-  if (shapeTab) shapeTab.classList.toggle('active', tabName === 'shape');
-  if (patternTab) patternTab.classList.toggle('active', tabName === 'pattern');
-
-  // Update tab content visibility
-  const shapeContent = document.getElementById('combinationShapeTab');
-  const patternContent = document.getElementById('combinationPatternTab');
-
-  if (shapeContent) {
-    shapeContent.style.display = tabName === 'shape' ? 'flex' : 'none';
-  }
-  if (patternContent) {
-    patternContent.style.display = tabName === 'pattern' ? 'flex' : 'none';
-  }
-
-  // Redraw pattern canvas if switching to pattern tab
-  if (tabName === 'pattern') {
-    drawCombPatternEditorCanvas();
-  }
-}
-
 // Build shape palette for drag-drop
 function buildCombinationShapePalette() {
   const paletteContainer = document.getElementById('combinationShapePalette');
@@ -613,19 +659,247 @@ function buildCombinationShapePalette() {
   });
 }
 
-// Load a shape from the palette into the combination editor
+// Load a shape from the palette into the combination editor (ADD, not replace)
 function loadShapeIntoCombinationEditor(shapeName) {
-  // Clear existing paths
-  EditorState.paths.forEach(p => EditorState.two.remove(p));
-  EditorState.paths = [];
-  EditorState.currentPathIndex = 0;
-  EditorState.holePathIndices = [];
+  // Get shape data from registry
+  const shapeData = getShapePathData(shapeName);
+  if (!shapeData) {
+    console.warn('No shape data found for:', shapeName);
+    return;
+  }
 
-  // Load the shape using the shared function
-  loadShapeIntoEditor(shapeName);
+  // Deselect current path visually
+  if (EditorState.paths[EditorState.currentPathIndex]) {
+    const oldPath = EditorState.paths[EditorState.currentPathIndex];
+    const wasHole = EditorState.holePathIndices.includes(EditorState.currentPathIndex);
+    if (wasHole) {
+      oldPath.fill = 'rgba(255, 100, 100, 0.15)';
+      oldPath.stroke = '#ff6666';
+    } else {
+      oldPath.fill = 'rgba(0, 0, 0, 0.4)';
+      oldPath.stroke = '#666';
+    }
+  }
+
+  // Add paths from the shape (could be single or multi-path)
+  const pathsToAdd = [];
+
+  if (shapeData.paths && Array.isArray(shapeData.paths)) {
+    // Multi-path shape
+    shapeData.paths.forEach((singlePathData, idx) => {
+      const isHole = shapeData.holePathIndices && shapeData.holePathIndices.includes(idx);
+      const path = createPathFromData(singlePathData, false, isHole);
+      pathsToAdd.push({ path, isHole });
+    });
+  } else if (shapeData.vertices && shapeData.vertices.length > 0) {
+    // Single path shape
+    const path = createPathFromData(shapeData, false, false);
+    pathsToAdd.push({ path, isHole: false });
+  }
+
+  // Add to EditorState and Two.js
+  const firstNewIndex = EditorState.paths.length;
+  pathsToAdd.forEach(({ path, isHole }, i) => {
+    EditorState.paths.push(path);
+    EditorState.two.add(path);
+    if (isHole) {
+      EditorState.holePathIndices.push(firstNewIndex + i);
+    }
+  });
+
+  // Select the first newly added path
+  EditorState.currentPathIndex = firstNewIndex;
+
+  // Update style of the new selected path
+  if (EditorState.paths[EditorState.currentPathIndex]) {
+    const newPath = EditorState.paths[EditorState.currentPathIndex];
+    const isHole = EditorState.holePathIndices.includes(EditorState.currentPathIndex);
+    if (isHole) {
+      newPath.fill = 'rgba(255, 100, 100, 0.3)';
+      newPath.stroke = '#cc0000';
+    } else {
+      newPath.fill = 'rgba(0, 0, 0, 0.8)';
+      newPath.stroke = '#333';
+    }
+  }
+
+  // Update anchor visuals for the new selected path
+  createAnchorVisuals();
+  EditorState.two.update();
 
   // Redraw tile overlay and preview
   drawCombinationTileGridOverlay();
+  updateCombinationPreview();
+}
+
+// Build the pattern palette with patterns and grid size options
+function buildCombinationPatternPalette() {
+  const paletteContainer = document.getElementById('combinationPatternPalette');
+  if (!paletteContainer) return;
+
+  paletteContainer.innerHTML = '';
+
+  // Add "No Pattern" option
+  const noPatternItem = document.createElement('div');
+  noPatternItem.className = 'combination-no-pattern';
+  if (!CombinationEditorState.selectedPatternName) {
+    noPatternItem.classList.add('selected');
+  }
+  noPatternItem.textContent = 'No Pattern';
+  noPatternItem.onclick = function() {
+    selectCombinationPattern(null, null);
+  };
+  paletteContainer.appendChild(noPatternItem);
+
+  // Get all available patterns
+  patternOrder.forEach((patternName) => {
+    const patternData = getPatternData(patternName);
+    if (!patternData) return;
+
+    const item = document.createElement('div');
+    item.className = 'combination-pattern-item';
+    item.dataset.pattern = patternName;
+
+    if (CombinationEditorState.selectedPatternName === patternName) {
+      item.classList.add('selected');
+    }
+
+    // Preview row (canvas + name)
+    const previewRow = document.createElement('div');
+    previewRow.className = 'combination-pattern-preview-row';
+
+    // Create small preview canvas
+    const previewCanvas = document.createElement('canvas');
+    previewCanvas.width = 24;
+    previewCanvas.height = 24;
+    const ctx = previewCanvas.getContext('2d');
+    renderPatternPreview(ctx, patternData, 24, 24);
+    previewRow.appendChild(previewCanvas);
+
+    // Pattern name
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'combination-pattern-name';
+    nameSpan.textContent = patternName;
+    previewRow.appendChild(nameSpan);
+
+    item.appendChild(previewRow);
+
+    // Grid size buttons row
+    const sizesRow = document.createElement('div');
+    sizesRow.className = 'combination-pattern-sizes';
+
+    [4, 8, 16, 32].forEach(size => {
+      const sizeBtn = document.createElement('button');
+      sizeBtn.className = 'combination-pattern-size-btn';
+      sizeBtn.textContent = size;
+      sizeBtn.dataset.size = size;
+
+      // Mark active if this pattern and size are selected
+      if (CombinationEditorState.selectedPatternName === patternName &&
+          CombinationEditorState.selectedPatternSize === size) {
+        sizeBtn.classList.add('active');
+      }
+
+      sizeBtn.onclick = function(e) {
+        e.stopPropagation();
+        selectCombinationPattern(patternName, size);
+      };
+
+      sizesRow.appendChild(sizeBtn);
+    });
+
+    item.appendChild(sizesRow);
+    paletteContainer.appendChild(item);
+  });
+}
+
+// Render a small preview of a pattern
+function renderPatternPreview(ctx, patternData, width, height) {
+  const size = patternData.size || 8;
+  const pixels = patternData.pixels || [];
+  const pixelW = width / size;
+  const pixelH = height / size;
+
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, width, height);
+
+  ctx.fillStyle = '#333';
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      if (pixels[y] && pixels[y][x] === 1) {
+        ctx.fillRect(x * pixelW, y * pixelH, pixelW, pixelH);
+      }
+    }
+  }
+}
+
+// Get the selected pattern data for preview rendering
+// This replaces the old getCombPatternData() from patternEditor.js
+function getCombPatternData() {
+  const patternName = CombinationEditorState.selectedPatternName;
+  if (!patternName) return null;
+
+  const patternData = getPatternData(patternName);
+  if (!patternData) return null;
+
+  const targetSize = CombinationEditorState.selectedPatternSize || 8;
+  const sourceSize = patternData.size || 8;
+
+  // If sizes match, return as-is
+  if (targetSize === sourceSize) {
+    return {
+      size: targetSize,
+      pixels: patternData.pixels
+    };
+  }
+
+  // Scale pattern to target size
+  const scaledPixels = [];
+  for (let y = 0; y < targetSize; y++) {
+    scaledPixels[y] = [];
+    for (let x = 0; x < targetSize; x++) {
+      // Map target coordinates to source coordinates
+      const srcX = Math.floor(x * sourceSize / targetSize);
+      const srcY = Math.floor(y * sourceSize / targetSize);
+      scaledPixels[y][x] = (patternData.pixels[srcY] && patternData.pixels[srcY][srcX]) ? 1 : 0;
+    }
+  }
+
+  return {
+    size: targetSize,
+    pixels: scaledPixels
+  };
+}
+
+// Select a pattern for the combination (or null for no pattern)
+function selectCombinationPattern(patternName, size) {
+  CombinationEditorState.selectedPatternName = patternName;
+  CombinationEditorState.selectedPatternSize = size || 8;
+
+  // Update visual selection
+  const paletteContainer = document.getElementById('combinationPatternPalette');
+  if (paletteContainer) {
+    // Update "No Pattern" selection
+    const noPatternItem = paletteContainer.querySelector('.combination-no-pattern');
+    if (noPatternItem) {
+      noPatternItem.classList.toggle('selected', !patternName);
+    }
+
+    // Update pattern items selection
+    paletteContainer.querySelectorAll('.combination-pattern-item').forEach(item => {
+      const itemPattern = item.dataset.pattern;
+      item.classList.toggle('selected', itemPattern === patternName);
+
+      // Update size buttons
+      item.querySelectorAll('.combination-pattern-size-btn').forEach(btn => {
+        const btnSize = parseInt(btn.dataset.size, 10);
+        btn.classList.toggle('active',
+          itemPattern === patternName && btnSize === CombinationEditorState.selectedPatternSize);
+      });
+    });
+  }
+
+  // Update the preview with the selected pattern
   updateCombinationPreview();
 }
 
