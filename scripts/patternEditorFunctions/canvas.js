@@ -80,12 +80,14 @@ function drawPatternEditorCanvas() {
     }
   }
 
-  // Draw the red boundary box around the primary tile (follows zoom and panning)
+  // Draw the red boundary box - stays fixed (doesn't move with panning)
+  const boundaryX = state.boundaryOffsetX + (state.BOUNDARY_SIZE - patternPixelSize) / 2;
+  const boundaryY = state.boundaryOffsetY + (state.BOUNDARY_SIZE - patternPixelSize) / 2;
   ctx.strokeStyle = '#ff0000';
   ctx.lineWidth = 2;
   ctx.strokeRect(
-    primaryTileX,
-    primaryTileY,
+    boundaryX,
+    boundaryY,
     patternPixelSize,
     patternPixelSize
   );
