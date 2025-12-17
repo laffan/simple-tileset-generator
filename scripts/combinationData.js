@@ -121,12 +121,13 @@ function drawCombination(x, y, tileSize, ctx, combinationData, color) {
   const tempCtx = tempCanvas.getContext('2d');
 
   // Render the shape (with per-path patterns if available)
+  // Pass tileSize so patterns tile per-tile, not stretched across whole canvas
   tempCtx.fillStyle = color || ctx.fillStyle || '#333';
-  renderNormalizedShape(tempCtx, shapeData, totalWidth, totalHeight, pathPatterns);
+  renderNormalizedShape(tempCtx, shapeData, totalWidth, totalHeight, pathPatterns, tileSize);
 
   // Legacy: Apply single pattern mask if present and no pathPatterns
   if (!pathPatterns && patternData && patternData.pixels && hasPatternFill(patternData)) {
-    applyPatternMaskToCombination(tempCtx, patternData, totalWidth, totalHeight);
+    applyPatternMaskToCombination(tempCtx, patternData, totalWidth, totalHeight, tileSize);
   }
 
   // Draw to the main canvas
@@ -149,7 +150,8 @@ function hasPatternFill(patternData) {
 }
 
 // Render normalized shape to canvas (with optional per-path patterns)
-function renderNormalizedShape(ctx, shapeData, width, height, pathPatterns) {
+// tileSize is used so patterns tile per-tile rather than across the whole canvas
+function renderNormalizedShape(ctx, shapeData, width, height, pathPatterns, tileSize) {
   // Handle multi-path shapes
   const pathsData = shapeData.paths || [shapeData];
   const fillRule = shapeData.fillRule || 'nonzero';
@@ -182,11 +184,12 @@ function renderNormalizedShape(ctx, shapeData, width, height, pathPatterns) {
       pathCtx.fill(fillRule);
 
       // Apply this path's pattern if it has one
+      // Pass tileSize so pattern tiles per-tile, not across whole canvas
       const pathPattern = pathPatterns[pathIndex];
       if (pathPattern && pathPattern.patternName) {
         const patternData = getScaledPatternData(pathPattern);
         if (patternData && hasPatternFill(patternData)) {
-          applyPatternMaskToCombination(pathCtx, patternData, width, height);
+          applyPatternMaskToCombination(pathCtx, patternData, width, height, tileSize);
         }
       }
 
@@ -253,7 +256,8 @@ function getScaledPatternData(pathPattern) {
 }
 
 // Apply pattern as mask (dark = keep, white = remove)
-function applyPatternMaskToCombination(ctx, patternData, width, height) {
+// Pattern tiles per individual tile (based on tileSize), not stretched across whole canvas
+function applyPatternMaskToCombination(ctx, patternData, width, height, tileSize) {
   if (!patternData || !patternData.pixels) return;
 
   const patternSize = patternData.size;
@@ -262,26 +266,26 @@ function applyPatternMaskToCombination(ctx, patternData, width, height) {
   const imageData = ctx.getImageData(0, 0, width, height);
   const data = imageData.data;
 
-  const pixelWidth = width / patternSize;
-  const pixelHeight = height / patternSize;
+  // If no tileSize provided, use width (single tile behavior)
+  const effectiveTileSize = tileSize || width;
 
-  for (let py = 0; py < patternSize; py++) {
-    for (let px = 0; px < patternSize; px++) {
+  // Calculate pattern cell size based on individual tile size
+  const cellWidth = effectiveTileSize / patternSize;
+  const cellHeight = effectiveTileSize / patternSize;
+
+  // For each pixel in the canvas, determine if it should be masked
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      // Calculate which pattern cell this pixel falls into (with tiling)
+      const px = Math.floor((x % effectiveTileSize) / cellWidth) % patternSize;
+      const py = Math.floor((y % effectiveTileSize) / cellHeight) % patternSize;
+
       const patternPixel = pixels[py] && pixels[py][px];
 
-      // If pattern pixel is white (0), clear that region
+      // If pattern pixel is white (0), clear this pixel
       if (patternPixel === 0) {
-        const startX = Math.floor(px * pixelWidth);
-        const endX = Math.floor((px + 1) * pixelWidth);
-        const startY = Math.floor(py * pixelHeight);
-        const endY = Math.floor((py + 1) * pixelHeight);
-
-        for (let y = startY; y < endY; y++) {
-          for (let x = startX; x < endX; x++) {
-            const i = (y * width + x) * 4;
-            data[i + 3] = 0; // Make transparent
-          }
-        }
+        const i = (y * width + x) * 4;
+        data[i + 3] = 0; // Make transparent
       }
     }
   }
@@ -309,12 +313,13 @@ function drawCombinationTile(tileRow, tileCol, tileSize, ctx, combinationData, c
   const tempCtx = tempCanvas.getContext('2d');
 
   // Render the full shape (with per-path patterns if available)
+  // Pass tileSize so patterns tile per-tile, not stretched across whole canvas
   tempCtx.fillStyle = color || '#333';
-  renderNormalizedShape(tempCtx, shapeData, totalWidth, totalHeight, pathPatterns);
+  renderNormalizedShape(tempCtx, shapeData, totalWidth, totalHeight, pathPatterns, tileSize);
 
   // Legacy: Apply single pattern mask if present and no pathPatterns
   if (!pathPatterns && patternData && patternData.pixels && hasPatternFill(patternData)) {
-    applyPatternMaskToCombination(tempCtx, patternData, totalWidth, totalHeight);
+    applyPatternMaskToCombination(tempCtx, patternData, totalWidth, totalHeight, tileSize);
   }
 
   // Extract the specific tile

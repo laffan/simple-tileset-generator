@@ -91,8 +91,9 @@ function renderCombinationShapeToTiles(ctx, tileSize, rows, cols) {
     pathCtx.fill();
 
     // Apply pattern if this path has one
+    // Pass tileSize so pattern tiles per-tile, not across whole canvas
     if (hasPattern) {
-      applyPatternMask(pathCtx, patternData, width, height);
+      applyPatternMask(pathCtx, patternData, width, height, tileSize);
     }
 
     // Draw to main canvas
@@ -191,7 +192,8 @@ function renderNormalizedShapeToCanvas(ctx, shapeData, width, height) {
 
 // Apply pattern as a mask to the canvas
 // Dark pixels (1) = keep shape, White pixels (0) = remove shape
-function applyPatternMask(ctx, patternData, width, height) {
+// The pattern tiles per individual tile (based on tileSize), not stretched across the whole canvas
+function applyPatternMask(ctx, patternData, width, height, tileSize) {
   if (!patternData || !patternData.pixels) return;
 
   const patternSize = patternData.size;
@@ -201,30 +203,27 @@ function applyPatternMask(ctx, patternData, width, height) {
   const imageData = ctx.getImageData(0, 0, width, height);
   const data = imageData.data;
 
-  // Calculate how the pattern tiles over the canvas
-  const pixelWidth = width / patternSize;
-  const pixelHeight = height / patternSize;
+  // If no tileSize provided, use width (single tile behavior)
+  const effectiveTileSize = tileSize || width;
 
-  for (let py = 0; py < patternSize; py++) {
-    for (let px = 0; px < patternSize; px++) {
+  // Calculate pattern cell size based on individual tile size
+  // This makes the pattern repeat for each tile in the combination
+  const cellWidth = effectiveTileSize / patternSize;
+  const cellHeight = effectiveTileSize / patternSize;
+
+  // For each pixel in the canvas, determine if it should be masked
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      // Calculate which pattern cell this pixel falls into (with tiling)
+      const px = Math.floor((x % effectiveTileSize) / cellWidth) % patternSize;
+      const py = Math.floor((y % effectiveTileSize) / cellHeight) % patternSize;
+
       const patternPixel = pixels[py] && pixels[py][px];
 
-      // If pattern pixel is white (0), clear that region
+      // If pattern pixel is white (0), clear this pixel
       if (patternPixel === 0) {
-        // Calculate canvas region for this pattern pixel
-        const startX = Math.floor(px * pixelWidth);
-        const endX = Math.floor((px + 1) * pixelWidth);
-        const startY = Math.floor(py * pixelHeight);
-        const endY = Math.floor((py + 1) * pixelHeight);
-
-        // Clear pixels in this region
-        for (let y = startY; y < endY; y++) {
-          for (let x = startX; x < endX; x++) {
-            const i = (y * width + x) * 4;
-            // Make fully transparent
-            data[i + 3] = 0;
-          }
-        }
+        const i = (y * width + x) * 4;
+        data[i + 3] = 0; // Make transparent
       }
     }
   }
