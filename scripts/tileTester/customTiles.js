@@ -8,26 +8,27 @@ function generateCustomTileId() {
 // Add a custom tile from current canvas selection
 function addCustomTileFromSelection() {
   const state = TileTesterState;
-  if (!state.dragSelectStart || !state.dragSelectEnd) return;
+  if (!state.canvasSelection) return;
 
+  const sel = state.canvasSelection;
   const tileSize = state.tileSize;
 
-  // Calculate grid bounds from pixel coordinates
-  const startGridX = Math.floor(Math.min(state.dragSelectStart.x, state.dragSelectEnd.x) / tileSize);
-  const startGridY = Math.floor(Math.min(state.dragSelectStart.y, state.dragSelectEnd.y) / tileSize);
-  const endGridX = Math.floor(Math.max(state.dragSelectStart.x, state.dragSelectEnd.x) / tileSize);
-  const endGridY = Math.floor(Math.max(state.dragSelectStart.y, state.dragSelectEnd.y) / tileSize);
+  // Calculate grid bounds
+  const minGridX = Math.min(sel.startCol, sel.endCol);
+  const maxGridX = Math.max(sel.startCol, sel.endCol);
+  const minGridY = Math.min(sel.startRow, sel.endRow);
+  const maxGridY = Math.max(sel.startRow, sel.endRow);
 
-  const width = endGridX - startGridX + 1;
-  const height = endGridY - startGridY + 1;
+  const width = maxGridX - minGridX + 1;
+  const height = maxGridY - minGridY + 1;
 
   // Collect tile references from all visible layers (composite view)
   const tileRefs = [];
 
   for (let localY = 0; localY < height; localY++) {
     for (let localX = 0; localX < width; localX++) {
-      const gridX = startGridX + localX;
-      const gridY = startGridY + localY;
+      const gridX = minGridX + localX;
+      const gridY = minGridY + localY;
 
       // Check bounds
       if (gridX < 0 || gridX >= state.gridWidth || gridY < 0 || gridY >= state.gridHeight) {
@@ -92,185 +93,172 @@ function removeCustomTile(tileId) {
 
 // Clear the canvas drag selection
 function clearCanvasSelection() {
-  TileTesterState.isDragSelecting = false;
-  TileTesterState.dragSelectStart = null;
-  TileTesterState.dragSelectEnd = null;
-  TileTesterState.showSelectionUI = false;
+  TileTesterState.isCanvasSelecting = false;
+  TileTesterState.canvasSelectionStart = null;
+  TileTesterState.canvasSelection = null;
   hideSelectionUI();
   renderTileTesterMainCanvas();
 }
 
-// Store event handler references for cleanup
-var customTileEventHandlers = {
-  canvasMouseDown: null,
-  documentMouseMove: null,
-  documentMouseUp: null,
-  documentMouseDown: null,
-  documentKeyDown: null
-};
-
-// Setup drag selection events on main canvas
-function setupCanvasDragSelection() {
+// Setup canvas selection events - called from setupMainCanvasEvents
+function setupCanvasSelectionEvents() {
   const mainCanvas = document.getElementById('tileTesterMainCanvas');
-
   if (!mainCanvas) return;
 
-  // Cmd/Ctrl+drag for selection (to not conflict with paint/erase)
-  customTileEventHandlers.canvasMouseDown = function(e) {
-    // Only allow Cmd/Ctrl+left-click for selection
-    if (e.button !== 0 || (!e.metaKey && !e.ctrlKey)) return;
+  // Store original mousedown handler
+  const originalMouseDown = tileTesterEventHandlers.mainCanvasMouseDown;
 
-    // Don't start selection if space panning
-    if (TileTesterState.isSpacePanning) return;
+  // Replace with enhanced version that handles Cmd/Ctrl+drag
+  tileTesterEventHandlers.mainCanvasMouseDown = function(e) {
+    // Check for Cmd/Ctrl+click for canvas selection
+    if (e.button === 0 && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      e.stopPropagation();
 
-    // Get position relative to canvas
-    const pos = getCanvasPixelPosition(e);
-    if (!pos) return;
+      // Don't start selection if space panning
+      if (TileTesterState.isSpacePanning) return;
 
-    TileTesterState.isDragSelecting = true;
-    TileTesterState.dragSelectStart = pos;
-    TileTesterState.dragSelectEnd = pos;
-    TileTesterState.showSelectionUI = false;
-    hideSelectionUI();
+      const pos = getGridPositionFromCanvasClick(e);
+      if (!pos) return;
 
-    e.preventDefault();
-    e.stopPropagation();
-  };
+      TileTesterState.isCanvasSelecting = true;
+      TileTesterState.canvasSelectionStart = { row: pos.gridY, col: pos.gridX };
+      TileTesterState.canvasSelection = {
+        startRow: pos.gridY,
+        startCol: pos.gridX,
+        endRow: pos.gridY,
+        endCol: pos.gridX
+      };
 
-  customTileEventHandlers.documentMouseMove = function(e) {
-    if (!TileTesterState.isDragSelecting) return;
-
-    const pos = getCanvasPixelPosition(e);
-    if (pos) {
-      TileTesterState.dragSelectEnd = pos;
-      renderSelectionOverlay();
+      hideSelectionUI();
+      renderCanvasSelection();
+      return;
     }
-  };
 
-  customTileEventHandlers.documentMouseUp = function(e) {
-    if (!TileTesterState.isDragSelecting) return;
-
-    TileTesterState.isDragSelecting = false;
-
-    // Check if we have a valid selection (more than a tiny drag)
-    const start = TileTesterState.dragSelectStart;
-    const end = TileTesterState.dragSelectEnd;
-
-    if (start && end) {
-      const dx = Math.abs(end.x - start.x);
-      const dy = Math.abs(end.y - start.y);
-
-      // Need at least some movement to create a selection
-      if (dx > 5 || dy > 5) {
-        TileTesterState.showSelectionUI = true;
-        showSelectionUI();
-      } else {
-        clearCanvasSelection();
-      }
-    }
-  };
-
-  // Click anywhere else to clear selection
-  customTileEventHandlers.documentMouseDown = function(e) {
-    if (!TileTesterState.showSelectionUI) return;
-
-    // Don't clear if clicking on selection UI elements
-    if (e.target.closest('#customTileSelectionUI')) return;
-
-    // Don't clear if Cmd/Ctrl+clicking on the canvas (starting new selection)
-    if (e.target.closest('#tileTesterMainCanvas') && (e.metaKey || e.ctrlKey)) return;
-
-    clearCanvasSelection();
-  };
-
-  // Escape key to clear selection
-  customTileEventHandlers.documentKeyDown = function(e) {
-    if (e.key === 'Escape' && TileTesterState.showSelectionUI) {
+    // Clear canvas selection if clicking without Cmd/Ctrl
+    if (TileTesterState.canvasSelection && !e.metaKey && !e.ctrlKey) {
       clearCanvasSelection();
     }
+
+    // Call original handler for normal painting
+    if (originalMouseDown) {
+      originalMouseDown.call(this, e);
+    }
   };
 
-  mainCanvas.addEventListener('mousedown', customTileEventHandlers.canvasMouseDown);
-  document.addEventListener('mousemove', customTileEventHandlers.documentMouseMove);
-  document.addEventListener('mouseup', customTileEventHandlers.documentMouseUp);
-  document.addEventListener('mousedown', customTileEventHandlers.documentMouseDown);
-  document.addEventListener('keydown', customTileEventHandlers.documentKeyDown);
-}
+  // Store original mousemove handler
+  const originalMouseMove = tileTesterEventHandlers.mainCanvasMouseMove;
 
-// Get pixel position relative to canvas (accounting for zoom/pan)
-function getCanvasPixelPosition(e) {
-  const canvas = TileTesterState.mainCanvas;
-  if (!canvas) return null;
+  tileTesterEventHandlers.mainCanvasMouseMove = function(e) {
+    // Handle canvas selection drag
+    if (TileTesterState.isCanvasSelecting && TileTesterState.canvasSelectionStart) {
+      const pos = getGridPositionFromCanvasClick(e);
+      if (pos) {
+        TileTesterState.canvasSelection = {
+          startRow: TileTesterState.canvasSelectionStart.row,
+          startCol: TileTesterState.canvasSelectionStart.col,
+          endRow: pos.gridY,
+          endCol: pos.gridX
+        };
+        renderCanvasSelection();
+      }
+      return;
+    }
 
-  const rect = canvas.getBoundingClientRect();
-  const scaleX = canvas.width / rect.width;
-  const scaleY = canvas.height / rect.height;
-
-  const x = (e.clientX - rect.left) * scaleX;
-  const y = (e.clientY - rect.top) * scaleY;
-
-  // Clamp to canvas bounds
-  return {
-    x: Math.max(0, Math.min(canvas.width, x)),
-    y: Math.max(0, Math.min(canvas.height, y))
+    // Call original handler
+    if (originalMouseMove) {
+      originalMouseMove.call(this, e);
+    }
   };
+
+  // Store original mouseup handler
+  const originalMouseUp = tileTesterEventHandlers.mainCanvasMouseUp;
+
+  tileTesterEventHandlers.mainCanvasMouseUp = function(e) {
+    // Handle canvas selection end
+    if (TileTesterState.isCanvasSelecting) {
+      TileTesterState.isCanvasSelecting = false;
+
+      // Check if we have a valid selection (at least one tile)
+      if (TileTesterState.canvasSelection) {
+        showSelectionUI();
+      }
+      return;
+    }
+
+    // Call original handler
+    if (originalMouseUp) {
+      originalMouseUp.call(this, e);
+    }
+  };
+
+  // Re-attach event listeners with new handlers
+  mainCanvas.removeEventListener('mousedown', originalMouseDown);
+  mainCanvas.removeEventListener('mousemove', originalMouseMove);
+  mainCanvas.removeEventListener('mouseup', originalMouseUp);
+
+  mainCanvas.addEventListener('mousedown', tileTesterEventHandlers.mainCanvasMouseDown);
+  mainCanvas.addEventListener('mousemove', tileTesterEventHandlers.mainCanvasMouseMove);
+  mainCanvas.addEventListener('mouseup', tileTesterEventHandlers.mainCanvasMouseUp);
+
+  // Add escape key handler to clear selection
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && TileTesterState.canvasSelection) {
+      clearCanvasSelection();
+    }
+  });
 }
 
-// Render selection rectangle overlay
-function renderSelectionOverlay() {
-  const state = TileTesterState;
-  if (!state.dragSelectStart || !state.dragSelectEnd) return;
-
-  // Render the main canvas first
+// Render selection rectangle on canvas (blue color to differentiate from palette red)
+function renderCanvasSelection() {
+  // First render the normal canvas
   renderTileTesterMainCanvas();
 
-  // Draw selection rectangle
-  const ctx = state.mainCtx;
-  const tileSize = state.tileSize;
+  const sel = TileTesterState.canvasSelection;
+  if (!sel) return;
 
-  // Snap to tile grid
-  const startGridX = Math.floor(Math.min(state.dragSelectStart.x, state.dragSelectEnd.x) / tileSize);
-  const startGridY = Math.floor(Math.min(state.dragSelectStart.y, state.dragSelectEnd.y) / tileSize);
-  const endGridX = Math.floor(Math.max(state.dragSelectStart.x, state.dragSelectEnd.x) / tileSize);
-  const endGridY = Math.floor(Math.max(state.dragSelectStart.y, state.dragSelectEnd.y) / tileSize);
+  const ctx = TileTesterState.mainCtx;
+  const tileSize = TileTesterState.tileSize;
 
-  const x = startGridX * tileSize;
-  const y = startGridY * tileSize;
-  const width = (endGridX - startGridX + 1) * tileSize;
-  const height = (endGridY - startGridY + 1) * tileSize;
+  const minRow = Math.min(sel.startRow, sel.endRow);
+  const maxRow = Math.max(sel.startRow, sel.endRow);
+  const minCol = Math.min(sel.startCol, sel.endCol);
+  const maxCol = Math.max(sel.startCol, sel.endCol);
 
-  // Draw semi-transparent fill
+  const x = minCol * tileSize;
+  const y = minRow * tileSize;
+  const width = (maxCol - minCol + 1) * tileSize;
+  const height = (maxRow - minRow + 1) * tileSize;
+
+  // Semi-transparent blue fill
   ctx.fillStyle = 'rgba(0, 123, 255, 0.2)';
   ctx.fillRect(x, y, width, height);
 
-  // Draw border
+  // Blue border
   ctx.strokeStyle = '#007bff';
-  ctx.lineWidth = 2;
-  ctx.setLineDash([5, 5]);
-  ctx.strokeRect(x + 1, y + 1, width - 2, height - 2);
-  ctx.setLineDash([]);
+  ctx.lineWidth = 3;
+  ctx.strokeRect(x + 1.5, y + 1.5, width - 3, height - 3);
 }
 
 // Show the "Add to custom tile" button UI
 function showSelectionUI() {
-  const state = TileTesterState;
-  if (!state.dragSelectStart || !state.dragSelectEnd) return;
+  const sel = TileTesterState.canvasSelection;
+  if (!sel) return;
 
   // Remove existing UI if any
   hideSelectionUI();
 
-  const tileSize = state.tileSize;
-  const zoom = state.canvasZoom || 1;
+  const tileSize = TileTesterState.tileSize;
+  const zoom = TileTesterState.canvasZoom || 1;
 
-  // Calculate selection bounds in grid coordinates
-  const startGridX = Math.floor(Math.min(state.dragSelectStart.x, state.dragSelectEnd.x) / tileSize);
-  const startGridY = Math.floor(Math.min(state.dragSelectStart.y, state.dragSelectEnd.y) / tileSize);
-  const endGridX = Math.floor(Math.max(state.dragSelectStart.x, state.dragSelectEnd.x) / tileSize);
-  const endGridY = Math.floor(Math.max(state.dragSelectStart.y, state.dragSelectEnd.y) / tileSize);
+  // Calculate selection bounds
+  const minRow = Math.min(sel.startRow, sel.endRow);
+  const minCol = Math.min(sel.startCol, sel.endCol);
+  const maxCol = Math.max(sel.startCol, sel.endCol);
 
   // Calculate center position for the button
-  const selectionCenterX = ((startGridX + endGridX + 1) / 2) * tileSize * zoom;
-  const selectionTop = startGridY * tileSize * zoom;
+  const selectionCenterX = ((minCol + maxCol + 1) / 2) * tileSize * zoom;
+  const selectionTop = minRow * tileSize * zoom;
 
   // Get canvas position
   const canvas = document.getElementById('tileTesterMainCanvas');
@@ -284,7 +272,7 @@ function showSelectionUI() {
   // Position above the selection
   ui.style.position = 'fixed';
   ui.style.left = (canvasRect.left + selectionCenterX) + 'px';
-  ui.style.top = (canvasRect.top + selectionTop - 40) + 'px';
+  ui.style.top = (canvasRect.top + selectionTop - 45) + 'px';
   ui.style.transform = 'translateX(-50%)';
   ui.style.zIndex = '1000';
 
@@ -300,8 +288,8 @@ function showSelectionUI() {
   ui.appendChild(btn);
   document.body.appendChild(ui);
 
-  // Also render the selection overlay
-  renderSelectionOverlay();
+  // Render the selection overlay
+  renderCanvasSelection();
 }
 
 // Hide the selection UI
@@ -407,13 +395,11 @@ function drawCheckerboard(ctx, width, height) {
 
 // Select a custom tile for painting on the canvas
 function selectCustomTileForPainting(customTile) {
-  // Convert custom tile to multi-tile selection format
-  // We need to set up the painting to place multiple tiles at once
-
   // Clear existing selections
   TileTesterState.selectedTile = null;
+  TileTesterState.selectedTiles = null;
 
-  // Create a special custom tile selection
+  // Set custom tile selection
   TileTesterState.selectedCustomTile = customTile;
 
   // Update palette selection visuals
@@ -421,10 +407,7 @@ function selectCustomTileForPainting(customTile) {
   updatePaletteSelection(); // Clear regular palette selection
 
   // Update cursor
-  const mainCanvas = document.getElementById('tileTesterMainCanvas');
-  if (mainCanvas) {
-    mainCanvas.classList.add('painting-mode');
-  }
+  updateCursorPreview();
 }
 
 // Update visual selection in custom tiles palette
@@ -476,5 +459,17 @@ function placeCustomTileAt(gridX, gridY) {
 
 // Initialize custom tiles functionality
 function initCustomTiles() {
-  setupCanvasDragSelection();
+  // Add canvas selection state if not present
+  if (TileTesterState.isCanvasSelecting === undefined) {
+    TileTesterState.isCanvasSelecting = false;
+  }
+  if (TileTesterState.canvasSelectionStart === undefined) {
+    TileTesterState.canvasSelectionStart = null;
+  }
+  if (TileTesterState.canvasSelection === undefined) {
+    TileTesterState.canvasSelection = null;
+  }
+
+  // Setup the canvas selection events
+  setupCanvasSelectionEvents();
 }

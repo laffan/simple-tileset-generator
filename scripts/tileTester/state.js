@@ -52,11 +52,10 @@ var TileTesterState = {
   // Currently selected custom tile for painting
   selectedCustomTile: null,
 
-  // Drag selection state for creating custom tiles
-  isDragSelecting: false,
-  dragSelectStart: null,  // {x, y} pixel coordinates
-  dragSelectEnd: null,    // {x, y} pixel coordinates
-  showSelectionUI: false  // Whether to show the "Add to custom tile" button
+  // Canvas selection state for creating custom tiles (grid-based like palette selection)
+  isCanvasSelecting: false,
+  canvasSelectionStart: null,  // {row, col}
+  canvasSelection: null        // {startRow, startCol, endRow, endCol}
 };
 
 // Create a new layer
@@ -208,10 +207,9 @@ function resetTileTesterState() {
   TileTesterState.isPainting = false;
   TileTesterState.lastPaintedCell = null;
   TileTesterState.tilesetImageData = null;
-  TileTesterState.isDragSelecting = false;
-  TileTesterState.dragSelectStart = null;
-  TileTesterState.dragSelectEnd = null;
-  TileTesterState.showSelectionUI = false;
+  TileTesterState.isCanvasSelecting = false;
+  TileTesterState.canvasSelectionStart = null;
+  TileTesterState.canvasSelection = null;
 }
 
 // Calculate grid size based on window dimensions
