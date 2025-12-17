@@ -40,7 +40,7 @@ function updateCombinationPreview() {
   }
 }
 
-// Render the combination shape to tiles (with pattern masking)
+// Render the combination shape to tiles (with pattern masking on selected shape only)
 function renderCombinationShapeToTiles(ctx, tileSize, rows, cols) {
   const state = CombinationEditorState;
 
@@ -48,26 +48,98 @@ function renderCombinationShapeToTiles(ctx, tileSize, rows, cols) {
   const shapeData = getCombShapeData();
   if (!shapeData) return;
 
-  // Create a temporary canvas to render the full shape
-  const tempCanvas = document.createElement('canvas');
-  tempCanvas.width = cols * tileSize;
-  tempCanvas.height = rows * tileSize;
-  const tempCtx = tempCanvas.getContext('2d');
+  const width = cols * tileSize;
+  const height = rows * tileSize;
 
-  // Clear with transparent background
-  tempCtx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
-
-  // Render shape (normalized coordinates to canvas coordinates)
-  renderNormalizedShapeToCanvas(tempCtx, shapeData, cols * tileSize, rows * tileSize);
-
-  // Apply pattern mask if pattern has any filled pixels
+  // Get pattern data
   const patternData = getCombPatternData();
-  if (patternData && hasFilledPixels(patternData)) {
-    applyPatternMask(tempCtx, patternData, cols * tileSize, rows * tileSize);
+  const hasPattern = patternData && hasFilledPixels(patternData);
+
+  // Get the currently selected path index
+  const selectedPathIndex = EditorState.currentPathIndex || 0;
+
+  // Determine paths data
+  const pathsData = shapeData.paths || [shapeData];
+
+  // If there's only one path or no pattern, render everything together
+  if (pathsData.length <= 1 || !hasPattern) {
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = width;
+    tempCanvas.height = height;
+    const tempCtx = tempCanvas.getContext('2d');
+    tempCtx.clearRect(0, 0, width, height);
+    renderNormalizedShapeToCanvas(tempCtx, shapeData, width, height);
+
+    if (hasPattern) {
+      applyPatternMask(tempCtx, patternData, width, height);
+    }
+
+    ctx.drawImage(tempCanvas, 0, 0);
+    return;
   }
 
-  // Draw to preview canvas
-  ctx.drawImage(tempCanvas, 0, 0);
+  // Multiple paths with pattern - render selected path with pattern, others without
+
+  // First render non-selected paths without pattern
+  const nonSelectedCanvas = document.createElement('canvas');
+  nonSelectedCanvas.width = width;
+  nonSelectedCanvas.height = height;
+  const nonSelectedCtx = nonSelectedCanvas.getContext('2d');
+  nonSelectedCtx.clearRect(0, 0, width, height);
+
+  nonSelectedCtx.fillStyle = '#333';
+  pathsData.forEach((pathData, pathIndex) => {
+    if (pathIndex === selectedPathIndex) return; // Skip selected path
+    if (!pathData || !pathData.length) return;
+
+    nonSelectedCtx.beginPath();
+    pathData.forEach((point, i) => {
+      const x = (point[0] + 0.5) * width;
+      const y = (point[1] + 0.5) * height;
+      if (i === 0) {
+        nonSelectedCtx.moveTo(x, y);
+      } else {
+        nonSelectedCtx.lineTo(x, y);
+      }
+    });
+    nonSelectedCtx.closePath();
+    nonSelectedCtx.fill();
+  });
+
+  // Draw non-selected paths to main canvas
+  ctx.drawImage(nonSelectedCanvas, 0, 0);
+
+  // Now render selected path with pattern
+  if (selectedPathIndex < pathsData.length) {
+    const selectedPath = pathsData[selectedPathIndex];
+    if (selectedPath && selectedPath.length) {
+      const selectedCanvas = document.createElement('canvas');
+      selectedCanvas.width = width;
+      selectedCanvas.height = height;
+      const selectedCtx = selectedCanvas.getContext('2d');
+      selectedCtx.clearRect(0, 0, width, height);
+
+      selectedCtx.fillStyle = '#333';
+      selectedCtx.beginPath();
+      selectedPath.forEach((point, i) => {
+        const x = (point[0] + 0.5) * width;
+        const y = (point[1] + 0.5) * height;
+        if (i === 0) {
+          selectedCtx.moveTo(x, y);
+        } else {
+          selectedCtx.lineTo(x, y);
+        }
+      });
+      selectedCtx.closePath();
+      selectedCtx.fill();
+
+      // Apply pattern only to selected shape
+      applyPatternMask(selectedCtx, patternData, width, height);
+
+      // Draw selected path (with pattern) on top
+      ctx.drawImage(selectedCanvas, 0, 0);
+    }
+  }
 }
 
 // Check if pattern has any filled (dark) pixels

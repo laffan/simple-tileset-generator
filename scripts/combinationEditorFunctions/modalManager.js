@@ -74,7 +74,8 @@ function openCombinationEditor(combinationIndex) {
 
   // Initialize pattern selection from saved data
   CombinationEditorState.selectedPatternName = combinationData.selectedPatternName || null;
-  CombinationEditorState.selectedPatternSize = combinationData.selectedPatternSize || 8;
+  CombinationEditorState.selectedPatternSize = combinationData.selectedPatternSize || 16;
+  CombinationEditorState.selectedPatternInvert = combinationData.selectedPatternInvert || false;
 
   // Show modal
   const modal = document.getElementById('combinationEditorModal');
@@ -428,15 +429,22 @@ function saveCombinationEditor() {
   // Get the current combination name
   const currentCombinationName = combinationOrder[combinationIndex];
 
-  // Create saved data (with pattern reference instead of pattern data)
+  // Resolve pattern data for rendering (getCombPatternData handles scaling and invert)
+  const patternData = getCombPatternData();
+
+  // Create saved data
   const savedData = {
     id: currentCombinationName,
     name: CombinationEditorState.combinationData?.name || currentCombinationName,
     tileRows: EditorState.combinationTileRows,
     tileCols: EditorState.combinationTileCols,
     shapeData: shapeData,
+    // Save pattern data for rendering
+    patternData: patternData,
+    // Also save selection info for re-editing
     selectedPatternName: CombinationEditorState.selectedPatternName || null,
-    selectedPatternSize: CombinationEditorState.selectedPatternSize || 8
+    selectedPatternSize: CombinationEditorState.selectedPatternSize || 8,
+    selectedPatternInvert: CombinationEditorState.selectedPatternInvert || false
   };
 
   // Update the registry
@@ -749,6 +757,29 @@ function buildCombinationPatternPalette() {
   };
   paletteContainer.appendChild(noPatternItem);
 
+  // Add invert toggle (shown when a pattern is selected)
+  const invertRow = document.createElement('div');
+  invertRow.className = 'combination-pattern-invert-row';
+  invertRow.id = 'combinationPatternInvertRow';
+  invertRow.style.display = CombinationEditorState.selectedPatternName ? 'flex' : 'none';
+
+  const invertLabel = document.createElement('label');
+  invertLabel.className = 'combination-pattern-invert-label';
+
+  const invertCheckbox = document.createElement('input');
+  invertCheckbox.type = 'checkbox';
+  invertCheckbox.id = 'combinationPatternInvert';
+  invertCheckbox.checked = CombinationEditorState.selectedPatternInvert || false;
+  invertCheckbox.onchange = function() {
+    CombinationEditorState.selectedPatternInvert = this.checked;
+    updateCombinationPreview();
+  };
+
+  invertLabel.appendChild(invertCheckbox);
+  invertLabel.appendChild(document.createTextNode(' Invert pattern'));
+  invertRow.appendChild(invertLabel);
+  paletteContainer.appendChild(invertRow);
+
   // Get all available patterns
   patternOrder.forEach((patternName) => {
     const patternData = getPatternPixelData(patternName);
@@ -761,6 +792,11 @@ function buildCombinationPatternPalette() {
     if (CombinationEditorState.selectedPatternName === patternName) {
       item.classList.add('selected');
     }
+
+    // Click on item selects with 16px default
+    item.onclick = function() {
+      selectCombinationPattern(patternName, 16);
+    };
 
     // Preview row (canvas + name)
     const previewRow = document.createElement('div');
@@ -840,16 +876,9 @@ function getCombPatternData() {
   const patternData = getPatternPixelData(patternName);
   if (!patternData) return null;
 
-  const targetSize = CombinationEditorState.selectedPatternSize || 8;
+  const targetSize = CombinationEditorState.selectedPatternSize || 16;
   const sourceSize = patternData.size || 8;
-
-  // If sizes match, return as-is
-  if (targetSize === sourceSize) {
-    return {
-      size: targetSize,
-      pixels: patternData.pixels
-    };
-  }
+  const shouldInvert = CombinationEditorState.selectedPatternInvert || false;
 
   // Scale pattern to target size
   const scaledPixels = [];
@@ -859,7 +888,14 @@ function getCombPatternData() {
       // Map target coordinates to source coordinates
       const srcX = Math.floor(x * sourceSize / targetSize);
       const srcY = Math.floor(y * sourceSize / targetSize);
-      scaledPixels[y][x] = (patternData.pixels[srcY] && patternData.pixels[srcY][srcX]) ? 1 : 0;
+      let pixelValue = (patternData.pixels[srcY] && patternData.pixels[srcY][srcX]) ? 1 : 0;
+
+      // Apply invert
+      if (shouldInvert) {
+        pixelValue = pixelValue === 1 ? 0 : 1;
+      }
+
+      scaledPixels[y][x] = pixelValue;
     }
   }
 
@@ -872,7 +908,12 @@ function getCombPatternData() {
 // Select a pattern for the combination (or null for no pattern)
 function selectCombinationPattern(patternName, size) {
   CombinationEditorState.selectedPatternName = patternName;
-  CombinationEditorState.selectedPatternSize = size || 8;
+  CombinationEditorState.selectedPatternSize = size || 16;
+
+  // Reset invert when selecting a different pattern
+  if (!patternName) {
+    CombinationEditorState.selectedPatternInvert = false;
+  }
 
   // Update visual selection
   const paletteContainer = document.getElementById('combinationPatternPalette');
@@ -881,6 +922,18 @@ function selectCombinationPattern(patternName, size) {
     const noPatternItem = paletteContainer.querySelector('.combination-no-pattern');
     if (noPatternItem) {
       noPatternItem.classList.toggle('selected', !patternName);
+    }
+
+    // Show/hide invert row
+    const invertRow = document.getElementById('combinationPatternInvertRow');
+    if (invertRow) {
+      invertRow.style.display = patternName ? 'flex' : 'none';
+    }
+
+    // Update invert checkbox
+    const invertCheckbox = document.getElementById('combinationPatternInvert');
+    if (invertCheckbox) {
+      invertCheckbox.checked = CombinationEditorState.selectedPatternInvert || false;
     }
 
     // Update pattern items selection

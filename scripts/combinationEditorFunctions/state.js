@@ -19,7 +19,8 @@ var CombinationEditorState = {
 
   // Selected pattern (from palette, not edited)
   selectedPatternName: null,
-  selectedPatternSize: 8,
+  selectedPatternSize: 16,
+  selectedPatternInvert: false,
 
   // Shape editor state (Two.js instance for combination shape)
   two: null,
