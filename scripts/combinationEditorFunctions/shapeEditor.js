@@ -513,7 +513,8 @@ function combBooleanCut() {
 
 function combToggleHole() {
   // Toggle hole for evenodd fill
-  const state = CombinationEditorState;
+  // Use EditorState when in combination mode (for consistency with save/load)
+  const state = EditorState.editorMode === 'combination' ? EditorState : CombinationEditorState;
   const pathIndex = state.currentPathIndex;
 
   if (!state.holePathIndices) state.holePathIndices = [];
@@ -524,6 +525,21 @@ function combToggleHole() {
   } else {
     state.holePathIndices.push(pathIndex);
     state.fillRule = 'evenodd';
+  }
+
+  // Update path visual to show hole styling
+  if (state.paths && state.paths[pathIndex]) {
+    const path = state.paths[pathIndex];
+    const isHole = state.holePathIndices.includes(pathIndex);
+    const isSelected = pathIndex === state.currentPathIndex;
+    if (isHole) {
+      path.fill = isSelected ? 'rgba(255, 100, 100, 0.3)' : 'rgba(255, 100, 100, 0.15)';
+      path.stroke = isSelected ? '#cc0000' : '#ff6666';
+    } else {
+      path.fill = isSelected ? 'rgba(0, 0, 0, 0.8)' : 'rgba(0, 0, 0, 0.4)';
+      path.stroke = isSelected ? '#333' : '#666';
+    }
+    if (state.two) state.two.update();
   }
 
   updateCombinationPreview();
