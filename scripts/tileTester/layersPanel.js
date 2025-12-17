@@ -125,8 +125,12 @@ function updateLayerThumbnail(layerId) {
       const tile = layer.tiles[y] && layer.tiles[y][x];
 
       if (tile) {
-        const srcX = tile.col * tileSize;
-        const srcY = tile.row * tileSize;
+        // Get canvas coordinates - handles both semantic refs and old-style {row, col}
+        const coords = getTileCanvasCoords(tile);
+        if (!coords) continue;
+
+        const srcX = coords.col * tileSize;
+        const srcY = coords.row * tileSize;
         const destX = offsetX + x * thumbTileSize;
         const destY = offsetY + y * thumbTileSize;
 

@@ -11,7 +11,6 @@ function addCustomTileFromSelection() {
   if (!state.canvasSelection) return;
 
   const sel = state.canvasSelection;
-  const tileSize = state.tileSize;
 
   // Calculate grid bounds
   const minGridX = Math.min(sel.startCol, sel.endCol);
@@ -22,7 +21,8 @@ function addCustomTileFromSelection() {
   const width = maxGridX - minGridX + 1;
   const height = maxGridY - minGridY + 1;
 
-  // Collect tile references from all visible layers (composite view)
+  // Collect tile references from ALL visible layers (composite view)
+  // Each position can have multiple tiles from different layers
   const tileRefs = [];
 
   for (let localY = 0; localY < height; localY++) {
@@ -35,26 +35,36 @@ function addCustomTileFromSelection() {
         continue;
       }
 
-      // Get tile from topmost visible layer that has a tile at this position
-      let foundTile = null;
-      for (let i = state.layers.length - 1; i >= 0; i--) {
+      // Collect tiles from ALL visible layers at this position (bottom to top)
+      for (let i = 0; i < state.layers.length; i++) {
         const layer = state.layers[i];
         if (!layer.visible) continue;
 
         const tile = layer.tiles[gridY] && layer.tiles[gridY][gridX];
         if (tile) {
-          foundTile = { ...tile };
-          break;
-        }
-      }
+          // Convert to semantic reference if it's not already
+          let tileRef;
+          if (tile.type && tile.name) {
+            // Already a semantic reference
+            tileRef = { ...tile };
+          } else if (tile.row !== undefined && tile.col !== undefined) {
+            // Old-style {row, col} - convert to semantic reference
+            tileRef = coordsToTileRef(tile.row, tile.col);
+            if (!tileRef) {
+              // Fallback to old format if conversion fails
+              tileRef = { row: tile.row, col: tile.col };
+            }
+          }
 
-      if (foundTile) {
-        tileRefs.push({
-          row: foundTile.row,
-          col: foundTile.col,
-          localX: localX,
-          localY: localY
-        });
+          if (tileRef) {
+            tileRefs.push({
+              ...tileRef,
+              localX: localX,
+              localY: localY,
+              layerIndex: i  // Track which layer this came from (for proper ordering)
+            });
+          }
+        }
       }
     }
   }
@@ -332,11 +342,18 @@ function renderCustomTilesInPalette() {
     // Fill with transparent background indicator (checkerboard)
     drawCheckerboard(previewCtx, previewCanvas.width, previewCanvas.height);
 
-    // Draw the tile references
+    // Draw the tile references (sorted by layer index to maintain proper ordering)
     if (sourceCanvas) {
-      customTile.tileRefs.forEach(ref => {
-        const srcX = ref.col * tileSize;
-        const srcY = ref.row * tileSize;
+      // Sort by layer index to draw in correct order (bottom to top)
+      const sortedRefs = [...customTile.tileRefs].sort((a, b) => (a.layerIndex || 0) - (b.layerIndex || 0));
+
+      sortedRefs.forEach(ref => {
+        // Get canvas coordinates - handles both semantic refs and old-style {row, col}
+        const coords = getTileCanvasCoords(ref);
+        if (!coords) return;
+
+        const srcX = coords.col * tileSize;
+        const srcY = coords.row * tileSize;
         const destX = ref.localX * tileSize;
         const destY = ref.localY * tileSize;
 
@@ -430,8 +447,11 @@ function placeCustomTileAt(gridX, gridY) {
   const layer = getActiveLayer();
   if (!layer) return;
 
+  // Sort refs by layer index to place in correct order (though all go to current layer)
+  const sortedRefs = [...customTile.tileRefs].sort((a, b) => (a.layerIndex || 0) - (b.layerIndex || 0));
+
   // Place all tiles from the custom tile
-  customTile.tileRefs.forEach(ref => {
+  sortedRefs.forEach(ref => {
     const destX = gridX + ref.localX;
     const destY = gridY + ref.localY;
 
@@ -446,11 +466,25 @@ function placeCustomTileAt(gridX, gridY) {
       layer.tiles[destY] = [];
     }
 
-    // Place tile
-    layer.tiles[destY][destX] = {
-      row: ref.row,
-      col: ref.col
-    };
+    // Place tile - preserve semantic reference if present
+    if (ref.type && ref.name) {
+      // Semantic reference - copy it (without localX/localY/layerIndex)
+      layer.tiles[destY][destX] = {
+        type: ref.type,
+        name: ref.name,
+        colorIndex: ref.colorIndex,
+        tileRow: ref.tileRow,
+        tileCol: ref.tileCol
+      };
+    } else if (ref.row !== undefined && ref.col !== undefined) {
+      // Old-style {row, col} - convert to semantic ref
+      const tileRef = coordsToTileRef(ref.row, ref.col);
+      if (tileRef) {
+        layer.tiles[destY][destX] = tileRef;
+      } else {
+        layer.tiles[destY][destX] = { row: ref.row, col: ref.col };
+      }
+    }
   });
 
   renderTileTesterMainCanvas();

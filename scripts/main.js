@@ -119,10 +119,17 @@ function createCombinedTilesetCanvas() {
     let yOffset = 0;
 
     column.tiles.forEach(customTile => {
+      // Sort refs by layer index to draw in correct order
+      const sortedRefs = [...customTile.tileRefs].sort((a, b) => (a.layerIndex || 0) - (b.layerIndex || 0));
+
       // Draw each tile reference from the main canvas
-      customTile.tileRefs.forEach(ref => {
-        const srcX = ref.col * tileSize;
-        const srcY = ref.row * tileSize;
+      sortedRefs.forEach(ref => {
+        // Get canvas coordinates - handles both semantic refs and old-style {row, col}
+        const coords = getTileCanvasCoords(ref);
+        if (!coords) return;
+
+        const srcX = coords.col * tileSize;
+        const srcY = coords.row * tileSize;
         const destX = xOffset + ref.localX * tileSize;
         const destY = yOffset + ref.localY * tileSize;
 

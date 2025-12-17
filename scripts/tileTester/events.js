@@ -148,10 +148,17 @@ function placeTileAtWithoutToggle(gridX, gridY) {
     layer.tiles[gridY] = [];
   }
 
-  layer.tiles[gridY][gridX] = {
-    row: TileTesterState.selectedTile.row,
-    col: TileTesterState.selectedTile.col
-  };
+  // Convert to semantic tile reference for persistence across tileset changes
+  const tileRef = coordsToTileRef(TileTesterState.selectedTile.row, TileTesterState.selectedTile.col);
+  if (tileRef) {
+    layer.tiles[gridY][gridX] = tileRef;
+  } else {
+    // Fallback to old format if conversion fails
+    layer.tiles[gridY][gridX] = {
+      row: TileTesterState.selectedTile.row,
+      col: TileTesterState.selectedTile.col
+    };
+  }
 
   renderTileTesterMainCanvas();
   updateLayerThumbnail(layer.id);

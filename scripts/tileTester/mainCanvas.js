@@ -64,9 +64,13 @@ function drawLayerTiles(layer) {
       const tile = layer.tiles[y] && layer.tiles[y][x];
 
       if (tile) {
+        // Get canvas coordinates - handles both semantic refs and old-style {row, col}
+        const coords = getTileCanvasCoords(tile);
+        if (!coords) continue; // Skip if tile not found in current tileset
+
         // Calculate source position from original tileset
-        const srcX = tile.col * tileSize;
-        const srcY = tile.row * tileSize;
+        const srcX = coords.col * tileSize;
+        const srcY = coords.row * tileSize;
 
         // Calculate destination position
         const destX = x * tileSize;
@@ -139,11 +143,16 @@ function placeTileAt(gridX, gridY) {
   if (existingTile) {
     layer.tiles[gridY][gridX] = null;
   } else if (TileTesterState.selectedTile) {
-    // Place new tile
-    layer.tiles[gridY][gridX] = {
-      row: TileTesterState.selectedTile.row,
-      col: TileTesterState.selectedTile.col
-    };
+    // Place new tile with semantic reference
+    const tileRef = coordsToTileRef(TileTesterState.selectedTile.row, TileTesterState.selectedTile.col);
+    if (tileRef) {
+      layer.tiles[gridY][gridX] = tileRef;
+    } else {
+      layer.tiles[gridY][gridX] = {
+        row: TileTesterState.selectedTile.row,
+        col: TileTesterState.selectedTile.col
+      };
+    }
   }
 
   // Redraw canvas
@@ -183,11 +192,17 @@ function placeMultiTilesAt(gridX, gridY) {
         layer.tiles[destY] = [];
       }
 
-      // Place tile from selection
-      layer.tiles[destY][destX] = {
-        row: minRow + dy,
-        col: minCol + dx
-      };
+      // Convert to semantic tile reference
+      const srcRow = minRow + dy;
+      const srcCol = minCol + dx;
+      const tileRef = coordsToTileRef(srcRow, srcCol);
+
+      if (tileRef) {
+        layer.tiles[destY][destX] = tileRef;
+      } else {
+        // Fallback to old format
+        layer.tiles[destY][destX] = { row: srcRow, col: srcCol };
+      }
     }
   }
 
@@ -262,8 +277,12 @@ function downloadTileTesterCanvas() {
           const tile = layer.tiles[y] && layer.tiles[y][x];
 
           if (tile) {
-            const srcX = tile.col * tileSize;
-            const srcY = tile.row * tileSize;
+            // Get canvas coordinates - handles both semantic refs and old-style {row, col}
+            const coords = getTileCanvasCoords(tile);
+            if (!coords) continue;
+
+            const srcX = coords.col * tileSize;
+            const srcY = coords.row * tileSize;
             const destX = x * tileSize;
             const destY = y * tileSize;
 
