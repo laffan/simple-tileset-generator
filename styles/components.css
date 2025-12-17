@@ -2159,7 +2159,7 @@
 
 /* Wider modal for combination editor */
 .combination-editor-modal {
-  max-width: 700px;
+  max-width: 820px;
   width: 95%;
 }
 
@@ -2207,10 +2207,7 @@
 
 /* Grid size controls - in preview column */
 .combination-grid-size-controls {
-  background: #f9f9f9;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  padding: 10px;
+  padding: 8px 0;
   text-align: center;
 }
 
@@ -2218,7 +2215,7 @@
   font-size: 11px;
   font-weight: 600;
   color: #666;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .grid-size-row {
@@ -2229,10 +2226,10 @@
 }
 
 .grid-size-btn {
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   border: 1px solid #ccc;
-  border-radius: 4px;
+  border-radius: 50%;
   background: #fff;
   cursor: pointer;
   font-size: 14px;
@@ -2307,35 +2304,18 @@
 .combination-preview-column {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 6px;
   flex-shrink: 0;
-  width: 180px;
+  width: 140px;
+  margin-left: 10px;
 }
 
-/* Combination preview section */
-.combination-preview-section {
-  background: #f9f9f9;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  padding: 10px;
-}
-
-.combination-preview-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: #666;
-  margin-bottom: 8px;
-  text-align: center;
-}
-
+/* Combination preview wrapper - simple centered container */
 .combination-preview-wrapper {
-  border: 1px solid #ddd;
-  background: #fafafa;
-  border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 150px;
+  flex: 1;
 }
 
 #combinationPreviewCanvas {
