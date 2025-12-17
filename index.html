@@ -128,39 +128,39 @@ FFFFFF, 000000, </textarea
                 <!-- Wheel tab content (Picker) -->
                 <div class="color-tab-content active" id="wheel-tab">
                     <div class="color-wheel-container">
-                        <div class="wheel-preview-column">
-                            <div
-                                class="wheel-color-preview"
-                                id="wheelColorPreview"
-                            ></div>
-                            <button class="wheel-add-btn" id="wheelAddBtn">
-                                Add Color
-                            </button>
+                        <div class="wheel-sliders">
+                            <div class="wheel-slider-row">
+                                <label>Hue</label>
+                                <input
+                                    type="range"
+                                    id="hueSlider"
+                                    min="0"
+                                    max="360"
+                                    value="0"
+                                    class="hue-slider"
+                                />
+                            </div>
+                            <div class="wheel-slider-row">
+                                <label>Opacity</label>
+                                <input
+                                    type="range"
+                                    id="opacitySlider"
+                                    min="0"
+                                    max="100"
+                                    value="100"
+                                    class="opacity-slider"
+                                />
+                            </div>
                         </div>
-                        <div class="wheel-controls-column">
-                            <div class="wheel-sliders">
-                                <div class="wheel-slider-row">
-                                    <label>Hue</label>
-                                    <input
-                                        type="range"
-                                        id="hueSlider"
-                                        min="0"
-                                        max="360"
-                                        value="0"
-                                        class="hue-slider"
-                                    />
-                                </div>
-                                <div class="wheel-slider-row">
-                                    <label>Opacity</label>
-                                    <input
-                                        type="range"
-                                        id="opacitySlider"
-                                        min="0"
-                                        max="100"
-                                        value="100"
-                                        class="opacity-slider"
-                                    />
-                                </div>
+                        <div class="wheel-field-row">
+                            <div class="wheel-preview-column">
+                                <div
+                                    class="wheel-color-preview"
+                                    id="wheelColorPreview"
+                                ></div>
+                                <button class="wheel-add-btn" id="wheelAddBtn">
+                                    Add Color
+                                </button>
                             </div>
                             <div class="color-field-wrapper">
                                 <canvas

@@ -239,6 +239,9 @@
 /* Color wheel tab */
 .color-wheel-container {
   padding: 10px 0;
+}
+
+.wheel-field-row {
   display: flex;
   gap: 15px;
 }
@@ -247,11 +250,6 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-}
-
-.wheel-controls-column {
-  flex: 1;
-  min-width: 0;
 }
 
 .wheel-sliders {
@@ -341,9 +339,8 @@
 
 .color-field-wrapper {
   position: relative;
-  display: block;
-  width: 100%;
-  margin-bottom: 15px;
+  flex: 1;
+  min-width: 0;
 }
 
 #colorFieldCanvas {
