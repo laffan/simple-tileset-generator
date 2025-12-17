@@ -28,7 +28,6 @@ const PatternEditorState = {
   drawColor: 1, // Color to draw (0 or 1)
   startPixel: null,
   currentPixel: null,
-  holdTimer: null,
   isLineMode: false,
   previewData: null,
 
@@ -48,6 +47,5 @@ const PatternEditorState = {
   MIN_PATTERN_SIZE: 4,
   MAX_PATTERN_SIZE: 64,
   MIN_EDITOR_ZOOM: 1,     // Slider value 1 = 0.25 zoom
-  MAX_EDITOR_ZOOM: 100,   // Slider value 100 = 1 zoom (pattern fills boundary)
-  HOLD_THRESHOLD: 300 // ms to trigger line mode
+  MAX_EDITOR_ZOOM: 100    // Slider value 100 = 1 zoom (pattern fills boundary)
 };

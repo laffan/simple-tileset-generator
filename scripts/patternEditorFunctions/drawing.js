@@ -20,15 +20,15 @@ function startPatternDrawing(e) {
   const currentValue = state.pixelData[pixel.row] ? state.pixelData[pixel.row][pixel.col] : 0;
   state.drawColor = currentValue === 1 ? 0 : 1;
 
-  // Toggle the first pixel immediately
-  togglePatternPixel(pixel.row, pixel.col, state.drawColor);
-
-  // Start hold timer for line mode
-  state.holdTimer = setTimeout(() => {
+  // Check if shift is held for line mode
+  if (e.shiftKey) {
     state.isLineMode = true;
-    // Initialize preview data
+    // Initialize preview data for line mode
     state.previewData = copyPatternPixels(state.pixelData);
-  }, state.HOLD_THRESHOLD);
+  } else {
+    // Freehand mode - toggle the first pixel immediately
+    togglePatternPixel(pixel.row, pixel.col, state.drawColor);
+  }
 
   drawPatternEditorCanvas();
   updatePatternPreviewCanvas();
@@ -75,11 +75,6 @@ function stopPatternDrawing() {
     return;
   }
 
-  if (state.holdTimer) {
-    clearTimeout(state.holdTimer);
-    state.holdTimer = null;
-  }
-
   if (state.isLineMode && state.previewData) {
     // Apply the line to actual data
     applyLineToPattern();
@@ -97,11 +92,6 @@ function stopPatternDrawing() {
 
 function cancelPatternDrawing() {
   const state = PatternEditorState;
-
-  if (state.holdTimer) {
-    clearTimeout(state.holdTimer);
-    state.holdTimer = null;
-  }
 
   state.isDrawing = false;
   state.isLineMode = false;
