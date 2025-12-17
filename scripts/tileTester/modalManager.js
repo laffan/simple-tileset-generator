@@ -36,6 +36,16 @@ function openTileTester() {
   setupLayersPanel();
   setupTileTesterEvents();
 
+  // Initialize custom tiles functionality
+  if (typeof initCustomTiles === 'function') {
+    initCustomTiles();
+  }
+
+  // Render custom tiles in palette
+  if (typeof renderCustomTilesInPalette === 'function') {
+    renderCustomTilesInPalette();
+  }
+
   // Reset palette window position
   const paletteWindow = document.getElementById('tileTesterPaletteWindow');
   if (paletteWindow) {

@@ -224,6 +224,11 @@ function handlePaletteMouseDown(e) {
       endCol: tilePos.col
     };
     TileTesterState.selectedTile = null; // Clear single selection
+    TileTesterState.selectedCustomTile = null; // Clear custom tile selection
+    // Update custom tiles palette to clear selection
+    if (typeof updateCustomTilePaletteSelection === 'function') {
+      updateCustomTilePaletteSelection(null);
+    }
     updatePaletteSelection();
   }
 }
@@ -310,7 +315,7 @@ function updateCursorPreview() {
 
   if (!mainCanvas) return;
 
-  if (TileTesterState.selectedTile) {
+  if (TileTesterState.selectedTile || TileTesterState.selectedTiles || TileTesterState.selectedCustomTile) {
     mainCanvas.classList.add('painting-mode');
   } else {
     mainCanvas.classList.remove('painting-mode');

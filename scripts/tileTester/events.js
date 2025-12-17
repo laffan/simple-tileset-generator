@@ -54,11 +54,11 @@ function setupMainCanvasEvents() {
       if (e.shiftKey) {
         tileTesterEraseMode = true;
         eraseTileAt(pos.gridX, pos.gridY);
-      } else if (existingTile && !TileTesterState.selectedTiles) {
-        // Only toggle erase mode for single tile selection, not multi-tile
+      } else if (existingTile && !TileTesterState.selectedTiles && !TileTesterState.selectedCustomTile) {
+        // Only toggle erase mode for single tile selection, not multi-tile or custom tile
         tileTesterEraseMode = true;
         eraseTileAt(pos.gridX, pos.gridY);
-      } else if (TileTesterState.selectedTile || TileTesterState.selectedTiles) {
+      } else if (TileTesterState.selectedTile || TileTesterState.selectedTiles || TileTesterState.selectedCustomTile) {
         tileTesterEraseMode = false;
         placeTileAtWithoutToggle(pos.gridX, pos.gridY);
       }
@@ -81,7 +81,7 @@ function setupMainCanvasEvents() {
 
       if (tileTesterEraseMode) {
         eraseTileAt(pos.gridX, pos.gridY);
-      } else if (TileTesterState.selectedTile || TileTesterState.selectedTiles) {
+      } else if (TileTesterState.selectedTile || TileTesterState.selectedTiles || TileTesterState.selectedCustomTile) {
         placeTileAtWithoutToggle(pos.gridX, pos.gridY);
       }
 
@@ -123,6 +123,12 @@ function setupMainCanvasEvents() {
 function placeTileAtWithoutToggle(gridX, gridY) {
   const layer = getActiveLayer();
   if (!layer) return;
+
+  // Handle custom tile selection
+  if (TileTesterState.selectedCustomTile) {
+    placeCustomTileAt(gridX, gridY);
+    return;
+  }
 
   // Handle multi-tile selection
   if (TileTesterState.selectedTiles) {

@@ -1536,6 +1536,7 @@
 .tester-palette-window.content-hidden .tester-palette-container,
 .tester-palette-window.content-hidden .tester-section-divider,
 .tester-palette-window.content-hidden .tester-layers-section,
+.tester-palette-window.content-hidden .tester-custom-tiles-section,
 .tester-palette-window.content-hidden .tester-resize-handle {
   display: none;
 }
@@ -2513,4 +2514,137 @@
 .pattern-preview-wrap::after {
   content: '';
   display: none;
+}
+
+/* =============================================
+   CUSTOM TILES STYLES
+   ============================================= */
+
+/* Custom tiles section in palette window */
+.tester-custom-tiles-section {
+  padding: 10px;
+  flex: 0 0 auto;
+  min-height: 80px;
+  max-height: 200px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.tester-custom-tiles-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.tester-custom-tiles-header span {
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+}
+
+.tester-custom-tiles-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px;
+  background: #f9f9f9;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+}
+
+.custom-tiles-empty {
+  width: 100%;
+  text-align: center;
+  color: #999;
+  font-size: 11px;
+  padding: 15px 10px;
+  line-height: 1.5;
+}
+
+/* Individual custom tile item */
+.custom-tile-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  background: white;
+  border: 2px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.custom-tile-item:hover {
+  border-color: #999;
+}
+
+.custom-tile-item.selected {
+  border-color: #007bff;
+  background: #e5f3ff;
+}
+
+.custom-tile-item canvas {
+  display: block;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+/* Remove button - shown on hover */
+.custom-tile-remove-btn {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #dc3545;
+  color: white;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: bold;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.custom-tile-item:hover .custom-tile-remove-btn {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.custom-tile-remove-btn:hover {
+  background: #c82333;
+}
+
+/* Selection UI - "Add to custom tile" button */
+.custom-tile-selection-ui {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 4px;
+}
+
+.custom-tile-add-btn {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  white-space: nowrap;
+}
+
+.custom-tile-add-btn:hover {
+  background: #0056b3;
 }

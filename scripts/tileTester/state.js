@@ -43,7 +43,20 @@ var TileTesterState = {
 
   // Cached tileset image data (without selection outline)
   tilesetImageData: null,
-  tileSize: 64
+  tileSize: 64,
+
+  // Custom tiles - created from canvas selections
+  // Each custom tile: { id, tileRefs: [{row, col, localX, localY}], width, height }
+  customTiles: [],
+
+  // Currently selected custom tile for painting
+  selectedCustomTile: null,
+
+  // Drag selection state for creating custom tiles
+  isDragSelecting: false,
+  dragSelectStart: null,  // {x, y} pixel coordinates
+  dragSelectEnd: null,    // {x, y} pixel coordinates
+  showSelectionUI: false  // Whether to show the "Add to custom tile" button
 };
 
 // Create a new layer
@@ -150,7 +163,8 @@ function getTileTesterData() {
     gridWidth: TileTesterState.gridWidth,
     gridHeight: TileTesterState.gridHeight,
     backgroundColor: TileTesterState.backgroundColor,
-    paletteFitMode: TileTesterState.paletteFitMode
+    paletteFitMode: TileTesterState.paletteFitMode,
+    customTiles: JSON.parse(JSON.stringify(TileTesterState.customTiles))
   };
 }
 
@@ -179,17 +193,25 @@ function loadTileTesterData(data) {
   if (data.nextLayerId !== undefined) {
     TileTesterState.nextLayerId = data.nextLayerId;
   }
+  if (data.customTiles !== undefined) {
+    TileTesterState.customTiles = JSON.parse(JSON.stringify(data.customTiles));
+  }
 }
 
 // Reset state when modal closes
 function resetTileTesterState() {
   TileTesterState.selectedTile = null;
   TileTesterState.selectedTiles = null;
+  TileTesterState.selectedCustomTile = null;
   TileTesterState.isSelectingMultiple = false;
   TileTesterState.selectionStart = null;
   TileTesterState.isPainting = false;
   TileTesterState.lastPaintedCell = null;
   TileTesterState.tilesetImageData = null;
+  TileTesterState.isDragSelecting = false;
+  TileTesterState.dragSelectStart = null;
+  TileTesterState.dragSelectEnd = null;
+  TileTesterState.showSelectionUI = false;
 }
 
 // Calculate grid size based on window dimensions
