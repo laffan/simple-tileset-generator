@@ -16,28 +16,11 @@ function updateCombinationPreview() {
   canvas.width = tileCols * previewTileSize;
   canvas.height = tileRows * previewTileSize;
 
-  // Clear canvas
-  ctx.fillStyle = '#f0f0f0';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  // Clear canvas with transparent background
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   // Render the shape divided across tiles
   renderCombinationShapeToTiles(ctx, previewTileSize, tileRows, tileCols);
-
-  // Draw grid lines
-  ctx.strokeStyle = '#ccc';
-  ctx.lineWidth = 1;
-  for (let i = 0; i <= tileCols; i++) {
-    ctx.beginPath();
-    ctx.moveTo(i * previewTileSize + 0.5, 0);
-    ctx.lineTo(i * previewTileSize + 0.5, canvas.height);
-    ctx.stroke();
-  }
-  for (let i = 0; i <= tileRows; i++) {
-    ctx.beginPath();
-    ctx.moveTo(0, i * previewTileSize + 0.5);
-    ctx.lineTo(canvas.width, i * previewTileSize + 0.5);
-    ctx.stroke();
-  }
 }
 
 // Render the combination shape to tiles (with per-path pattern masking)
