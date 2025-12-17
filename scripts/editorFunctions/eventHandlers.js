@@ -20,8 +20,6 @@ function setupEditorEvents() {
   document.addEventListener('keydown', (e) => {
     // Only handle if the active editor modal is visible
     if (!isActiveEditorOpen()) return;
-    // For combination editor, only handle in shape tab
-    if (EditorState.editorMode === 'combination' && CombinationEditorState.activeTab !== 'shape') return;
 
     if (e.metaKey || e.ctrlKey) {
       if (EditorState.paths.length > 0 && !EditorState.boundingBox) {
@@ -37,8 +35,6 @@ function setupEditorEvents() {
   document.addEventListener('keyup', (e) => {
     // Only handle if the active editor modal is visible
     if (!isActiveEditorOpen()) return;
-    // For combination editor, only handle in shape tab
-    if (EditorState.editorMode === 'combination' && CombinationEditorState.activeTab !== 'shape') return;
 
     // Check if the released key is Meta or Control
     if (e.key === 'Meta' || e.key === 'Control') {
@@ -582,8 +578,6 @@ function setupKeyboardEvents() {
   document.addEventListener('keydown', (e) => {
     // Only handle if the active editor modal is visible
     if (!isActiveEditorOpen()) return;
-    // For combination editor, only handle in shape tab
-    if (EditorState.editorMode === 'combination' && CombinationEditorState.activeTab !== 'shape') return;
 
     // Delete or Backspace to delete selected points or current path
     if (e.key === 'Delete' || e.key === 'Backspace') {

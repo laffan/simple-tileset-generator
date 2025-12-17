@@ -97,13 +97,11 @@ function openCombinationEditor(combinationIndex) {
   // Draw tile division overlay
   drawCombinationTileGridOverlay();
 
-  // Load shape data if exists
+  // Load shape data if exists (canvas starts empty otherwise)
   if (combinationData.shapeData) {
     loadCombinationShapeData(combinationData.shapeData);
-  } else {
-    // Create default shape (square)
-    createDefaultCombinationShape();
   }
+  // No default shape - canvas starts empty, user adds shapes from palette
 
   // Setup event handlers (shared with shape editor)
   setupEditorEvents();
@@ -753,7 +751,7 @@ function buildCombinationPatternPalette() {
 
   // Get all available patterns
   patternOrder.forEach((patternName) => {
-    const patternData = getPatternData(patternName);
+    const patternData = getPatternPixelData(patternName);
     if (!patternData) return;
 
     const item = document.createElement('div');
@@ -839,7 +837,7 @@ function getCombPatternData() {
   const patternName = CombinationEditorState.selectedPatternName;
   if (!patternName) return null;
 
-  const patternData = getPatternData(patternName);
+  const patternData = getPatternPixelData(patternName);
   if (!patternData) return null;
 
   const targetSize = CombinationEditorState.selectedPatternSize || 8;
