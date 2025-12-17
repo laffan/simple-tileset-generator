@@ -145,6 +145,11 @@ function selectPath(index) {
     updatePathStyles();
     createAnchorVisuals();
     clearBoundingBox();  // Clear bounding box when switching paths
+
+    // In combination editor mode, update pattern palette to show this path's pattern
+    if (EditorState.editorMode === 'combination' && typeof loadPathPatternInfo === 'function') {
+      loadPathPatternInfo();
+    }
   }
 }
 

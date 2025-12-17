@@ -110,7 +110,7 @@ function loadCustomCombinationData(customData) {
 function drawCombination(x, y, tileSize, ctx, combinationData, color) {
   if (!combinationData || !combinationData.shapeData) return { width: 1, height: 1 };
 
-  const { tileRows, tileCols, shapeData, patternData } = combinationData;
+  const { tileRows, tileCols, shapeData, pathPatterns, patternData } = combinationData;
   const totalWidth = tileCols * tileSize;
   const totalHeight = tileRows * tileSize;
 
@@ -120,12 +120,12 @@ function drawCombination(x, y, tileSize, ctx, combinationData, color) {
   tempCanvas.height = totalHeight;
   const tempCtx = tempCanvas.getContext('2d');
 
-  // Render the shape
+  // Render the shape (with per-path patterns if available)
   tempCtx.fillStyle = color || ctx.fillStyle || '#333';
-  renderNormalizedShape(tempCtx, shapeData, totalWidth, totalHeight);
+  renderNormalizedShape(tempCtx, shapeData, totalWidth, totalHeight, pathPatterns);
 
-  // Apply pattern mask if present
-  if (patternData && patternData.pixels && hasPatternFill(patternData)) {
+  // Legacy: Apply single pattern mask if present and no pathPatterns
+  if (!pathPatterns && patternData && patternData.pixels && hasPatternFill(patternData)) {
     applyPatternMaskToCombination(tempCtx, patternData, totalWidth, totalHeight);
   }
 
@@ -148,33 +148,108 @@ function hasPatternFill(patternData) {
   return false;
 }
 
-// Render normalized shape to canvas
-function renderNormalizedShape(ctx, shapeData, width, height) {
+// Render normalized shape to canvas (with optional per-path patterns)
+function renderNormalizedShape(ctx, shapeData, width, height, pathPatterns) {
   // Handle multi-path shapes
   const pathsData = shapeData.paths || [shapeData];
   const fillRule = shapeData.fillRule || 'nonzero';
+  const hasPerPathPatterns = pathPatterns && Object.keys(pathPatterns).length > 0;
 
-  ctx.beginPath();
+  // If we have per-path patterns, render each path separately
+  if (hasPerPathPatterns) {
+    pathsData.forEach((pathData, pathIndex) => {
+      if (!pathData || !pathData.length) return;
 
-  pathsData.forEach((pathData) => {
-    if (!pathData || !pathData.length) return;
+      // Create temp canvas for this path
+      const pathCanvas = document.createElement('canvas');
+      pathCanvas.width = width;
+      pathCanvas.height = height;
+      const pathCtx = pathCanvas.getContext('2d');
+      pathCtx.fillStyle = ctx.fillStyle;
 
-    pathData.forEach((point, i) => {
-      // Convert from normalized (-0.5 to 0.5) to canvas coordinates
-      const x = (point[0] + 0.5) * width;
-      const y = (point[1] + 0.5) * height;
+      // Draw the path
+      pathCtx.beginPath();
+      pathData.forEach((point, i) => {
+        const x = (point[0] + 0.5) * width;
+        const y = (point[1] + 0.5) * height;
+        if (i === 0) {
+          pathCtx.moveTo(x, y);
+        } else {
+          pathCtx.lineTo(x, y);
+        }
+      });
+      pathCtx.closePath();
+      pathCtx.fill(fillRule);
 
-      if (i === 0) {
-        ctx.moveTo(x, y);
-      } else {
-        ctx.lineTo(x, y);
+      // Apply this path's pattern if it has one
+      const pathPattern = pathPatterns[pathIndex];
+      if (pathPattern && pathPattern.patternName) {
+        const patternData = getScaledPatternData(pathPattern);
+        if (patternData && hasPatternFill(patternData)) {
+          applyPatternMaskToCombination(pathCtx, patternData, width, height);
+        }
       }
+
+      // Draw to main canvas
+      ctx.drawImage(pathCanvas, 0, 0);
+    });
+  } else {
+    // No per-path patterns - render all paths together (original behavior)
+    ctx.beginPath();
+
+    pathsData.forEach((pathData) => {
+      if (!pathData || !pathData.length) return;
+
+      pathData.forEach((point, i) => {
+        const x = (point[0] + 0.5) * width;
+        const y = (point[1] + 0.5) * height;
+
+        if (i === 0) {
+          ctx.moveTo(x, y);
+        } else {
+          ctx.lineTo(x, y);
+        }
+      });
+
+      ctx.closePath();
     });
 
-    ctx.closePath();
-  });
+    ctx.fill(fillRule);
+  }
+}
 
-  ctx.fill(fillRule);
+// Get scaled pattern data from pathPattern settings
+function getScaledPatternData(pathPattern) {
+  if (!pathPattern || !pathPattern.patternName) return null;
+
+  const patternData = getPatternPixelData(pathPattern.patternName);
+  if (!patternData) return null;
+
+  const targetSize = pathPattern.patternSize || 16;
+  const sourceSize = patternData.size || 8;
+  const shouldInvert = pathPattern.patternInvert || false;
+
+  // Scale pattern to target size
+  const scaledPixels = [];
+  for (let y = 0; y < targetSize; y++) {
+    scaledPixels[y] = [];
+    for (let x = 0; x < targetSize; x++) {
+      const srcX = Math.floor(x * sourceSize / targetSize);
+      const srcY = Math.floor(y * sourceSize / targetSize);
+      let pixelValue = (patternData.pixels[srcY] && patternData.pixels[srcY][srcX]) ? 1 : 0;
+
+      if (shouldInvert) {
+        pixelValue = pixelValue === 1 ? 0 : 1;
+      }
+
+      scaledPixels[y][x] = pixelValue;
+    }
+  }
+
+  return {
+    size: targetSize,
+    pixels: scaledPixels
+  };
 }
 
 // Apply pattern as mask (dark = keep, white = remove)
@@ -223,7 +298,7 @@ function applyPatternMaskToCombination(ctx, patternData, width, height) {
 function drawCombinationTile(tileRow, tileCol, tileSize, ctx, combinationData, color) {
   if (!combinationData || !combinationData.shapeData) return;
 
-  const { tileRows, tileCols, shapeData, patternData } = combinationData;
+  const { tileRows, tileCols, shapeData, pathPatterns, patternData } = combinationData;
   const totalWidth = tileCols * tileSize;
   const totalHeight = tileRows * tileSize;
 
@@ -233,12 +308,12 @@ function drawCombinationTile(tileRow, tileCol, tileSize, ctx, combinationData, c
   tempCanvas.height = totalHeight;
   const tempCtx = tempCanvas.getContext('2d');
 
-  // Render the full shape
+  // Render the full shape (with per-path patterns if available)
   tempCtx.fillStyle = color || '#333';
-  renderNormalizedShape(tempCtx, shapeData, totalWidth, totalHeight);
+  renderNormalizedShape(tempCtx, shapeData, totalWidth, totalHeight, pathPatterns);
 
-  // Apply pattern mask
-  if (patternData && patternData.pixels && hasPatternFill(patternData)) {
+  // Legacy: Apply single pattern mask if present and no pathPatterns
+  if (!pathPatterns && patternData && patternData.pixels && hasPatternFill(patternData)) {
     applyPatternMaskToCombination(tempCtx, patternData, totalWidth, totalHeight);
   }
 

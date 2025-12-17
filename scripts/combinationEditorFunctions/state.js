@@ -17,10 +17,13 @@ var CombinationEditorState = {
   tileRows: 2,
   tileCols: 2,
 
-  // Selected pattern (from palette, not edited)
+  // Selected pattern (from palette, not edited) - these are for currently selected path
   selectedPatternName: null,
   selectedPatternSize: 16,
   selectedPatternInvert: false,
+
+  // Per-path pattern data: { pathIndex: { patternName, patternSize, patternInvert } }
+  pathPatterns: {},
 
   // Shape editor state (Two.js instance for combination shape)
   two: null,
@@ -83,6 +86,7 @@ function resetCombinationEditorState() {
   CombinationEditorState.currentEditingCombinationIndex = null;
   CombinationEditorState.combinationData = null;
   CombinationEditorState.activeTab = 'shape';
+  CombinationEditorState.pathPatterns = {};
 
   // Reset shape editor state
   CombinationEditorState.two = null;

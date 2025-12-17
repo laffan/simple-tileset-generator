@@ -72,10 +72,13 @@ function openCombinationEditor(combinationIndex) {
   CombinationEditorState.tileRows = EditorState.combinationTileRows;
   CombinationEditorState.tileCols = EditorState.combinationTileCols;
 
-  // Initialize pattern selection from saved data
-  CombinationEditorState.selectedPatternName = combinationData.selectedPatternName || null;
-  CombinationEditorState.selectedPatternSize = combinationData.selectedPatternSize || 16;
-  CombinationEditorState.selectedPatternInvert = combinationData.selectedPatternInvert || false;
+  // Initialize per-path pattern data from saved data
+  CombinationEditorState.pathPatterns = combinationData.pathPatterns ? { ...combinationData.pathPatterns } : {};
+
+  // Initialize current pattern selection (will be updated when path is selected)
+  CombinationEditorState.selectedPatternName = null;
+  CombinationEditorState.selectedPatternSize = 16;
+  CombinationEditorState.selectedPatternInvert = false;
 
   // Show modal
   const modal = document.getElementById('combinationEditorModal');
@@ -106,6 +109,9 @@ function openCombinationEditor(combinationIndex) {
 
   // Setup event handlers (shared with shape editor)
   setupEditorEvents();
+
+  // Load pattern info for the initially selected path
+  loadPathPatternInfo();
 
   // Initialize preview
   initCombinationPreviewCanvas();
@@ -429,8 +435,8 @@ function saveCombinationEditor() {
   // Get the current combination name
   const currentCombinationName = combinationOrder[combinationIndex];
 
-  // Resolve pattern data for rendering (getCombPatternData handles scaling and invert)
-  const patternData = getCombPatternData();
+  // Get per-path pattern data (copy the pathPatterns object)
+  const pathPatterns = { ...CombinationEditorState.pathPatterns };
 
   // Create saved data
   const savedData = {
@@ -439,12 +445,8 @@ function saveCombinationEditor() {
     tileRows: EditorState.combinationTileRows,
     tileCols: EditorState.combinationTileCols,
     shapeData: shapeData,
-    // Save pattern data for rendering
-    patternData: patternData,
-    // Also save selection info for re-editing
-    selectedPatternName: CombinationEditorState.selectedPatternName || null,
-    selectedPatternSize: CombinationEditorState.selectedPatternSize || 8,
-    selectedPatternInvert: CombinationEditorState.selectedPatternInvert || false
+    // Save per-path pattern info for re-editing
+    pathPatterns: pathPatterns
   };
 
   // Update the registry
@@ -739,6 +741,7 @@ function loadShapeIntoCombinationEditor(shapeName) {
 }
 
 // Build the pattern palette with patterns and grid size options
+// Shows normal and inverted previews side by side
 function buildCombinationPatternPalette() {
   const paletteContainer = document.getElementById('combinationPatternPalette');
   if (!paletteContainer) return;
@@ -753,32 +756,9 @@ function buildCombinationPatternPalette() {
   }
   noPatternItem.textContent = 'No Pattern';
   noPatternItem.onclick = function() {
-    selectCombinationPattern(null, null);
+    selectCombinationPattern(null, null, false);
   };
   paletteContainer.appendChild(noPatternItem);
-
-  // Add invert toggle (shown when a pattern is selected)
-  const invertRow = document.createElement('div');
-  invertRow.className = 'combination-pattern-invert-row';
-  invertRow.id = 'combinationPatternInvertRow';
-  invertRow.style.display = CombinationEditorState.selectedPatternName ? 'flex' : 'none';
-
-  const invertLabel = document.createElement('label');
-  invertLabel.className = 'combination-pattern-invert-label';
-
-  const invertCheckbox = document.createElement('input');
-  invertCheckbox.type = 'checkbox';
-  invertCheckbox.id = 'combinationPatternInvert';
-  invertCheckbox.checked = CombinationEditorState.selectedPatternInvert || false;
-  invertCheckbox.onchange = function() {
-    CombinationEditorState.selectedPatternInvert = this.checked;
-    updateCombinationPreview();
-  };
-
-  invertLabel.appendChild(invertCheckbox);
-  invertLabel.appendChild(document.createTextNode(' Invert pattern'));
-  invertRow.appendChild(invertLabel);
-  paletteContainer.appendChild(invertRow);
 
   // Get all available patterns
   patternOrder.forEach((patternName) => {
@@ -789,34 +769,52 @@ function buildCombinationPatternPalette() {
     item.className = 'combination-pattern-item';
     item.dataset.pattern = patternName;
 
-    if (CombinationEditorState.selectedPatternName === patternName) {
+    const isSelected = CombinationEditorState.selectedPatternName === patternName;
+    if (isSelected) {
       item.classList.add('selected');
     }
 
-    // Click on item selects with 16px default
-    item.onclick = function() {
-      selectCombinationPattern(patternName, 16);
+    // Previews row (normal + inverted side by side)
+    const previewsRow = document.createElement('div');
+    previewsRow.className = 'combination-pattern-previews-row';
+
+    // Normal preview (clickable)
+    const normalPreviewWrap = document.createElement('div');
+    normalPreviewWrap.className = 'pattern-preview-wrap pattern-preview-normal';
+    if (isSelected && !CombinationEditorState.selectedPatternInvert) {
+      normalPreviewWrap.classList.add('selected');
+    }
+    const normalCanvas = document.createElement('canvas');
+    normalCanvas.width = 32;
+    normalCanvas.height = 32;
+    const normalCtx = normalCanvas.getContext('2d');
+    renderPatternPreview(normalCtx, patternData, 32, 32, false);
+    normalPreviewWrap.appendChild(normalCanvas);
+    normalPreviewWrap.onclick = function(e) {
+      e.stopPropagation();
+      selectCombinationPattern(patternName, CombinationEditorState.selectedPatternSize || 16, false);
     };
+    previewsRow.appendChild(normalPreviewWrap);
 
-    // Preview row (canvas + name)
-    const previewRow = document.createElement('div');
-    previewRow.className = 'combination-pattern-preview-row';
+    // Inverted preview (clickable)
+    const invertedPreviewWrap = document.createElement('div');
+    invertedPreviewWrap.className = 'pattern-preview-wrap pattern-preview-inverted';
+    if (isSelected && CombinationEditorState.selectedPatternInvert) {
+      invertedPreviewWrap.classList.add('selected');
+    }
+    const invertedCanvas = document.createElement('canvas');
+    invertedCanvas.width = 32;
+    invertedCanvas.height = 32;
+    const invertedCtx = invertedCanvas.getContext('2d');
+    renderPatternPreview(invertedCtx, patternData, 32, 32, true);
+    invertedPreviewWrap.appendChild(invertedCanvas);
+    invertedPreviewWrap.onclick = function(e) {
+      e.stopPropagation();
+      selectCombinationPattern(patternName, CombinationEditorState.selectedPatternSize || 16, true);
+    };
+    previewsRow.appendChild(invertedPreviewWrap);
 
-    // Create small preview canvas
-    const previewCanvas = document.createElement('canvas');
-    previewCanvas.width = 24;
-    previewCanvas.height = 24;
-    const ctx = previewCanvas.getContext('2d');
-    renderPatternPreview(ctx, patternData, 24, 24);
-    previewRow.appendChild(previewCanvas);
-
-    // Pattern name
-    const nameSpan = document.createElement('span');
-    nameSpan.className = 'combination-pattern-name';
-    nameSpan.textContent = patternName;
-    previewRow.appendChild(nameSpan);
-
-    item.appendChild(previewRow);
+    item.appendChild(previewsRow);
 
     // Grid size buttons row
     const sizesRow = document.createElement('div');
@@ -829,14 +827,13 @@ function buildCombinationPatternPalette() {
       sizeBtn.dataset.size = size;
 
       // Mark active if this pattern and size are selected
-      if (CombinationEditorState.selectedPatternName === patternName &&
-          CombinationEditorState.selectedPatternSize === size) {
+      if (isSelected && CombinationEditorState.selectedPatternSize === size) {
         sizeBtn.classList.add('active');
       }
 
       sizeBtn.onclick = function(e) {
         e.stopPropagation();
-        selectCombinationPattern(patternName, size);
+        selectCombinationPattern(patternName, size, CombinationEditorState.selectedPatternInvert);
       };
 
       sizesRow.appendChild(sizeBtn);
@@ -847,8 +844,8 @@ function buildCombinationPatternPalette() {
   });
 }
 
-// Render a small preview of a pattern
-function renderPatternPreview(ctx, patternData, width, height) {
+// Render a small preview of a pattern (with optional invert)
+function renderPatternPreview(ctx, patternData, width, height, invert) {
   const size = patternData.size || 8;
   const pixels = patternData.pixels || [];
   const pixelW = width / size;
@@ -860,7 +857,11 @@ function renderPatternPreview(ctx, patternData, width, height) {
   ctx.fillStyle = '#333';
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
-      if (pixels[y] && pixels[y][x] === 1) {
+      let pixelValue = (pixels[y] && pixels[y][x] === 1) ? 1 : 0;
+      if (invert) {
+        pixelValue = pixelValue === 1 ? 0 : 1;
+      }
+      if (pixelValue === 1) {
         ctx.fillRect(x * pixelW, y * pixelH, pixelW, pixelH);
       }
     }
@@ -906,52 +907,90 @@ function getCombPatternData() {
 }
 
 // Select a pattern for the combination (or null for no pattern)
-function selectCombinationPattern(patternName, size) {
+// Now stores pattern per-path
+function selectCombinationPattern(patternName, size, invert) {
+  const pathIndex = EditorState.currentPathIndex;
+  const shouldInvert = invert !== undefined ? invert : false;
+
   CombinationEditorState.selectedPatternName = patternName;
   CombinationEditorState.selectedPatternSize = size || 16;
+  CombinationEditorState.selectedPatternInvert = shouldInvert;
 
-  // Reset invert when selecting a different pattern
-  if (!patternName) {
-    CombinationEditorState.selectedPatternInvert = false;
+  // Store per-path pattern data
+  if (patternName) {
+    CombinationEditorState.pathPatterns[pathIndex] = {
+      patternName: patternName,
+      patternSize: size || 16,
+      patternInvert: shouldInvert
+    };
+  } else {
+    // Clear pattern for this path
+    delete CombinationEditorState.pathPatterns[pathIndex];
   }
 
-  // Update visual selection
-  const paletteContainer = document.getElementById('combinationPatternPalette');
-  if (paletteContainer) {
-    // Update "No Pattern" selection
-    const noPatternItem = paletteContainer.querySelector('.combination-no-pattern');
-    if (noPatternItem) {
-      noPatternItem.classList.toggle('selected', !patternName);
-    }
-
-    // Show/hide invert row
-    const invertRow = document.getElementById('combinationPatternInvertRow');
-    if (invertRow) {
-      invertRow.style.display = patternName ? 'flex' : 'none';
-    }
-
-    // Update invert checkbox
-    const invertCheckbox = document.getElementById('combinationPatternInvert');
-    if (invertCheckbox) {
-      invertCheckbox.checked = CombinationEditorState.selectedPatternInvert || false;
-    }
-
-    // Update pattern items selection
-    paletteContainer.querySelectorAll('.combination-pattern-item').forEach(item => {
-      const itemPattern = item.dataset.pattern;
-      item.classList.toggle('selected', itemPattern === patternName);
-
-      // Update size buttons
-      item.querySelectorAll('.combination-pattern-size-btn').forEach(btn => {
-        const btnSize = parseInt(btn.dataset.size, 10);
-        btn.classList.toggle('active',
-          itemPattern === patternName && btnSize === CombinationEditorState.selectedPatternSize);
-      });
-    });
-  }
+  // Update the UI
+  updatePatternPaletteSelection();
 
   // Update the preview with the selected pattern
   updateCombinationPreview();
+}
+
+// Update pattern palette UI to reflect current selection
+function updatePatternPaletteSelection() {
+  const paletteContainer = document.getElementById('combinationPatternPalette');
+  if (!paletteContainer) return;
+
+  const patternName = CombinationEditorState.selectedPatternName;
+  const patternSize = CombinationEditorState.selectedPatternSize;
+  const patternInvert = CombinationEditorState.selectedPatternInvert;
+
+  // Update "No Pattern" selection
+  const noPatternItem = paletteContainer.querySelector('.combination-no-pattern');
+  if (noPatternItem) {
+    noPatternItem.classList.toggle('selected', !patternName);
+  }
+
+  // Update pattern items selection
+  paletteContainer.querySelectorAll('.combination-pattern-item').forEach(item => {
+    const itemPattern = item.dataset.pattern;
+    const isSelected = itemPattern === patternName;
+    item.classList.toggle('selected', isSelected);
+
+    // Update normal/inverted preview selection
+    const normalPreview = item.querySelector('.pattern-preview-normal');
+    const invertedPreview = item.querySelector('.pattern-preview-inverted');
+    if (normalPreview) {
+      normalPreview.classList.toggle('selected', isSelected && !patternInvert);
+    }
+    if (invertedPreview) {
+      invertedPreview.classList.toggle('selected', isSelected && patternInvert);
+    }
+
+    // Update size buttons
+    item.querySelectorAll('.combination-pattern-size-btn').forEach(btn => {
+      const btnSize = parseInt(btn.dataset.size, 10);
+      btn.classList.toggle('active', isSelected && btnSize === patternSize);
+    });
+  });
+}
+
+// Load pattern info for the currently selected path
+function loadPathPatternInfo() {
+  const pathIndex = EditorState.currentPathIndex;
+  const pathPattern = CombinationEditorState.pathPatterns[pathIndex];
+
+  if (pathPattern) {
+    CombinationEditorState.selectedPatternName = pathPattern.patternName;
+    CombinationEditorState.selectedPatternSize = pathPattern.patternSize;
+    CombinationEditorState.selectedPatternInvert = pathPattern.patternInvert;
+  } else {
+    // No pattern for this path
+    CombinationEditorState.selectedPatternName = null;
+    CombinationEditorState.selectedPatternSize = 16;
+    CombinationEditorState.selectedPatternInvert = false;
+  }
+
+  updatePatternPaletteSelection();
 }
 
 // Setup buttons (called from main.js)

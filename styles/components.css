@@ -2469,28 +2469,38 @@
   background: #e5f3ff;
 }
 
-/* Pattern preview row */
-.combination-pattern-preview-row {
+/* Pattern previews row (normal + inverted side by side) */
+.combination-pattern-previews-row {
   display: flex;
-  align-items: center;
-  gap: 6px;
+  justify-content: center;
+  gap: 8px;
+  padding: 4px 0;
 }
 
-.combination-pattern-preview-row canvas {
+.pattern-preview-wrap {
+  cursor: pointer;
+  border: 2px solid transparent;
+  border-radius: 4px;
+  padding: 2px;
+  transition: all 0.15s ease;
+}
+
+.pattern-preview-wrap:hover {
+  border-color: #ccc;
+  background: #f5f5f5;
+}
+
+.pattern-preview-wrap.selected {
+  border-color: #007bff;
+  background: #e5f3ff;
+}
+
+.pattern-preview-wrap canvas {
   display: block;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
   border: 1px solid #ddd;
   border-radius: 2px;
-}
-
-.combination-pattern-name {
-  font-size: 10px;
-  color: #666;
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 /* Grid size buttons */
@@ -2544,26 +2554,8 @@
   color: #007bff;
 }
 
-/* Pattern invert row */
-.combination-pattern-invert-row {
-  display: flex;
-  align-items: center;
-  padding: 6px 8px;
-  background: #f0f0f0;
-  border-bottom: 1px solid #ddd;
-  margin-bottom: 4px;
-}
-
-.combination-pattern-invert-label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  color: #555;
-  cursor: pointer;
-}
-
-.combination-pattern-invert-label input[type="checkbox"] {
-  margin: 0;
-  cursor: pointer;
+/* Pattern preview selection indicator labels */
+.pattern-preview-wrap::after {
+  content: '';
+  display: none;
 }

@@ -40,7 +40,7 @@ function updateCombinationPreview() {
   }
 }
 
-// Render the combination shape to tiles (with pattern masking on selected shape only)
+// Render the combination shape to tiles (with per-path pattern masking)
 function renderCombinationShapeToTiles(ctx, tileSize, rows, cols) {
   const state = CombinationEditorState;
 
@@ -51,95 +51,87 @@ function renderCombinationShapeToTiles(ctx, tileSize, rows, cols) {
   const width = cols * tileSize;
   const height = rows * tileSize;
 
-  // Get pattern data
-  const patternData = getCombPatternData();
-  const hasPattern = patternData && hasFilledPixels(patternData);
-
-  // Get the currently selected path index
-  const selectedPathIndex = EditorState.currentPathIndex || 0;
-
   // Determine paths data
   const pathsData = shapeData.paths || [shapeData];
 
-  // If there's only one path or no pattern, render everything together
-  if (pathsData.length <= 1 || !hasPattern) {
-    const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = width;
-    tempCanvas.height = height;
-    const tempCtx = tempCanvas.getContext('2d');
-    tempCtx.clearRect(0, 0, width, height);
-    renderNormalizedShapeToCanvas(tempCtx, shapeData, width, height);
-
-    if (hasPattern) {
-      applyPatternMask(tempCtx, patternData, width, height);
-    }
-
-    ctx.drawImage(tempCanvas, 0, 0);
-    return;
-  }
-
-  // Multiple paths with pattern - render selected path with pattern, others without
-
-  // First render non-selected paths without pattern
-  const nonSelectedCanvas = document.createElement('canvas');
-  nonSelectedCanvas.width = width;
-  nonSelectedCanvas.height = height;
-  const nonSelectedCtx = nonSelectedCanvas.getContext('2d');
-  nonSelectedCtx.clearRect(0, 0, width, height);
-
-  nonSelectedCtx.fillStyle = '#333';
+  // Render each path individually with its own pattern
   pathsData.forEach((pathData, pathIndex) => {
-    if (pathIndex === selectedPathIndex) return; // Skip selected path
     if (!pathData || !pathData.length) return;
 
-    nonSelectedCtx.beginPath();
+    // Get this path's pattern data
+    const pathPattern = CombinationEditorState.pathPatterns[pathIndex];
+    let patternData = null;
+
+    if (pathPattern && pathPattern.patternName) {
+      patternData = getPatternDataForPath(pathPattern);
+    }
+
+    const hasPattern = patternData && hasFilledPixels(patternData);
+
+    // Create temp canvas for this path
+    const pathCanvas = document.createElement('canvas');
+    pathCanvas.width = width;
+    pathCanvas.height = height;
+    const pathCtx = pathCanvas.getContext('2d');
+    pathCtx.clearRect(0, 0, width, height);
+
+    // Draw the path
+    pathCtx.fillStyle = '#333';
+    pathCtx.beginPath();
     pathData.forEach((point, i) => {
       const x = (point[0] + 0.5) * width;
       const y = (point[1] + 0.5) * height;
       if (i === 0) {
-        nonSelectedCtx.moveTo(x, y);
+        pathCtx.moveTo(x, y);
       } else {
-        nonSelectedCtx.lineTo(x, y);
+        pathCtx.lineTo(x, y);
       }
     });
-    nonSelectedCtx.closePath();
-    nonSelectedCtx.fill();
+    pathCtx.closePath();
+    pathCtx.fill();
+
+    // Apply pattern if this path has one
+    if (hasPattern) {
+      applyPatternMask(pathCtx, patternData, width, height);
+    }
+
+    // Draw to main canvas
+    ctx.drawImage(pathCanvas, 0, 0);
   });
+}
 
-  // Draw non-selected paths to main canvas
-  ctx.drawImage(nonSelectedCanvas, 0, 0);
+// Get scaled and inverted pattern data for a specific path's pattern settings
+function getPatternDataForPath(pathPattern) {
+  if (!pathPattern || !pathPattern.patternName) return null;
 
-  // Now render selected path with pattern
-  if (selectedPathIndex < pathsData.length) {
-    const selectedPath = pathsData[selectedPathIndex];
-    if (selectedPath && selectedPath.length) {
-      const selectedCanvas = document.createElement('canvas');
-      selectedCanvas.width = width;
-      selectedCanvas.height = height;
-      const selectedCtx = selectedCanvas.getContext('2d');
-      selectedCtx.clearRect(0, 0, width, height);
+  const patternData = getPatternPixelData(pathPattern.patternName);
+  if (!patternData) return null;
 
-      selectedCtx.fillStyle = '#333';
-      selectedCtx.beginPath();
-      selectedPath.forEach((point, i) => {
-        const x = (point[0] + 0.5) * width;
-        const y = (point[1] + 0.5) * height;
-        if (i === 0) {
-          selectedCtx.moveTo(x, y);
-        } else {
-          selectedCtx.lineTo(x, y);
-        }
-      });
-      selectedCtx.closePath();
-      selectedCtx.fill();
+  const targetSize = pathPattern.patternSize || 16;
+  const sourceSize = patternData.size || 8;
+  const shouldInvert = pathPattern.patternInvert || false;
 
-      // Apply pattern only to selected shape
-      applyPatternMask(selectedCtx, patternData, width, height);
+  // Scale pattern to target size
+  const scaledPixels = [];
+  for (let y = 0; y < targetSize; y++) {
+    scaledPixels[y] = [];
+    for (let x = 0; x < targetSize; x++) {
+      const srcX = Math.floor(x * sourceSize / targetSize);
+      const srcY = Math.floor(y * sourceSize / targetSize);
+      let pixelValue = (patternData.pixels[srcY] && patternData.pixels[srcY][srcX]) ? 1 : 0;
 
-      // Draw selected path (with pattern) on top
-      ctx.drawImage(selectedCanvas, 0, 0);
+      if (shouldInvert) {
+        pixelValue = pixelValue === 1 ? 0 : 1;
+      }
+
+      scaledPixels[y][x] = pixelValue;
     }
   }
+
+  return {
+    size: targetSize,
+    pixels: scaledPixels
+  };
 }
 
 // Check if pattern has any filled (dark) pixels
