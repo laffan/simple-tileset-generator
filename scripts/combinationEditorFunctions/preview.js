@@ -41,6 +41,7 @@ function updateCombinationPreview() {
 }
 
 // Render the combination shape to tiles (with per-path pattern masking)
+// Supports bezier curves via control points
 function renderCombinationShapeToTiles(ctx, tileSize, rows, cols) {
   const state = CombinationEditorState;
 
@@ -75,18 +76,90 @@ function renderCombinationShapeToTiles(ctx, tileSize, rows, cols) {
     const pathCtx = pathCanvas.getContext('2d');
     pathCtx.clearRect(0, 0, width, height);
 
-    // Draw the path
+    // Draw the path with bezier curve support
     pathCtx.fillStyle = '#333';
     pathCtx.beginPath();
+
+    // Helper to get point coordinates
+    function getPointCoords(point) {
+      if (Array.isArray(point)) {
+        return { x: point[0], y: point[1] };
+      }
+      return { x: point.x, y: point.y };
+    }
+
+    // Helper to check if point has control points
+    function hasControls(point) {
+      return !Array.isArray(point) && (point.ctrlLeft || point.ctrlRight);
+    }
+
     pathData.forEach((point, i) => {
-      const x = (point[0] + 0.5) * width;
-      const y = (point[1] + 0.5) * height;
+      const coords = getPointCoords(point);
+      const px = (coords.x + 0.5) * width;
+      const py = (coords.y + 0.5) * height;
+
       if (i === 0) {
-        pathCtx.moveTo(x, y);
+        pathCtx.moveTo(px, py);
       } else {
-        pathCtx.lineTo(x, y);
+        // Check if we need to draw a bezier curve
+        const prevPoint = pathData[i - 1];
+        const prevCoords = getPointCoords(prevPoint);
+
+        const prevHasCtrlRight = !Array.isArray(prevPoint) && prevPoint.ctrlRight;
+        const currentHasCtrlLeft = !Array.isArray(point) && point.ctrlLeft;
+
+        if (prevHasCtrlRight || currentHasCtrlLeft) {
+          // Bezier curve
+          const cp1x = prevHasCtrlRight
+            ? (prevCoords.x + prevPoint.ctrlRight.x + 0.5) * width
+            : (prevCoords.x + 0.5) * width;
+          const cp1y = prevHasCtrlRight
+            ? (prevCoords.y + prevPoint.ctrlRight.y + 0.5) * height
+            : (prevCoords.y + 0.5) * height;
+          const cp2x = currentHasCtrlLeft
+            ? (coords.x + point.ctrlLeft.x + 0.5) * width
+            : px;
+          const cp2y = currentHasCtrlLeft
+            ? (coords.y + point.ctrlLeft.y + 0.5) * height
+            : py;
+
+          pathCtx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, px, py);
+        } else {
+          pathCtx.lineTo(px, py);
+        }
       }
     });
+
+    // Handle closing segment (last point to first point)
+    if (pathData.length > 2) {
+      const lastPoint = pathData[pathData.length - 1];
+      const firstPoint = pathData[0];
+      const lastCoords = getPointCoords(lastPoint);
+      const firstCoords = getPointCoords(firstPoint);
+
+      const lastHasCtrlRight = !Array.isArray(lastPoint) && lastPoint.ctrlRight;
+      const firstHasCtrlLeft = !Array.isArray(firstPoint) && firstPoint.ctrlLeft;
+
+      if (lastHasCtrlRight || firstHasCtrlLeft) {
+        const cp1x = lastHasCtrlRight
+          ? (lastCoords.x + lastPoint.ctrlRight.x + 0.5) * width
+          : (lastCoords.x + 0.5) * width;
+        const cp1y = lastHasCtrlRight
+          ? (lastCoords.y + lastPoint.ctrlRight.y + 0.5) * height
+          : (lastCoords.y + 0.5) * height;
+        const cp2x = firstHasCtrlLeft
+          ? (firstCoords.x + firstPoint.ctrlLeft.x + 0.5) * width
+          : (firstCoords.x + 0.5) * width;
+        const cp2y = firstHasCtrlLeft
+          ? (firstCoords.y + firstPoint.ctrlLeft.y + 0.5) * height
+          : (firstCoords.y + 0.5) * height;
+        const fx = (firstCoords.x + 0.5) * width;
+        const fy = (firstCoords.y + 0.5) * height;
+
+        pathCtx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, fx, fy);
+      }
+    }
+
     pathCtx.closePath();
     pathCtx.fill();
 

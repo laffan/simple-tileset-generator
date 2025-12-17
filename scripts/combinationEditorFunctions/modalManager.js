@@ -298,28 +298,66 @@ function combinationPathToNormalizedData(path) {
 }
 
 // Get shape data from editor (converts to normalized format for saving)
+// Preserves control points for bezier curves
 function getCombinationShapeData() {
   if (!EditorState.paths || EditorState.paths.length === 0) return null;
 
   const shouldCrop = isCropEnabled();
 
+  // Helper to convert vertex to save format (preserving control points)
+  function vertexToSaveFormat(v) {
+    const point = [v.x - 0.5, v.y - 0.5];
+    // Add control points if they exist
+    if (v.ctrlLeft || v.ctrlRight) {
+      const vertexObj = { x: v.x - 0.5, y: v.y - 0.5 };
+      if (v.ctrlLeft) {
+        vertexObj.ctrlLeft = { x: v.ctrlLeft.x, y: v.ctrlLeft.y };
+      }
+      if (v.ctrlRight) {
+        vertexObj.ctrlRight = { x: v.ctrlRight.x, y: v.ctrlRight.y };
+      }
+      return vertexObj;
+    }
+    return point;
+  }
+
+  // Check if any path has curves (control points)
+  function pathHasCurves(pathData) {
+    return pathData.vertices.some(v => v.ctrlLeft || v.ctrlRight);
+  }
+
   if (EditorState.paths.length === 1) {
     const pathData = combinationPathToNormalizedData(EditorState.paths[0]);
-    // Convert to simple array format [x - 0.5, y - 0.5] for combination storage
-    let points = pathData.vertices.map(v => [v.x - 0.5, v.y - 0.5]);
-    if (shouldCrop) {
-      points = clipPathDataToBounds(points);
+
+    if (pathHasCurves(pathData)) {
+      // Return vertices with control points preserved
+      let vertices = pathData.vertices.map(vertexToSaveFormat);
+      // Note: cropping bezier curves is complex, skip for now
+      return vertices;
+    } else {
+      // Simple array format for non-curved shapes
+      let points = pathData.vertices.map(v => [v.x - 0.5, v.y - 0.5]);
+      if (shouldCrop) {
+        points = clipPathDataToBounds(points);
+      }
+      return points;
     }
-    return points;
   } else {
     // Multi-path
+    let hasCurves = false;
     let paths = EditorState.paths.map(path => {
       const pd = combinationPathToNormalizedData(path);
+      if (pathHasCurves(pd)) {
+        hasCurves = true;
+        return pd.vertices.map(vertexToSaveFormat);
+      }
       return pd.vertices.map(v => [v.x - 0.5, v.y - 0.5]);
     });
-    if (shouldCrop) {
+
+    if (shouldCrop && !hasCurves) {
       paths = paths.map(p => clipPathDataToBounds(p));
     }
+
     const result = { paths };
     if (EditorState.fillRule) {
       result.fillRule = EditorState.fillRule;
@@ -561,68 +599,108 @@ function switchCombinationPaletteTab(tabName) {
 
 // Setup combination shape toolbar
 function setupCombinationShapeToolbar() {
-  // The toolbar actions use the same functions as the shape editor
-  document.querySelectorAll('.combination-shape-toolbar .tool-action').forEach(btn => {
-    btn.onclick = function(e) {
-      e.preventDefault();
-      const action = this.dataset.action;
+  const toolbar = document.querySelector('.combination-shape-toolbar');
+  if (!toolbar) return;
 
-      switch (action) {
-        case 'comb-add-circle':
-          addCircleShape();
-          updateCombinationPreview();
-          break;
-        case 'comb-add-square':
-          addSquareShape();
-          updateCombinationPreview();
-          break;
-        case 'comb-add-triangle':
-          addTriangleShape();
-          updateCombinationPreview();
-          break;
-        case 'comb-add-hexagon':
-          addHexagonShape();
-          updateCombinationPreview();
-          break;
-        case 'comb-reflect-horizontal':
-          reflectHorizontal();
-          updateCombinationPreview();
-          break;
-        case 'comb-reflect-vertical':
-          reflectVertical();
-          updateCombinationPreview();
-          break;
-        case 'comb-align-center':
-          alignCenter();
-          updateCombinationPreview();
-          break;
-        case 'comb-align-top':
-          alignTop();
-          updateCombinationPreview();
-          break;
-        case 'comb-align-bottom':
-          alignBottom();
-          updateCombinationPreview();
-          break;
-        case 'comb-align-left':
-          alignLeft();
-          updateCombinationPreview();
-          break;
-        case 'comb-align-right':
-          alignRight();
-          updateCombinationPreview();
-          break;
-        case 'comb-boolean-cut':
-          booleanCut();
-          updateCombinationPreview();
-          break;
-        case 'comb-toggle-hole':
-          toggleHolePath();
-          updateCombinationPreview();
-          break;
+  // Handle tool clicks to toggle submenu
+  toolbar.addEventListener('click', (e) => {
+    const tool = e.target.closest('.toolbar-tool');
+    const action = e.target.closest('.tool-action');
+
+    if (action) {
+      // Handle action click
+      e.stopPropagation();
+      const actionType = action.dataset.action;
+      executeCombinationToolAction(actionType);
+      closeCombinationSubmenus();
+      return;
+    }
+
+    if (tool) {
+      // Toggle submenu
+      const wasActive = tool.classList.contains('active');
+      closeCombinationSubmenus();
+      if (!wasActive) {
+        tool.classList.add('active');
       }
-    };
+    }
   });
+
+  // Close submenus when clicking outside
+  const closeHandler = (e) => {
+    if (!e.target.closest('.combination-shape-toolbar')) {
+      closeCombinationSubmenus();
+    }
+  };
+  document.addEventListener('click', closeHandler);
+
+  // Store handler reference for cleanup
+  toolbar._closeHandler = closeHandler;
+}
+
+// Close all combination toolbar submenus
+function closeCombinationSubmenus() {
+  document.querySelectorAll('.combination-shape-toolbar .toolbar-tool.active').forEach(tool => {
+    tool.classList.remove('active');
+  });
+}
+
+// Execute a combination toolbar action
+function executeCombinationToolAction(actionType) {
+  switch (actionType) {
+    case 'comb-add-circle':
+      addCircleShape();
+      updateCombinationPreview();
+      break;
+    case 'comb-add-square':
+      addSquareShape();
+      updateCombinationPreview();
+      break;
+    case 'comb-add-triangle':
+      addTriangleShape();
+      updateCombinationPreview();
+      break;
+    case 'comb-add-hexagon':
+      addHexagonShape();
+      updateCombinationPreview();
+      break;
+    case 'comb-reflect-horizontal':
+      reflectHorizontal();
+      updateCombinationPreview();
+      break;
+    case 'comb-reflect-vertical':
+      reflectVertical();
+      updateCombinationPreview();
+      break;
+    case 'comb-align-center':
+      alignCenter();
+      updateCombinationPreview();
+      break;
+    case 'comb-align-top':
+      alignTop();
+      updateCombinationPreview();
+      break;
+    case 'comb-align-bottom':
+      alignBottom();
+      updateCombinationPreview();
+      break;
+    case 'comb-align-left':
+      alignLeft();
+      updateCombinationPreview();
+      break;
+    case 'comb-align-right':
+      alignRight();
+      updateCombinationPreview();
+      break;
+    case 'comb-boolean-cut':
+      booleanCut();
+      updateCombinationPreview();
+      break;
+    case 'comb-toggle-hole':
+      toggleHolePath();
+      updateCombinationPreview();
+      break;
+  }
 }
 
 // Build shape palette for drag-drop

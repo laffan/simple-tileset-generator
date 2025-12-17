@@ -49,72 +49,8 @@ function drawCombEditorGrid() {
   state.two.update();
 }
 
-// Draw red tile grid overlay showing how the shape will be divided
-function drawCombinationTileGridOverlay() {
-  const state = CombinationEditorState;
-  if (!state.two) return;
-
-  // Remove existing overlay
-  const container = document.getElementById('combinationShapeEditorCanvas');
-  if (!container) return;
-
-  // Remove old overlay SVG
-  const oldOverlay = container.querySelector('.comb-tile-overlay');
-  if (oldOverlay) {
-    oldOverlay.remove();
-  }
-
-  // Create SVG overlay for tile grid lines
-  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  svg.classList.add('comb-tile-overlay');
-  svg.setAttribute('width', COMB_EDITOR_SIZE);
-  svg.setAttribute('height', COMB_EDITOR_SIZE);
-  svg.style.position = 'absolute';
-  svg.style.top = '0';
-  svg.style.left = '0';
-  svg.style.pointerEvents = 'none';
-
-  const rows = state.tileRows;
-  const cols = state.tileCols;
-
-  // Calculate tile dimensions within the shape boundary
-  const tileWidth = COMB_EDITOR_SHAPE_SIZE / cols;
-  const tileHeight = COMB_EDITOR_SHAPE_SIZE / rows;
-
-  // Starting position (top-left of shape area)
-  const startX = COMB_EDITOR_MARGIN;
-  const startY = COMB_EDITOR_MARGIN;
-
-  // Draw vertical tile division lines (red, solid)
-  for (let i = 1; i < cols; i++) {
-    const x = startX + i * tileWidth;
-    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-    line.setAttribute('x1', x);
-    line.setAttribute('y1', startY);
-    line.setAttribute('x2', x);
-    line.setAttribute('y2', startY + COMB_EDITOR_SHAPE_SIZE);
-    line.setAttribute('stroke', '#dc3545');
-    line.setAttribute('stroke-width', '2');
-    line.setAttribute('stroke-dasharray', '4,4');
-    svg.appendChild(line);
-  }
-
-  // Draw horizontal tile division lines (red, solid)
-  for (let i = 1; i < rows; i++) {
-    const y = startY + i * tileHeight;
-    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-    line.setAttribute('x1', startX);
-    line.setAttribute('y1', y);
-    line.setAttribute('x2', startX + COMB_EDITOR_SHAPE_SIZE);
-    line.setAttribute('y2', y);
-    line.setAttribute('stroke', '#dc3545');
-    line.setAttribute('stroke-width', '2');
-    line.setAttribute('stroke-dasharray', '4,4');
-    svg.appendChild(line);
-  }
-
-  container.appendChild(svg);
-}
+// Note: drawCombinationTileGridOverlay is defined in modalManager.js
+// It handles the rectangular bounds calculation for non-square tile grids
 
 // Create default shape (square filling the shape area)
 function createDefaultCombShape() {

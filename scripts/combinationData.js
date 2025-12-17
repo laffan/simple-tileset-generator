@@ -149,8 +149,91 @@ function hasPatternFill(patternData) {
   return false;
 }
 
+// Helper functions for bezier curve rendering
+function getPointCoords(point) {
+  if (Array.isArray(point)) {
+    return { x: point[0], y: point[1] };
+  }
+  return { x: point.x, y: point.y };
+}
+
+// Draw a path with bezier curve support
+function drawPathWithCurves(ctx, pathData, width, height, closePath) {
+  if (!pathData || !pathData.length) return;
+
+  pathData.forEach((point, i) => {
+    const coords = getPointCoords(point);
+    const px = (coords.x + 0.5) * width;
+    const py = (coords.y + 0.5) * height;
+
+    if (i === 0) {
+      ctx.moveTo(px, py);
+    } else {
+      // Check if we need to draw a bezier curve
+      const prevPoint = pathData[i - 1];
+      const prevCoords = getPointCoords(prevPoint);
+
+      const prevHasCtrlRight = !Array.isArray(prevPoint) && prevPoint.ctrlRight;
+      const currentHasCtrlLeft = !Array.isArray(point) && point.ctrlLeft;
+
+      if (prevHasCtrlRight || currentHasCtrlLeft) {
+        // Bezier curve
+        const cp1x = prevHasCtrlRight
+          ? (prevCoords.x + prevPoint.ctrlRight.x + 0.5) * width
+          : (prevCoords.x + 0.5) * width;
+        const cp1y = prevHasCtrlRight
+          ? (prevCoords.y + prevPoint.ctrlRight.y + 0.5) * height
+          : (prevCoords.y + 0.5) * height;
+        const cp2x = currentHasCtrlLeft
+          ? (coords.x + point.ctrlLeft.x + 0.5) * width
+          : px;
+        const cp2y = currentHasCtrlLeft
+          ? (coords.y + point.ctrlLeft.y + 0.5) * height
+          : py;
+
+        ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, px, py);
+      } else {
+        ctx.lineTo(px, py);
+      }
+    }
+  });
+
+  // Handle closing segment (last point to first point)
+  if (closePath && pathData.length > 2) {
+    const lastPoint = pathData[pathData.length - 1];
+    const firstPoint = pathData[0];
+    const lastCoords = getPointCoords(lastPoint);
+    const firstCoords = getPointCoords(firstPoint);
+
+    const lastHasCtrlRight = !Array.isArray(lastPoint) && lastPoint.ctrlRight;
+    const firstHasCtrlLeft = !Array.isArray(firstPoint) && firstPoint.ctrlLeft;
+
+    if (lastHasCtrlRight || firstHasCtrlLeft) {
+      const cp1x = lastHasCtrlRight
+        ? (lastCoords.x + lastPoint.ctrlRight.x + 0.5) * width
+        : (lastCoords.x + 0.5) * width;
+      const cp1y = lastHasCtrlRight
+        ? (lastCoords.y + lastPoint.ctrlRight.y + 0.5) * height
+        : (lastCoords.y + 0.5) * height;
+      const cp2x = firstHasCtrlLeft
+        ? (firstCoords.x + firstPoint.ctrlLeft.x + 0.5) * width
+        : (firstCoords.x + 0.5) * width;
+      const cp2y = firstHasCtrlLeft
+        ? (firstCoords.y + firstPoint.ctrlLeft.y + 0.5) * height
+        : (firstCoords.y + 0.5) * height;
+      const fx = (firstCoords.x + 0.5) * width;
+      const fy = (firstCoords.y + 0.5) * height;
+
+      ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, fx, fy);
+    }
+  }
+
+  ctx.closePath();
+}
+
 // Render normalized shape to canvas (with optional per-path patterns)
 // tileSize is used so patterns tile per-tile rather than across the whole canvas
+// Supports bezier curves via control points
 function renderNormalizedShape(ctx, shapeData, width, height, pathPatterns, tileSize) {
   // Handle multi-path shapes
   const pathsData = shapeData.paths || [shapeData];
@@ -169,18 +252,9 @@ function renderNormalizedShape(ctx, shapeData, width, height, pathPatterns, tile
       const pathCtx = pathCanvas.getContext('2d');
       pathCtx.fillStyle = ctx.fillStyle;
 
-      // Draw the path
+      // Draw the path with bezier curve support
       pathCtx.beginPath();
-      pathData.forEach((point, i) => {
-        const x = (point[0] + 0.5) * width;
-        const y = (point[1] + 0.5) * height;
-        if (i === 0) {
-          pathCtx.moveTo(x, y);
-        } else {
-          pathCtx.lineTo(x, y);
-        }
-      });
-      pathCtx.closePath();
+      drawPathWithCurves(pathCtx, pathData, width, height, true);
       pathCtx.fill(fillRule);
 
       // Apply this path's pattern if it has one
@@ -202,19 +276,7 @@ function renderNormalizedShape(ctx, shapeData, width, height, pathPatterns, tile
 
     pathsData.forEach((pathData) => {
       if (!pathData || !pathData.length) return;
-
-      pathData.forEach((point, i) => {
-        const x = (point[0] + 0.5) * width;
-        const y = (point[1] + 0.5) * height;
-
-        if (i === 0) {
-          ctx.moveTo(x, y);
-        } else {
-          ctx.lineTo(x, y);
-        }
-      });
-
-      ctx.closePath();
+      drawPathWithCurves(ctx, pathData, width, height, true);
     });
 
     ctx.fill(fillRule);
