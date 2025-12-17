@@ -8,9 +8,36 @@ function openPatternEditor(patternIndex) {
   const patternName = patternOrder[patternIndex];
   const patternData = getPatternPixelData(patternName);
 
-  // Initialize state
-  state.patternSize = patternData.size || patternData.pixels.length;
+  // Initialize state with original pattern data
+  const originalSize = patternData.size || patternData.pixels.length;
+  state.patternSize = originalSize;
   state.pixelData = copyPatternPixels(patternData.pixels);
+
+  // For built-in patterns, resize to default grid size (16px)
+  // Custom patterns (user-saved) keep their saved size
+  const defaultSize = 16;
+  if (!isCustomPattern(patternName) && originalSize !== defaultSize) {
+    const oldData = state.pixelData;
+    const newData = [];
+    for (let row = 0; row < defaultSize; row++) {
+      newData[row] = [];
+      for (let col = 0; col < defaultSize; col++) {
+        if (defaultSize > originalSize && originalSize > 0) {
+          // When increasing size, tile the existing pattern
+          const srcRow = row % originalSize;
+          const srcCol = col % originalSize;
+          newData[row][col] = (oldData[srcRow] && oldData[srcRow][srcCol]) || 0;
+        } else if (row < originalSize && col < originalSize && oldData[row]) {
+          // When decreasing size, preserve existing data within bounds
+          newData[row][col] = oldData[row][col] || 0;
+        } else {
+          newData[row][col] = 0;
+        }
+      }
+    }
+    state.patternSize = defaultSize;
+    state.pixelData = newData;
+  }
 
   // Show modal
   const modal = document.getElementById('patternEditorModal');

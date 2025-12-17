@@ -95,7 +95,48 @@ function createPatternPreview(pattern) {
   previewCanvas.height = 40;
   const previewCtx = previewCanvas.getContext('2d');
   previewCtx.fillStyle = 'black';
-  drawPattern(0, 0, 40, previewCtx, pattern);
+
+  const patternData = getPatternPixelData(pattern);
+  const originalSize = patternData.size || patternData.pixels.length;
+
+  // Custom patterns use their saved size, built-in patterns default to 16px
+  const defaultSize = 16;
+  const targetSize = isCustomPattern(pattern) ? originalSize : defaultSize;
+
+  // Resize pattern data if needed
+  let previewPixels;
+  if (originalSize === targetSize) {
+    previewPixels = patternData.pixels;
+  } else {
+    previewPixels = [];
+    for (let row = 0; row < targetSize; row++) {
+      previewPixels[row] = [];
+      for (let col = 0; col < targetSize; col++) {
+        if (targetSize > originalSize && originalSize > 0) {
+          // Tile the existing pattern
+          const srcRow = row % originalSize;
+          const srcCol = col % originalSize;
+          previewPixels[row][col] = (patternData.pixels[srcRow] && patternData.pixels[srcRow][srcCol]) || 0;
+        } else if (row < originalSize && col < originalSize && patternData.pixels[row]) {
+          // Crop for larger patterns
+          previewPixels[row][col] = patternData.pixels[row][col] || 0;
+        } else {
+          previewPixels[row][col] = 0;
+        }
+      }
+    }
+  }
+
+  // Draw the pattern scaled to 40px preview
+  const pixelSize = 40 / targetSize;
+  for (let row = 0; row < targetSize; row++) {
+    for (let col = 0; col < targetSize; col++) {
+      if (previewPixels[row] && previewPixels[row][col] === 1) {
+        previewCtx.fillRect(col * pixelSize, row * pixelSize, pixelSize, pixelSize);
+      }
+    }
+  }
+
   return previewCanvas;
 }
 

@@ -9,7 +9,7 @@ const PatternEditorState = {
 
   // Pattern data
   pixelData: [],
-  patternSize: 8,
+  patternSize: 16,
 
   // Editor settings
   editorZoom: 100,      // Slider value (1-100), default to max (1:1 zoom)
