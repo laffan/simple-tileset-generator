@@ -831,31 +831,6 @@ FFFFFF, 000000, </textarea
             <div class="modal-content combination-editor-modal">
                 <div class="modal-body">
                     <div class="combination-editor-workspace">
-                        <!-- Header with tile size controls -->
-                        <div class="combination-editor-header">
-                            <div class="combination-editor-title">Edit Combination</div>
-                            <div class="combination-tile-size">
-                                <span class="combination-tile-size-label">Tile Size:</span>
-                                <input
-                                    type="number"
-                                    id="combinationTileRows"
-                                    class="combination-tile-input"
-                                    min="1"
-                                    max="8"
-                                    value="2"
-                                />
-                                <span class="combination-tile-x">×</span>
-                                <input
-                                    type="number"
-                                    id="combinationTileCols"
-                                    class="combination-tile-input"
-                                    min="1"
-                                    max="8"
-                                    value="2"
-                                />
-                            </div>
-                        </div>
-
                         <!-- Shape Editor Tab Content -->
                         <div id="combinationShapeTab" class="combination-tab-content active">
                             <!-- Toolbar (same as shape editor) -->
@@ -922,15 +897,27 @@ FFFFFF, 000000, </textarea
                                         <div id="combinationPatternPalette" class="combination-pattern-palette"></div>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-
-                        <!-- Preview section (always visible) -->
-                        <div class="combination-preview-column">
-                            <div class="combination-preview-section">
-                                <div class="combination-preview-label">Preview</div>
-                                <div class="combination-preview-wrapper">
-                                    <canvas id="combinationPreviewCanvas"></canvas>
+                                <!-- Preview column (right side) -->
+                                <div class="combination-preview-column">
+                                    <!-- Grid size controls -->
+                                    <div class="combination-grid-size-controls">
+                                        <div class="grid-size-label">Grid Size</div>
+                                        <div class="grid-size-row">
+                                            <button class="grid-size-btn" data-action="rows-dec">−</button>
+                                            <span id="combinationRowsDisplay" class="grid-size-value">2</span>
+                                            <button class="grid-size-btn" data-action="rows-inc">+</button>
+                                            <span class="grid-size-x">×</span>
+                                            <button class="grid-size-btn" data-action="cols-dec">−</button>
+                                            <span id="combinationColsDisplay" class="grid-size-value">2</span>
+                                            <button class="grid-size-btn" data-action="cols-inc">+</button>
+                                        </div>
+                                    </div>
+                                    <!-- Preview -->
+                                    <div class="combination-preview-section">
+                                        <div class="combination-preview-wrapper">
+                                            <canvas id="combinationPreviewCanvas"></canvas>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>

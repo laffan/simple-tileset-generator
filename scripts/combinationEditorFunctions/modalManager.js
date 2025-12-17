@@ -86,11 +86,8 @@ function openCombinationEditor(combinationIndex) {
     modal.classList.add('active');
   }
 
-  // Update tile size inputs
-  const rowsInput = document.getElementById('combinationTileRows');
-  const colsInput = document.getElementById('combinationTileCols');
-  if (rowsInput) rowsInput.value = EditorState.combinationTileRows;
-  if (colsInput) colsInput.value = EditorState.combinationTileCols;
+  // Update grid size displays
+  updateGridSizeDisplay();
 
   // Initialize Two.js in the combination shape editor canvas
   initCombinationTwoEditor();
@@ -519,30 +516,14 @@ function setupCombinationEditorUI() {
     };
   });
 
-  // Tile size inputs
-  const rowsInput = document.getElementById('combinationTileRows');
-  const colsInput = document.getElementById('combinationTileCols');
-
-  if (rowsInput) {
-    rowsInput.onchange = function() {
-      const rows = parseInt(this.value, 10) || 2;
-      EditorState.combinationTileRows = Math.max(1, Math.min(8, rows));
-      CombinationEditorState.tileRows = EditorState.combinationTileRows;
-      this.value = EditorState.combinationTileRows;
-      drawCombinationTileGridOverlay();
-      updateCombinationPreview();
+  // Grid size +/- buttons
+  const gridSizeButtons = document.querySelectorAll('.grid-size-btn');
+  gridSizeButtons.forEach(btn => {
+    btn.onclick = function() {
+      const action = this.dataset.action;
+      handleGridSizeChange(action);
     };
-  }
-  if (colsInput) {
-    colsInput.onchange = function() {
-      const cols = parseInt(this.value, 10) || 2;
-      EditorState.combinationTileCols = Math.max(1, Math.min(8, cols));
-      CombinationEditorState.tileCols = EditorState.combinationTileCols;
-      this.value = EditorState.combinationTileCols;
-      drawCombinationTileGridOverlay();
-      updateCombinationPreview();
-    };
-  }
+  });
 
   // Cancel button
   const cancelBtn = document.getElementById('cancelCombinationEditorBtn');
@@ -576,6 +557,48 @@ function setupCombinationEditorUI() {
 
   // Setup toolbar buttons (uses shape editor toolbar functions)
   setupCombinationShapeToolbar();
+}
+
+// Update the grid size display values
+function updateGridSizeDisplay() {
+  const rowsDisplay = document.getElementById('combinationRowsDisplay');
+  const colsDisplay = document.getElementById('combinationColsDisplay');
+  if (rowsDisplay) rowsDisplay.textContent = EditorState.combinationTileRows;
+  if (colsDisplay) colsDisplay.textContent = EditorState.combinationTileCols;
+}
+
+// Handle grid size +/- button clicks
+function handleGridSizeChange(action) {
+  let rows = EditorState.combinationTileRows;
+  let cols = EditorState.combinationTileCols;
+
+  switch (action) {
+    case 'rows-inc':
+      rows = Math.min(8, rows + 1);
+      break;
+    case 'rows-dec':
+      rows = Math.max(1, rows - 1);
+      break;
+    case 'cols-inc':
+      cols = Math.min(8, cols + 1);
+      break;
+    case 'cols-dec':
+      cols = Math.max(1, cols - 1);
+      break;
+  }
+
+  // Update state
+  EditorState.combinationTileRows = rows;
+  EditorState.combinationTileCols = cols;
+  CombinationEditorState.tileRows = rows;
+  CombinationEditorState.tileCols = cols;
+
+  // Update display
+  updateGridSizeDisplay();
+
+  // Redraw tile grid overlay and preview
+  drawCombinationTileGridOverlay();
+  updateCombinationPreview();
 }
 
 // Switch between palette tabs (Shapes / Patterns)
