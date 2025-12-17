@@ -719,10 +719,8 @@ function executeCombinationToolAction(actionType) {
       booleanCut();
       updateCombinationPreview();
       break;
-    case 'comb-toggle-hole':
-      toggleHole();
-      updateCombinationPreview();
-      break;
+    // Note: comb-toggle-hole is handled by setupCombShapeToolbar in shapeEditor.js
+    // to avoid double-toggle (both handlers would fire for the same click)
   }
 }
 
