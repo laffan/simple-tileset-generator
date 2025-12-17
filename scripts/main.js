@@ -19,6 +19,10 @@ document.getElementById('deselectAllShapes').addEventListener('click', deselectA
 document.getElementById('selectAllPatterns').addEventListener('click', selectAllPatterns);
 document.getElementById('deselectAllPatterns').addEventListener('click', deselectAllPatterns);
 
+// Add event listeners to the "all" and "none" links for combinations
+document.getElementById('selectAllCombinations').addEventListener('click', selectAllCombinations);
+document.getElementById('deselectAllCombinations').addEventListener('click', deselectAllCombinations);
+
 
 // Function to trigger download
 document.getElementById('downloadBtn').onclick = function () {
@@ -41,6 +45,10 @@ window.onload = function () {
   // Initialize pattern order before creating HTML
   initializePatternOrder();
   createPatternSelectionHTML();
+
+  // Initialize combination order before creating HTML
+  initializeCombinationOrder();
+  createCombinationSelectionHTML();
 
   const defaultColors = document.getElementById('colorInput').value.split(',');
   const defaultSize = parseInt(document.getElementById('sizeInput').value, 10);
@@ -89,6 +97,12 @@ window.onload = function () {
   addPatternButtonListeners();
   setupPatternDragAndDrop();
 
+  // Combination listeners and previews
+  addCombinationCheckboxesListeners();
+  addCombinationPreviews();
+  addCombinationButtonListeners();
+  setupCombinationDragAndDrop();
+
   // Update colors preview initially
   updateColorsPreview();
   sanitizeColorInput();
@@ -101,6 +115,11 @@ window.onload = function () {
 
   // Initialize shape toolbar
   setupShapeToolbar();
+
+  // Initialize combination editor buttons
+  if (typeof setupCombinationEditorButtons === 'function') {
+    setupCombinationEditorButtons();
+  }
 
   // Initialize tile size controls and custom size modals
   setupTileSizeControls();

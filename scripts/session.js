@@ -22,11 +22,19 @@ function getSessionData() {
     }
   });
 
+  // Get selected combination indices
+  const selectedCombinationIndices = [];
+  document.querySelectorAll('.combinationCheckbox').forEach((cb, index) => {
+    if (cb.checked) {
+      selectedCombinationIndices.push(index);
+    }
+  });
+
   // Get fit preview state
   const fitPreview = document.getElementById('fitPreview').checked;
 
   return {
-    version: 5,
+    version: 6,
     colors: colorInput,
     tileSize: sizeInput,
     paletteComplexity: paletteComplexity,
@@ -34,9 +42,12 @@ function getSessionData() {
     selectedIndices: selectedShapeIndices, // Save which shape indices are selected (keep name for backwards compat)
     patternOrder: [...patternOrder], // Save full pattern order
     selectedPatternIndices: selectedPatternIndices, // Save which pattern indices are selected
+    combinationOrder: [...combinationOrder], // Save full combination order
+    selectedCombinationIndices: selectedCombinationIndices, // Save which combination indices are selected
     fitPreview: fitPreview,
     customShapes: getCustomShapeData(), // Save custom shape path data
     customPatterns: getCustomPatternData(), // Save custom pattern pixel data
+    customCombinations: getCustomCombinationData(), // Save custom combination data
     tileTester: getTileTesterData() // Save tile tester state
   };
 }
@@ -66,6 +77,11 @@ function applySessionData(data) {
   // Load custom patterns first (before rebuilding UI)
   if (data.customPatterns) {
     loadCustomPatternData(data.customPatterns);
+  }
+
+  // Load custom combinations first (before rebuilding UI)
+  if (data.customCombinations) {
+    loadCustomCombinationData(data.customCombinations);
   }
 
   // Handle shape order and selection
@@ -107,6 +123,24 @@ function applySessionData(data) {
     const patternCheckboxes = document.querySelectorAll('.patternCheckbox');
     patternCheckboxes.forEach((cb, index) => {
       cb.checked = data.selectedPatternIndices && data.selectedPatternIndices.includes(index);
+    });
+  }
+
+  // Handle combination order and selection (version 6+)
+  if (data.version >= 6 && data.combinationOrder !== undefined) {
+    combinationOrder = [...data.combinationOrder];
+
+    // Rebuild the combination UI
+    createCombinationSelectionHTML();
+    addCombinationPreviews();
+    addCombinationCheckboxesListeners();
+    addCombinationButtonListeners();
+    setupCombinationDragAndDrop();
+
+    // Restore selected combination indices
+    const combinationCheckboxes = document.querySelectorAll('.combinationCheckbox');
+    combinationCheckboxes.forEach((cb, index) => {
+      cb.checked = data.selectedCombinationIndices && data.selectedCombinationIndices.includes(index);
     });
   }
 

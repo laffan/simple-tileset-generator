@@ -130,8 +130,29 @@ function updatePaletteSelection() {
   // Redraw grid lines
   drawPaletteGridLines();
 
-  // Draw selection highlight if a tile is selected
-  if (TileTesterState.selectedTile) {
+  // Draw selection highlight for multi-tile selection
+  if (TileTesterState.selectedTiles) {
+    const sel = TileTesterState.selectedTiles;
+    const minRow = Math.min(sel.startRow, sel.endRow);
+    const maxRow = Math.max(sel.startRow, sel.endRow);
+    const minCol = Math.min(sel.startCol, sel.endCol);
+    const maxCol = Math.max(sel.startCol, sel.endCol);
+
+    const x = minCol * tileSize;
+    const y = minRow * tileSize;
+    const width = (maxCol - minCol + 1) * tileSize;
+    const height = (maxRow - minRow + 1) * tileSize;
+
+    // Semi-transparent fill
+    ctx.fillStyle = 'rgba(255, 0, 0, 0.15)';
+    ctx.fillRect(x, y, width, height);
+
+    ctx.strokeStyle = '#ff0000';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(x + 1.5, y + 1.5, width - 3, height - 3);
+  }
+  // Draw selection highlight if a single tile is selected (backwards compatibility)
+  else if (TileTesterState.selectedTile) {
     const { row, col } = TileTesterState.selectedTile;
     const x = col * tileSize;
     const y = row * tileSize;
@@ -175,13 +196,74 @@ function handlePaletteClick(e) {
   const tilePos = getTileFromPaletteClick(e);
 
   if (tilePos) {
+    // Start single tile selection (or start of drag selection)
     TileTesterState.selectedTile = {
       row: tilePos.row,
       col: tilePos.col
     };
+    // Clear multi-tile selection when clicking
+    TileTesterState.selectedTiles = null;
+    TileTesterState.isSelectingMultiple = false;
+    TileTesterState.selectionStart = { row: tilePos.row, col: tilePos.col };
     updatePaletteSelection();
     updateCursorPreview();
   }
+}
+
+// Handle palette mouse down for drag selection
+function handlePaletteMouseDown(e) {
+  const tilePos = getTileFromPaletteClick(e);
+
+  if (tilePos) {
+    TileTesterState.isSelectingMultiple = true;
+    TileTesterState.selectionStart = { row: tilePos.row, col: tilePos.col };
+    TileTesterState.selectedTiles = {
+      startRow: tilePos.row,
+      startCol: tilePos.col,
+      endRow: tilePos.row,
+      endCol: tilePos.col
+    };
+    TileTesterState.selectedTile = null; // Clear single selection
+    updatePaletteSelection();
+  }
+}
+
+// Handle palette mouse move for drag selection
+function handlePaletteMouseMove(e) {
+  if (!TileTesterState.isSelectingMultiple || !TileTesterState.selectionStart) return;
+
+  const tilePos = getTileFromPaletteClick(e);
+
+  if (tilePos) {
+    TileTesterState.selectedTiles = {
+      startRow: TileTesterState.selectionStart.row,
+      startCol: TileTesterState.selectionStart.col,
+      endRow: tilePos.row,
+      endCol: tilePos.col
+    };
+    updatePaletteSelection();
+  }
+}
+
+// Handle palette mouse up for drag selection
+function handlePaletteMouseUp(e) {
+  if (!TileTesterState.isSelectingMultiple) return;
+
+  TileTesterState.isSelectingMultiple = false;
+
+  // If only one tile was selected, treat as single selection
+  if (TileTesterState.selectedTiles) {
+    const sel = TileTesterState.selectedTiles;
+    const isSingleTile = sel.startRow === sel.endRow && sel.startCol === sel.endCol;
+
+    if (isSingleTile) {
+      TileTesterState.selectedTile = { row: sel.startRow, col: sel.startCol };
+      TileTesterState.selectedTiles = null;
+    }
+  }
+
+  updatePaletteSelection();
+  updateCursorPreview();
 }
 
 // Setup palette window dragging

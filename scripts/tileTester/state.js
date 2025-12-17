@@ -20,6 +20,11 @@ var TileTesterState = {
   // Selected tile for painting
   selectedTile: null,  // { row, col }
 
+  // Multi-tile selection for combinations (rectangular selection)
+  selectedTiles: null, // { startRow, startCol, endRow, endCol, tiles: [[{row,col}]] }
+  isSelectingMultiple: false,
+  selectionStart: null, // { row, col } - starting point for drag selection
+
   // Background color
   backgroundColor: '#d0d0d0',
 
@@ -179,6 +184,9 @@ function loadTileTesterData(data) {
 // Reset state when modal closes
 function resetTileTesterState() {
   TileTesterState.selectedTile = null;
+  TileTesterState.selectedTiles = null;
+  TileTesterState.isSelectingMultiple = false;
+  TileTesterState.selectionStart = null;
   TileTesterState.isPainting = false;
   TileTesterState.lastPaintedCell = null;
   TileTesterState.tilesetImageData = null;

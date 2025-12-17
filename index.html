@@ -55,6 +55,18 @@
                     <div id="patternSelection"></div>
                 </div>
 
+                <div>
+                    <h3>
+                        Combinations
+                        <div class="combinationToggle">
+                            <a href="#" id="selectAllCombinations">all</a> |
+                            <a href="#" id="deselectAllCombinations">none</a>
+                        </div>
+                    </h3>
+
+                    <div id="combinationSelection"></div>
+                </div>
+
                 <br />
             </div>
 
@@ -814,6 +826,162 @@ FFFFFF, 000000, </textarea
             </div>
         </div>
 
+        <!-- Combination Editor Modal -->
+        <div id="combinationEditorModal" class="modal">
+            <div class="modal-content combination-editor-modal">
+                <div class="modal-body">
+                    <div class="combination-editor-workspace">
+                        <!-- Tab bar -->
+                        <div class="combination-editor-tabs">
+                            <button
+                                id="combinationTabShape"
+                                class="combination-tab active"
+                            >
+                                Edit Shape
+                            </button>
+                            <button
+                                id="combinationTabPattern"
+                                class="combination-tab"
+                            >
+                                Edit Pattern
+                            </button>
+                        </div>
+
+                        <!-- Left side: Toolbar (placeholder for future tools) -->
+                        <div class="combination-toolbar">
+                            <span class="combination-toolbar-label"
+                                >Click cells to place shapes</span
+                            >
+                        </div>
+
+                        <!-- Center: Editor canvas area -->
+                        <div class="combination-editor-container">
+                            <div
+                                id="combinationShapeCanvasContainer"
+                                class="combination-canvas-container"
+                            >
+                                <canvas id="combinationShapeCanvas"></canvas>
+                            </div>
+                            <div
+                                id="combinationPatternCanvasContainer"
+                                class="combination-canvas-container"
+                                style="display: none"
+                            >
+                                <canvas id="combinationPatternCanvas"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Right side: Palette -->
+                        <div class="combination-palette-container">
+                            <div class="combination-palette-label">Palette</div>
+                            <div
+                                id="combinationShapePalette"
+                                class="combination-palette"
+                            ></div>
+                            <div
+                                id="combinationPatternPalette"
+                                class="combination-palette"
+                                style="display: none"
+                            ></div>
+                        </div>
+
+                        <!-- Grid selector and preview column -->
+                        <div class="combination-right-column">
+                            <div class="combination-grid-section">
+                                <div class="combination-grid-label">
+                                    Grid Size
+                                </div>
+                                <div id="combinationGridSelector"></div>
+                            </div>
+                            <div class="combination-preview-section">
+                                <div class="combination-preview-label">
+                                    Preview
+                                </div>
+                                <div class="combination-preview-wrapper">
+                                    <canvas
+                                        id="combinationPreviewCanvas"
+                                    ></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <a href="#" id="combinationEditorHelpLink" class="help-link"
+                        >How to use</a
+                    >
+                    <div class="modal-footer-buttons">
+                        <button
+                            id="cancelCombinationEditorBtn"
+                            class="sessionBtn"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            id="saveCombinationBtn"
+                            class="editor-save-btn"
+                        >
+                            Save Combination
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Combination Editor Help Modal -->
+        <div id="combinationEditorHelpModal" class="modal">
+            <div class="modal-content help-modal">
+                <div class="modal-header">
+                    <h3>How to use the Combination Editor</h3>
+                    <button id="closeCombinationHelpBtn" class="modal-close">
+                        &times;
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <table class="help-table">
+                        <thead>
+                            <tr>
+                                <th>Action</th>
+                                <th>How to</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Add/remove cells</td>
+                                <td>Click cells in Grid Size panel</td>
+                            </tr>
+                            <tr>
+                                <td>Place shape in cell</td>
+                                <td>
+                                    Drag shape from palette or click cell then
+                                    click palette
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Apply pattern to shape</td>
+                                <td>
+                                    Switch to Edit Pattern tab and click a
+                                    pattern
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Select cell</td>
+                                <td>Click on cell in the canvas</td>
+                            </tr>
+                            <tr>
+                                <td>Navigate cells</td>
+                                <td>Arrow keys</td>
+                            </tr>
+                            <tr>
+                                <td>Clear pattern from cell</td>
+                                <td>Delete/Backspace</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
         <!-- Scripts loaded in dependency order -->
         <script src="https://cdnjs.cloudflare.com/ajax/libs/two.js/0.8.10/two.min.js"></script>
         <script src="scripts/config.js"></script>
@@ -905,6 +1073,18 @@ FFFFFF, 000000, </textarea
         <script src="scripts/tileTester/layersPanel.js"></script>
         <script src="scripts/tileTester/events.js"></script>
         <script src="scripts/tileTester/modalManager.js"></script>
+
+        <!-- Combination data and UI -->
+        <script src="scripts/combinationData.js"></script>
+        <script src="scripts/combinations.js"></script>
+
+        <!-- Combination Editor function modules -->
+        <script src="scripts/combinationEditorFunctions/state.js"></script>
+        <script src="scripts/combinationEditorFunctions/canvas.js"></script>
+        <script src="scripts/combinationEditorFunctions/gridSelector.js"></script>
+        <script src="scripts/combinationEditorFunctions/palette.js"></script>
+        <script src="scripts/combinationEditorFunctions/events.js"></script>
+        <script src="scripts/combinationEditorFunctions/modalManager.js"></script>
 
         <script src="scripts/main.js"></script>
         <script src="scripts/session.js"></script>

@@ -13,7 +13,11 @@ var tileTesterEventHandlers = {
   mainCanvasMouseUp: null,
   mainCanvasMouseLeave: null,
   mainCanvasContextMenu: null,
-  paletteClick: null
+  paletteClick: null,
+  paletteMouseDown: null,
+  paletteMouseMove: null,
+  paletteMouseUp: null,
+  paletteMouseLeave: null
 };
 
 // Setup all event listeners for tile tester
@@ -50,10 +54,11 @@ function setupMainCanvasEvents() {
       if (e.shiftKey) {
         tileTesterEraseMode = true;
         eraseTileAt(pos.gridX, pos.gridY);
-      } else if (existingTile) {
+      } else if (existingTile && !TileTesterState.selectedTiles) {
+        // Only toggle erase mode for single tile selection, not multi-tile
         tileTesterEraseMode = true;
         eraseTileAt(pos.gridX, pos.gridY);
-      } else if (TileTesterState.selectedTile) {
+      } else if (TileTesterState.selectedTile || TileTesterState.selectedTiles) {
         tileTesterEraseMode = false;
         placeTileAtWithoutToggle(pos.gridX, pos.gridY);
       }
@@ -76,7 +81,7 @@ function setupMainCanvasEvents() {
 
       if (tileTesterEraseMode) {
         eraseTileAt(pos.gridX, pos.gridY);
-      } else if (TileTesterState.selectedTile) {
+      } else if (TileTesterState.selectedTile || TileTesterState.selectedTiles) {
         placeTileAtWithoutToggle(pos.gridX, pos.gridY);
       }
 
@@ -117,7 +122,16 @@ function setupMainCanvasEvents() {
 // Place tile without toggle behavior (for drag painting)
 function placeTileAtWithoutToggle(gridX, gridY) {
   const layer = getActiveLayer();
-  if (!layer || !TileTesterState.selectedTile) return;
+  if (!layer) return;
+
+  // Handle multi-tile selection
+  if (TileTesterState.selectedTiles) {
+    placeMultiTilesAt(gridX, gridY);
+    updateLayerThumbnail(layer.id);
+    return;
+  }
+
+  if (!TileTesterState.selectedTile) return;
 
   if (gridX < 0 || gridX >= TileTesterState.gridWidth ||
       gridY < 0 || gridY >= TileTesterState.gridHeight) {
@@ -142,8 +156,21 @@ function setupPaletteCanvasEvents() {
   const paletteCanvas = document.getElementById('tileTesterPaletteCanvas');
   if (!paletteCanvas) return;
 
-  tileTesterEventHandlers.paletteClick = handlePaletteClick;
-  paletteCanvas.addEventListener('click', tileTesterEventHandlers.paletteClick);
+  // Use mouse down/move/up for drag selection instead of click
+  tileTesterEventHandlers.paletteMouseDown = handlePaletteMouseDown;
+  tileTesterEventHandlers.paletteMouseMove = handlePaletteMouseMove;
+  tileTesterEventHandlers.paletteMouseUp = handlePaletteMouseUp;
+  tileTesterEventHandlers.paletteMouseLeave = function() {
+    // End selection if mouse leaves palette
+    if (TileTesterState.isSelectingMultiple) {
+      handlePaletteMouseUp({ clientX: 0, clientY: 0 });
+    }
+  };
+
+  paletteCanvas.addEventListener('mousedown', tileTesterEventHandlers.paletteMouseDown);
+  paletteCanvas.addEventListener('mousemove', tileTesterEventHandlers.paletteMouseMove);
+  paletteCanvas.addEventListener('mouseup', tileTesterEventHandlers.paletteMouseUp);
+  paletteCanvas.addEventListener('mouseleave', tileTesterEventHandlers.paletteMouseLeave);
 }
 
 // Setup control button events
@@ -210,8 +237,22 @@ function removeTileTesterEvents() {
     }
   }
 
-  if (paletteCanvas && tileTesterEventHandlers.paletteClick) {
-    paletteCanvas.removeEventListener('click', tileTesterEventHandlers.paletteClick);
+  if (paletteCanvas) {
+    if (tileTesterEventHandlers.paletteClick) {
+      paletteCanvas.removeEventListener('click', tileTesterEventHandlers.paletteClick);
+    }
+    if (tileTesterEventHandlers.paletteMouseDown) {
+      paletteCanvas.removeEventListener('mousedown', tileTesterEventHandlers.paletteMouseDown);
+    }
+    if (tileTesterEventHandlers.paletteMouseMove) {
+      paletteCanvas.removeEventListener('mousemove', tileTesterEventHandlers.paletteMouseMove);
+    }
+    if (tileTesterEventHandlers.paletteMouseUp) {
+      paletteCanvas.removeEventListener('mouseup', tileTesterEventHandlers.paletteMouseUp);
+    }
+    if (tileTesterEventHandlers.paletteMouseLeave) {
+      paletteCanvas.removeEventListener('mouseleave', tileTesterEventHandlers.paletteMouseLeave);
+    }
   }
 
   // Reset zoom and pan

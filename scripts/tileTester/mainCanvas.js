@@ -116,6 +116,12 @@ function placeTileAt(gridX, gridY) {
   const layer = getActiveLayer();
   if (!layer) return;
 
+  // Handle multi-tile selection
+  if (TileTesterState.selectedTiles) {
+    placeMultiTilesAt(gridX, gridY);
+    return;
+  }
+
   // Check bounds
   if (gridX < 0 || gridX >= TileTesterState.gridWidth ||
       gridY < 0 || gridY >= TileTesterState.gridHeight) {
@@ -138,6 +144,51 @@ function placeTileAt(gridX, gridY) {
       row: TileTesterState.selectedTile.row,
       col: TileTesterState.selectedTile.col
     };
+  }
+
+  // Redraw canvas
+  renderTileTesterMainCanvas();
+}
+
+// Place multi-tile selection at grid position
+function placeMultiTilesAt(gridX, gridY) {
+  const layer = getActiveLayer();
+  if (!layer) return;
+
+  const sel = TileTesterState.selectedTiles;
+  if (!sel) return;
+
+  const minRow = Math.min(sel.startRow, sel.endRow);
+  const maxRow = Math.max(sel.startRow, sel.endRow);
+  const minCol = Math.min(sel.startCol, sel.endCol);
+  const maxCol = Math.max(sel.startCol, sel.endCol);
+
+  const height = maxRow - minRow + 1;
+  const width = maxCol - minCol + 1;
+
+  // Place all tiles in the selection region
+  for (let dy = 0; dy < height; dy++) {
+    for (let dx = 0; dx < width; dx++) {
+      const destX = gridX + dx;
+      const destY = gridY + dy;
+
+      // Check bounds
+      if (destX < 0 || destX >= TileTesterState.gridWidth ||
+          destY < 0 || destY >= TileTesterState.gridHeight) {
+        continue;
+      }
+
+      // Ensure row exists
+      if (!layer.tiles[destY]) {
+        layer.tiles[destY] = [];
+      }
+
+      // Place tile from selection
+      layer.tiles[destY][destX] = {
+        row: minRow + dy,
+        col: minCol + dx
+      };
+    }
   }
 
   // Redraw canvas

@@ -2004,3 +2004,394 @@
   visibility: visible;
   transform: translateX(-50%) translateY(0);
 }
+
+/* =============================================
+   COMBINATION SELECTION STYLES
+   ============================================= */
+
+/* Combination selection - matches shape/pattern selection */
+.combinationPreview {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.combinationToggle {
+  font-size: 12px;
+  display: inline;
+  margin-left: 10px;
+  opacity: .3;
+}
+
+.combinationToggle a {
+  color: black;
+}
+
+#combinationSelection ul {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+}
+
+/* Combination item with hover buttons */
+.combinationItem {
+  display: inline-block;
+}
+
+.combinationItem label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+/* Preview wrapper - contains preview and hover buttons */
+.combinationPreviewWrapper {
+  position: relative;
+  display: inline-block;
+  margin-left: 5px;
+  min-width: 60px;
+  min-height: 40px;
+}
+
+/* Hover buttons overlay - 2x2 grid filling full combination area */
+.combinationHoverButtons {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  pointer-events: none;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+/* Only show hover buttons when hovering over the preview area */
+.combinationPreviewWrapper:hover .combinationHoverButtons {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Individual buttons - fill grid cells */
+.combinationBtn {
+  width: 100%;
+  height: 100%;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0;
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+  text-align: center;
+}
+
+.combinationBtn:hover {
+  color: #333;
+}
+
+.combinationDuplicateBtn:hover {
+  color: #28a745;
+}
+
+.combinationEditBtn:hover {
+  color: #6f42c1;
+}
+
+.combinationDeleteBtn:hover {
+  color: #dc3545;
+}
+
+.combinationDragHandle {
+  cursor: grab;
+  font-size: 12px;
+}
+
+.combinationDragHandle:hover {
+  color: #17a2b8;
+}
+
+.combinationDragHandle:active {
+  cursor: grabbing;
+}
+
+/* Drag states */
+.combinationItem.dragging {
+  display: none;
+}
+
+/* Add combination button */
+.addCombinationBtn {
+  display: block;
+  width: 100%;
+  padding: 8px 16px;
+  margin-top: 10px;
+  background: #f5f5f5;
+  border: 1px dashed #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #666;
+  transition: all 0.15s ease;
+}
+
+.addCombinationBtn:hover {
+  background: #e5e5e5;
+  border-color: #999;
+  color: #333;
+}
+
+/* Position combination selection for overlay */
+#combinationSelection {
+  position: relative;
+}
+
+/* =============================================
+   COMBINATION EDITOR MODAL STYLES
+   ============================================= */
+
+/* Wider modal for combination editor */
+.combination-editor-modal {
+  max-width: 900px;
+  width: 95%;
+}
+
+/* Combination editor workspace - horizontal layout */
+.combination-editor-workspace {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+/* Tab bar */
+.combination-editor-tabs {
+  width: 100%;
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid #ddd;
+  margin-bottom: 5px;
+}
+
+.combination-tab {
+  padding: 10px 20px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 14px;
+  color: #666;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: all 0.15s ease;
+}
+
+.combination-tab:hover {
+  color: #333;
+}
+
+.combination-tab.active {
+  color: #007bff;
+  border-bottom-color: #007bff;
+}
+
+/* Combination toolbar - left side */
+.combination-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  background: #f5f5f5;
+  border-radius: 4px;
+  width: 80px;
+  flex-shrink: 0;
+}
+
+.combination-toolbar-label {
+  font-size: 10px;
+  color: #888;
+  text-align: center;
+  line-height: 1.3;
+}
+
+/* Combination editor container - center */
+.combination-editor-container {
+  flex: 1;
+  min-width: 400px;
+}
+
+.combination-canvas-container {
+  border: 1px solid #ccc;
+  background: #fafafa;
+  border-radius: 4px;
+}
+
+#combinationShapeCanvas,
+#combinationPatternCanvas {
+  display: block;
+  width: 400px;
+  height: 400px;
+}
+
+/* Combination palette container - right side */
+.combination-palette-container {
+  width: 120px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.combination-palette-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.combination-palette {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  max-height: 400px;
+  overflow-y: auto;
+  padding: 5px;
+  background: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.combination-palette-item {
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  border-radius: 4px;
+  background: white;
+  transition: all 0.15s ease;
+}
+
+.combination-palette-item:hover {
+  border-color: #007bff;
+}
+
+.combination-palette-item.selected {
+  border-color: #28a745;
+  background: #e8f5e9;
+}
+
+.combination-palette-item.dragging {
+  opacity: 0.5;
+}
+
+.combination-palette-item canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+/* Combination right column - grid selector and preview */
+.combination-right-column {
+  width: 180px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.combination-grid-section {
+  background: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 10px;
+}
+
+.combination-grid-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+/* Grid selector - 5x5 grid */
+.combination-grid-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  justify-content: center;
+}
+
+.combination-grid-row {
+  display: flex;
+  gap: 2px;
+  justify-content: center;
+}
+
+.combination-grid-cell {
+  width: 28px;
+  height: 28px;
+  border: 1px solid #ccc;
+  background: #f0f0f0;
+  cursor: pointer;
+  border-radius: 3px;
+  padding: 0;
+  transition: all 0.15s ease;
+}
+
+.combination-grid-cell:hover {
+  border-color: #007bff;
+  background: #e3f2fd;
+}
+
+.combination-grid-cell.in-bounds {
+  border-color: #999;
+  background: #e0e0e0;
+}
+
+.combination-grid-cell.in-bounds.enabled {
+  background: #333;
+  border-color: #333;
+}
+
+.combination-grid-cell.in-bounds.enabled:hover {
+  background: #555;
+}
+
+/* Combination preview section */
+.combination-preview-section {
+  background: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 10px;
+}
+
+.combination-preview-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.combination-preview-wrapper {
+  border: 1px solid #ddd;
+  background: #fafafa;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 150px;
+}
+
+#combinationPreviewCanvas {
+  display: block;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
