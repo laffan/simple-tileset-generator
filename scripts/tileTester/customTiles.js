@@ -115,10 +115,10 @@ function setupCanvasDragSelection() {
 
   if (!mainCanvas) return;
 
-  // Alt+drag for selection (to not conflict with paint/erase)
+  // Cmd/Ctrl+drag for selection (to not conflict with paint/erase)
   customTileEventHandlers.canvasMouseDown = function(e) {
-    // Only allow Alt+left-click for selection
-    if (e.button !== 0 || !e.altKey) return;
+    // Only allow Cmd/Ctrl+left-click for selection
+    if (e.button !== 0 || (!e.metaKey && !e.ctrlKey)) return;
 
     // Don't start selection if space panning
     if (TileTesterState.isSpacePanning) return;
@@ -177,8 +177,8 @@ function setupCanvasDragSelection() {
     // Don't clear if clicking on selection UI elements
     if (e.target.closest('#customTileSelectionUI')) return;
 
-    // Don't clear if Alt+clicking on the canvas (starting new selection)
-    if (e.target.closest('#tileTesterMainCanvas') && e.altKey) return;
+    // Don't clear if Cmd/Ctrl+clicking on the canvas (starting new selection)
+    if (e.target.closest('#tileTesterMainCanvas') && (e.metaKey || e.ctrlKey)) return;
 
     clearCanvasSelection();
   };
@@ -325,7 +325,7 @@ function renderCustomTilesInPalette() {
   container.innerHTML = '';
 
   if (customTiles.length === 0) {
-    container.innerHTML = '<div class="custom-tiles-empty">No custom tiles yet.<br>Alt+drag on canvas to select.</div>';
+    container.innerHTML = '<div class="custom-tiles-empty">No custom tiles yet.<br>Cmd/Ctrl+drag on canvas to select.</div>';
     return;
   }
 
