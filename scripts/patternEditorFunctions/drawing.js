@@ -2,6 +2,13 @@
 
 function startPatternDrawing(e) {
   const state = PatternEditorState;
+
+  // If spacebar is held, start panning instead of drawing
+  if (state.isSpacebarHeld) {
+    startPatternPanning(e);
+    return;
+  }
+
   const pixel = getPixelFromEvent(e);
   if (!pixel || !isPixelInBounds(pixel)) return;
 
@@ -29,6 +36,13 @@ function startPatternDrawing(e) {
 
 function handlePatternMouseMove(e) {
   const state = PatternEditorState;
+
+  // Handle panning mode
+  if (state.isPanning) {
+    handlePatternPanning(e);
+    return;
+  }
+
   if (!state.isDrawing) return;
 
   const pixel = getPixelFromEvent(e);
@@ -54,6 +68,12 @@ function handlePatternMouseMove(e) {
 
 function stopPatternDrawing() {
   const state = PatternEditorState;
+
+  // Handle panning stop
+  if (state.isPanning) {
+    stopPatternPanning();
+    return;
+  }
 
   if (state.holdTimer) {
     clearTimeout(state.holdTimer);
@@ -171,4 +191,52 @@ function invertPatternEditorPixels() {
 
   drawPatternEditorCanvas();
   updatePatternPreviewCanvas();
+}
+
+// Panning functions for spacebar+drag pattern repositioning
+
+function startPatternPanning(e) {
+  const state = PatternEditorState;
+  const rect = state.editorCanvas.getBoundingClientRect();
+
+  state.isPanning = true;
+
+  // Store start position, accounting for any existing offset
+  const currentX = e.clientX - rect.left;
+  const currentY = e.clientY - rect.top;
+  state.panStartX = currentX - state.patternOffsetX;
+  state.panStartY = currentY - state.patternOffsetY;
+
+  // Change cursor to grabbing
+  state.editorCanvas.style.cursor = 'grabbing';
+}
+
+function handlePatternPanning(e) {
+  const state = PatternEditorState;
+  const rect = state.editorCanvas.getBoundingClientRect();
+
+  const currentX = e.clientX - rect.left;
+  const currentY = e.clientY - rect.top;
+
+  // Calculate total offset from original pan start (accounts for accumulated offset)
+  state.patternOffsetX = currentX - state.panStartX;
+  state.patternOffsetY = currentY - state.panStartY;
+
+  drawPatternEditorCanvas();
+}
+
+function stopPatternPanning() {
+  const state = PatternEditorState;
+
+  state.isPanning = false;
+
+  // Don't snap here - snap happens on spacebar release
+  // Just change cursor back to grab (still holding spacebar)
+  if (state.isSpacebarHeld) {
+    state.editorCanvas.style.cursor = 'grab';
+  } else {
+    state.editorCanvas.style.cursor = 'crosshair';
+  }
+
+  // Keep the offset - it will be applied when spacebar is released
 }

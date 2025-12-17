@@ -32,6 +32,14 @@ const PatternEditorState = {
   isLineMode: false,
   previewData: null,
 
+  // Panning state (spacebar + drag)
+  isSpacebarHeld: false,
+  isPanning: false,
+  panStartX: 0,
+  panStartY: 0,
+  patternOffsetX: 0,  // Current offset in pixels during drag
+  patternOffsetY: 0,
+
   // Current editing context
   currentEditingPatternIndex: null,
 

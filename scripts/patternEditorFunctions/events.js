@@ -14,6 +14,10 @@ function setupPatternEditorEvents() {
   state.editorCanvas.addEventListener('touchmove', handlePatternTouchMove);
   state.editorCanvas.addEventListener('touchend', handlePatternTouchEnd);
 
+  // Keyboard events for spacebar panning
+  document.addEventListener('keydown', handlePatternEditorKeyDown);
+  document.addEventListener('keyup', handlePatternEditorKeyUp);
+
   // Editor zoom slider
   const editorZoomSlider = document.getElementById('patternEditorZoom');
   if (editorZoomSlider) {
@@ -59,6 +63,16 @@ function removePatternEditorEvents() {
     state.editorCanvas.removeEventListener('touchmove', handlePatternTouchMove);
     state.editorCanvas.removeEventListener('touchend', handlePatternTouchEnd);
   }
+
+  // Remove keyboard events
+  document.removeEventListener('keydown', handlePatternEditorKeyDown);
+  document.removeEventListener('keyup', handlePatternEditorKeyUp);
+
+  // Reset panning state
+  state.isSpacebarHeld = false;
+  state.isPanning = false;
+  state.patternOffsetX = 0;
+  state.patternOffsetY = 0;
 }
 
 function handlePatternTouchStart(e) {
@@ -274,4 +288,84 @@ function downloadPattern() {
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
+}
+
+function handlePatternEditorKeyDown(e) {
+  const state = PatternEditorState;
+
+  // Only handle spacebar
+  if (e.code !== 'Space') return;
+
+  // Prevent default scrolling behavior
+  e.preventDefault();
+
+  // Ignore if already held or if currently drawing (not panning)
+  if (state.isSpacebarHeld) return;
+
+  state.isSpacebarHeld = true;
+
+  // Change cursor to grab hand
+  if (state.editorCanvas) {
+    state.editorCanvas.style.cursor = 'grab';
+  }
+}
+
+function handlePatternEditorKeyUp(e) {
+  const state = PatternEditorState;
+
+  // Only handle spacebar
+  if (e.code !== 'Space') return;
+
+  if (!state.isSpacebarHeld) return;
+
+  state.isSpacebarHeld = false;
+
+  // If we were panning, snap to grid and apply offset
+  if (state.isPanning) {
+    snapPatternToGrid();
+    state.isPanning = false;
+  }
+
+  // Reset cursor
+  if (state.editorCanvas) {
+    state.editorCanvas.style.cursor = 'crosshair';
+  }
+
+  // Reset offset (it's been applied to pixel data)
+  state.patternOffsetX = 0;
+  state.patternOffsetY = 0;
+
+  drawPatternEditorCanvas();
+  updatePatternPreviewCanvas();
+}
+
+function snapPatternToGrid() {
+  const state = PatternEditorState;
+
+  // Calculate offset in pattern grid cells
+  const cellOffsetX = state.patternOffsetX / state.pixelSize;
+  const cellOffsetY = state.patternOffsetY / state.pixelSize;
+
+  // Round to nearest integer cells
+  const snapX = Math.round(cellOffsetX);
+  const snapY = Math.round(cellOffsetY);
+
+  // If no offset, nothing to do
+  if (snapX === 0 && snapY === 0) return;
+
+  // Shift the pixel data by the snapped offset
+  const oldData = copyPatternPixels(state.pixelData);
+  const newData = [];
+
+  for (let row = 0; row < state.patternSize; row++) {
+    newData[row] = [];
+    for (let col = 0; col < state.patternSize; col++) {
+      // Calculate source position (wrap around)
+      const srcCol = ((col - snapX) % state.patternSize + state.patternSize) % state.patternSize;
+      const srcRow = ((row - snapY) % state.patternSize + state.patternSize) % state.patternSize;
+      newData[row][col] = oldData[srcRow] ? oldData[srcRow][srcCol] || 0 : 0;
+    }
+  }
+
+  state.pixelData = newData;
 }

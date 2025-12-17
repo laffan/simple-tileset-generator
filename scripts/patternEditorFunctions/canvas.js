@@ -60,8 +60,9 @@ function drawPatternEditorCanvas() {
 
   // Calculate how the tiles are positioned relative to the boundary
   // The primary tile (0,0) is positioned so that when zoom=1, it fills the boundary
-  const primaryTileX = state.boundaryOffsetX + (state.BOUNDARY_SIZE - patternPixelSize) / 2;
-  const primaryTileY = state.boundaryOffsetY + (state.BOUNDARY_SIZE - patternPixelSize) / 2;
+  // Apply panning offset during drag
+  const primaryTileX = state.boundaryOffsetX + (state.BOUNDARY_SIZE - patternPixelSize) / 2 + state.patternOffsetX;
+  const primaryTileY = state.boundaryOffsetY + (state.BOUNDARY_SIZE - patternPixelSize) / 2 + state.patternOffsetY;
 
   // Calculate how many tiles we need to cover the entire canvas
   const tilesLeft = Math.ceil((primaryTileX) / patternPixelSize) + 1;
@@ -79,7 +80,7 @@ function drawPatternEditorCanvas() {
     }
   }
 
-  // Draw the red boundary box around the primary tile (follows zoom)
+  // Draw the red boundary box around the primary tile (follows zoom and panning)
   ctx.strokeStyle = '#ff0000';
   ctx.lineWidth = 2;
   ctx.strokeRect(
