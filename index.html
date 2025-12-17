@@ -529,12 +529,69 @@ FFFFFF, 000000, </textarea
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button id="cancelPatternEditorBtn" class="sessionBtn">
-                        Cancel
+                    <a href="#" id="patternEditorHelpLink" class="help-link"
+                        >How to use</a
+                    >
+                    <div class="modal-footer-buttons">
+                        <button id="cancelPatternEditorBtn" class="sessionBtn">
+                            Cancel
+                        </button>
+                        <button id="savePatternBtn" class="editor-save-btn">
+                            Save Pattern
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pattern Editor Help Modal -->
+        <div id="patternEditorHelpModal" class="modal">
+            <div class="modal-content help-modal">
+                <div class="modal-header">
+                    <h3>How to use the Pattern Editor</h3>
+                    <button id="closePatternHelpBtn" class="modal-close">
+                        &times;
                     </button>
-                    <button id="savePatternBtn" class="editor-save-btn">
-                        Save Pattern
-                    </button>
+                </div>
+                <div class="modal-body">
+                    <table class="help-table">
+                        <thead>
+                            <tr>
+                                <th>Action</th>
+                                <th>How to</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Draw/erase pixels</td>
+                                <td>Click + drag</td>
+                            </tr>
+                            <tr>
+                                <td>Draw straight line</td>
+                                <td>Hold click for 300ms, then drag</td>
+                            </tr>
+                            <tr>
+                                <td>Pan pattern</td>
+                                <td>Hold Space + drag</td>
+                            </tr>
+                            <tr>
+                                <td>Commit pan position</td>
+                                <td>Release Space</td>
+                            </tr>
+                            <tr>
+                                <td>Invert all pixels</td>
+                                <td>Click Invert button</td>
+                            </tr>
+                            <tr>
+                                <td>Import from image</td>
+                                <td>Click Upload button</td>
+                            </tr>
+                            <tr>
+                                <td>Export as PNG</td>
+                                <td>Click Download button</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>

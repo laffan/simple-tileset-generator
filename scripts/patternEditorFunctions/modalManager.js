@@ -107,4 +107,20 @@ function setupPatternEditorButtons() {
   if (saveBtn) {
     saveBtn.addEventListener('click', saveEditedPattern);
   }
+
+  // Help modal
+  document.getElementById('patternEditorHelpLink').addEventListener('click', (e) => {
+    e.preventDefault();
+    document.getElementById('patternEditorHelpModal').classList.add('active');
+  });
+
+  document.getElementById('closePatternHelpBtn').addEventListener('click', () => {
+    document.getElementById('patternEditorHelpModal').classList.remove('active');
+  });
+
+  document.getElementById('patternEditorHelpModal').addEventListener('click', (e) => {
+    if (e.target.id === 'patternEditorHelpModal') {
+      document.getElementById('patternEditorHelpModal').classList.remove('active');
+    }
+  });
 }
