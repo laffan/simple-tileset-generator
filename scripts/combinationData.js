@@ -234,16 +234,20 @@ function drawPathWithCurves(ctx, pathData, width, height, closePath) {
 // Render normalized shape to canvas (with optional per-path patterns)
 // tileSize is used so patterns tile per-tile rather than across the whole canvas
 // Supports bezier curves via control points
+// Supports holePathIndices for proper hole rendering using destination-out
 function renderNormalizedShape(ctx, shapeData, width, height, pathPatterns, tileSize) {
   // Handle multi-path shapes
   const pathsData = shapeData.paths || [shapeData];
   const fillRule = shapeData.fillRule || 'nonzero';
+  const holeIndices = shapeData.holePathIndices || [];
   const hasPerPathPatterns = pathPatterns && Object.keys(pathPatterns).length > 0;
 
   // If we have per-path patterns, render each path separately
   if (hasPerPathPatterns) {
+    // First pass: render all non-hole paths
     pathsData.forEach((pathData, pathIndex) => {
       if (!pathData || !pathData.length) return;
+      if (holeIndices.includes(pathIndex)) return; // Skip holes in first pass
 
       // Create temp canvas for this path
       const pathCanvas = document.createElement('canvas');
@@ -270,16 +274,61 @@ function renderNormalizedShape(ctx, shapeData, width, height, pathPatterns, tile
       // Draw to main canvas
       ctx.drawImage(pathCanvas, 0, 0);
     });
+
+    // Second pass: erase hole paths using destination-out
+    if (holeIndices.length > 0) {
+      const savedComposite = ctx.globalCompositeOperation;
+      ctx.globalCompositeOperation = 'destination-out';
+
+      holeIndices.forEach(holeIndex => {
+        const pathData = pathsData[holeIndex];
+        if (!pathData || !pathData.length) return;
+
+        ctx.beginPath();
+        drawPathWithCurves(ctx, pathData, width, height, true);
+        ctx.fill();
+      });
+
+      ctx.globalCompositeOperation = savedComposite;
+    }
   } else {
-    // No per-path patterns - render all paths together (original behavior)
-    ctx.beginPath();
+    // No per-path patterns - check if we have holes
+    if (holeIndices.length > 0) {
+      // First pass: draw all non-hole paths
+      pathsData.forEach((pathData, pathIndex) => {
+        if (!pathData || !pathData.length) return;
+        if (holeIndices.includes(pathIndex)) return;
 
-    pathsData.forEach((pathData) => {
-      if (!pathData || !pathData.length) return;
-      drawPathWithCurves(ctx, pathData, width, height, true);
-    });
+        ctx.beginPath();
+        drawPathWithCurves(ctx, pathData, width, height, true);
+        ctx.fill(fillRule);
+      });
 
-    ctx.fill(fillRule);
+      // Second pass: erase holes with destination-out
+      const savedComposite = ctx.globalCompositeOperation;
+      ctx.globalCompositeOperation = 'destination-out';
+
+      holeIndices.forEach(holeIndex => {
+        const pathData = pathsData[holeIndex];
+        if (!pathData || !pathData.length) return;
+
+        ctx.beginPath();
+        drawPathWithCurves(ctx, pathData, width, height, true);
+        ctx.fill();
+      });
+
+      ctx.globalCompositeOperation = savedComposite;
+    } else {
+      // No holes - render all paths together (original behavior)
+      ctx.beginPath();
+
+      pathsData.forEach((pathData) => {
+        if (!pathData || !pathData.length) return;
+        drawPathWithCurves(ctx, pathData, width, height, true);
+      });
+
+      ctx.fill(fillRule);
+    }
   }
 }
 

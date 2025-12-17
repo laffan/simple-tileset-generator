@@ -25,6 +25,7 @@ function updateCombinationPreview() {
 
 // Render the combination shape to tiles (with per-path pattern masking)
 // Supports bezier curves via control points
+// Supports holePathIndices for proper hole rendering using destination-out
 function renderCombinationShapeToTiles(ctx, tileSize, rows, cols) {
   const state = CombinationEditorState;
 
@@ -35,46 +36,21 @@ function renderCombinationShapeToTiles(ctx, tileSize, rows, cols) {
   const width = cols * tileSize;
   const height = rows * tileSize;
 
-  // Determine paths data
+  // Determine paths data and hole indices
   const pathsData = shapeData.paths || [shapeData];
+  const holeIndices = shapeData.holePathIndices || [];
 
-  // Render each path individually with its own pattern
-  pathsData.forEach((pathData, pathIndex) => {
-    if (!pathData || !pathData.length) return;
-
-    // Get this path's pattern data
-    const pathPattern = CombinationEditorState.pathPatterns[pathIndex];
-    let patternData = null;
-
-    if (pathPattern && pathPattern.patternName) {
-      patternData = getPatternDataForPath(pathPattern);
+  // Helper to get point coordinates
+  function getPointCoords(point) {
+    if (Array.isArray(point)) {
+      return { x: point[0], y: point[1] };
     }
+    return { x: point.x, y: point.y };
+  }
 
-    const hasPattern = patternData && hasFilledPixels(patternData);
-
-    // Create temp canvas for this path
-    const pathCanvas = document.createElement('canvas');
-    pathCanvas.width = width;
-    pathCanvas.height = height;
-    const pathCtx = pathCanvas.getContext('2d');
-    pathCtx.clearRect(0, 0, width, height);
-
-    // Draw the path with bezier curve support
-    pathCtx.fillStyle = '#333';
+  // Helper to draw a path with bezier curve support
+  function drawPath(pathCtx, pathData) {
     pathCtx.beginPath();
-
-    // Helper to get point coordinates
-    function getPointCoords(point) {
-      if (Array.isArray(point)) {
-        return { x: point[0], y: point[1] };
-      }
-      return { x: point.x, y: point.y };
-    }
-
-    // Helper to check if point has control points
-    function hasControls(point) {
-      return !Array.isArray(point) && (point.ctrlLeft || point.ctrlRight);
-    }
 
     pathData.forEach((point, i) => {
       const coords = getPointCoords(point);
@@ -144,6 +120,33 @@ function renderCombinationShapeToTiles(ctx, tileSize, rows, cols) {
     }
 
     pathCtx.closePath();
+  }
+
+  // First pass: render all non-hole paths
+  pathsData.forEach((pathData, pathIndex) => {
+    if (!pathData || !pathData.length) return;
+    if (holeIndices.includes(pathIndex)) return; // Skip holes in first pass
+
+    // Get this path's pattern data
+    const pathPattern = CombinationEditorState.pathPatterns[pathIndex];
+    let patternData = null;
+
+    if (pathPattern && pathPattern.patternName) {
+      patternData = getPatternDataForPath(pathPattern);
+    }
+
+    const hasPattern = patternData && hasFilledPixels(patternData);
+
+    // Create temp canvas for this path
+    const pathCanvas = document.createElement('canvas');
+    pathCanvas.width = width;
+    pathCanvas.height = height;
+    const pathCtx = pathCanvas.getContext('2d');
+    pathCtx.clearRect(0, 0, width, height);
+
+    // Draw the path with bezier curve support
+    pathCtx.fillStyle = '#333';
+    drawPath(pathCtx, pathData);
     pathCtx.fill();
 
     // Apply pattern if this path has one
@@ -155,6 +158,23 @@ function renderCombinationShapeToTiles(ctx, tileSize, rows, cols) {
     // Draw to main canvas
     ctx.drawImage(pathCanvas, 0, 0);
   });
+
+  // Second pass: erase hole paths using destination-out
+  if (holeIndices.length > 0) {
+    const savedComposite = ctx.globalCompositeOperation;
+    ctx.globalCompositeOperation = 'destination-out';
+
+    holeIndices.forEach(holeIndex => {
+      const pathData = pathsData[holeIndex];
+      if (!pathData || !pathData.length) return;
+
+      ctx.fillStyle = '#000'; // Color doesn't matter for destination-out
+      drawPath(ctx, pathData);
+      ctx.fill();
+    });
+
+    ctx.globalCompositeOperation = savedComposite;
+  }
 }
 
 // Get pattern data for a specific path's pattern settings
