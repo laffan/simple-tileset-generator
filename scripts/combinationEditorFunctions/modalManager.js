@@ -180,8 +180,19 @@ function loadCombinationShapeData(shapeData) {
     if (singlePathData.vertices) {
       vertices = singlePathData.vertices;
     } else if (Array.isArray(singlePathData)) {
-      // Array of [x, y] points (normalized -0.5 to 0.5)
-      vertices = singlePathData.map(p => ({ x: p[0] + 0.5, y: p[1] + 0.5 }));
+      // Array of points - could be [x, y] arrays OR {x, y, ctrlLeft, ctrlRight} objects
+      vertices = singlePathData.map(p => {
+        if (Array.isArray(p)) {
+          // Simple [x, y] format
+          return { x: p[0] + 0.5, y: p[1] + 0.5 };
+        } else {
+          // Object format with potential control points
+          const v = { x: p.x + 0.5, y: p.y + 0.5 };
+          if (p.ctrlLeft) v.ctrlLeft = p.ctrlLeft;
+          if (p.ctrlRight) v.ctrlRight = p.ctrlRight;
+          return v;
+        }
+      });
     } else {
       return;
     }
