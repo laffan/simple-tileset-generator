@@ -239,6 +239,19 @@
 /* Color wheel tab */
 .color-wheel-container {
   padding: 10px 0;
+  display: flex;
+  gap: 15px;
+}
+
+.wheel-preview-column {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.wheel-controls-column {
+  flex: 1;
+  min-width: 0;
 }
 
 .wheel-sliders {
@@ -354,28 +367,24 @@
   left: 50%;
 }
 
-.wheel-preview-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
 .wheel-color-preview {
-  width: 40px;
-  height: 40px;
+  width: 80px;
+  height: 80px;
   border: 1px solid #ddd;
   border-radius: 4px;
   background: #ff0000;
 }
 
 .wheel-add-btn {
-  padding: 8px 16px;
+  width: 80px;
+  padding: 8px 0;
   background: #007bff;
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   font-size: 14px;
+  text-align: center;
 }
 
 .wheel-add-btn:hover {
