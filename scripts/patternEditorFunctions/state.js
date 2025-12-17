@@ -35,9 +35,10 @@ const PatternEditorState = {
   // Panning state (spacebar + drag)
   isSpacebarHeld: false,
   isPanning: false,
+  hasPanned: false,   // Track if any panning occurred during spacebar hold
   panStartX: 0,
   panStartY: 0,
-  patternOffsetX: 0,  // Current offset in pixels during drag
+  patternOffsetX: 0,  // Current offset in pixels (snapped to grid)
   patternOffsetY: 0,
 
   // Current editing context

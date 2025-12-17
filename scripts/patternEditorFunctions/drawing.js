@@ -200,12 +200,11 @@ function startPatternPanning(e) {
   const rect = state.editorCanvas.getBoundingClientRect();
 
   state.isPanning = true;
+  state.hasPanned = true;
 
-  // Store start position, accounting for any existing offset
-  const currentX = e.clientX - rect.left;
-  const currentY = e.clientY - rect.top;
-  state.panStartX = currentX - state.patternOffsetX;
-  state.panStartY = currentY - state.patternOffsetY;
+  // Store start position in canvas coordinates
+  state.panStartX = e.clientX - rect.left;
+  state.panStartY = e.clientY - rect.top;
 
   // Change cursor to grabbing
   state.editorCanvas.style.cursor = 'grabbing';
@@ -218,9 +217,16 @@ function handlePatternPanning(e) {
   const currentX = e.clientX - rect.left;
   const currentY = e.clientY - rect.top;
 
-  // Calculate total offset from original pan start (accounts for accumulated offset)
-  state.patternOffsetX = currentX - state.panStartX;
-  state.patternOffsetY = currentY - state.panStartY;
+  // Calculate raw offset from drag start
+  const rawOffsetX = currentX - state.panStartX;
+  const rawOffsetY = currentY - state.panStartY;
+
+  // Snap to nearest grid cell (discrete jumps)
+  const cellsX = Math.round(rawOffsetX / state.pixelSize);
+  const cellsY = Math.round(rawOffsetY / state.pixelSize);
+
+  state.patternOffsetX = cellsX * state.pixelSize;
+  state.patternOffsetY = cellsY * state.pixelSize;
 
   drawPatternEditorCanvas();
 }

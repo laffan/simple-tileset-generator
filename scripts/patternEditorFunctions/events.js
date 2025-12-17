@@ -71,6 +71,7 @@ function removePatternEditorEvents() {
   // Reset panning state
   state.isSpacebarHeld = false;
   state.isPanning = false;
+  state.hasPanned = false;
   state.patternOffsetX = 0;
   state.patternOffsetY = 0;
 }
@@ -320,11 +321,14 @@ function handlePatternEditorKeyUp(e) {
 
   state.isSpacebarHeld = false;
 
-  // If we were panning, snap to grid and apply offset
-  if (state.isPanning) {
-    snapPatternToGrid();
-    state.isPanning = false;
+  // If any panning occurred, apply the offset to pixel data
+  if (state.hasPanned && (state.patternOffsetX !== 0 || state.patternOffsetY !== 0)) {
+    applyPatternOffset();
   }
+
+  // Reset panning state
+  state.isPanning = false;
+  state.hasPanned = false;
 
   // Reset cursor
   if (state.editorCanvas) {
@@ -339,21 +343,17 @@ function handlePatternEditorKeyUp(e) {
   updatePatternPreviewCanvas();
 }
 
-function snapPatternToGrid() {
+function applyPatternOffset() {
   const state = PatternEditorState;
 
-  // Calculate offset in pattern grid cells
-  const cellOffsetX = state.patternOffsetX / state.pixelSize;
-  const cellOffsetY = state.patternOffsetY / state.pixelSize;
-
-  // Round to nearest integer cells
-  const snapX = Math.round(cellOffsetX);
-  const snapY = Math.round(cellOffsetY);
+  // Offset is already snapped to grid cells, convert to cell count
+  const cellsX = Math.round(state.patternOffsetX / state.pixelSize);
+  const cellsY = Math.round(state.patternOffsetY / state.pixelSize);
 
   // If no offset, nothing to do
-  if (snapX === 0 && snapY === 0) return;
+  if (cellsX === 0 && cellsY === 0) return;
 
-  // Shift the pixel data by the snapped offset
+  // Shift the pixel data by the offset (wrap around)
   const oldData = copyPatternPixels(state.pixelData);
   const newData = [];
 
@@ -361,8 +361,8 @@ function snapPatternToGrid() {
     newData[row] = [];
     for (let col = 0; col < state.patternSize; col++) {
       // Calculate source position (wrap around)
-      const srcCol = ((col - snapX) % state.patternSize + state.patternSize) % state.patternSize;
-      const srcRow = ((row - snapY) % state.patternSize + state.patternSize) % state.patternSize;
+      const srcCol = ((col - cellsX) % state.patternSize + state.patternSize) % state.patternSize;
+      const srcRow = ((row - cellsY) % state.patternSize + state.patternSize) % state.patternSize;
       newData[row][col] = oldData[srcRow] ? oldData[srcRow][srcCol] || 0 : 0;
     }
   }
