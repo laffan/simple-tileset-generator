@@ -1,157 +1,154 @@
-/* Combination Editor State Management */
+/* Combination Editor State Management
+ *
+ * The combination editor allows creating shapes that span multiple tiles.
+ * A single shape is edited (like the shape editor) and divided into tiles
+ * based on the tile rows/columns settings. An optional pattern can be
+ * applied as a mask (dark areas kept, white areas removed).
+ */
 
 var CombinationEditorState = {
   // Current editing context
   currentEditingCombinationIndex: null,
-  combinationData: null,  // Working copy of the combination being edited
+
+  // Combination data (working copy)
+  // Contains: { id, name, tileRows, tileCols, shapeData, patternData }
+  combinationData: null,
 
   // Active editor tab: 'shape' or 'pattern'
   activeTab: 'shape',
 
-  // Selected cell in the grid (for applying patterns)
-  selectedCell: { x: 0, y: 0 },
+  // Tile grid dimensions (how the shape is divided)
+  tileRows: 2,
+  tileCols: 2,
 
-  // Canvas elements
-  shapeCanvas: null,
-  shapeCtx: null,
+  // Shape editor state (Two.js instance for combination shape)
+  two: null,
+  paths: [],
+  anchors: [],
+  selectedAnchors: [],
+  selectedPathIndices: [],
+  currentPathIndex: 0,
+  isDragging: false,
+  newShapePoints: [],
+  ghostPoint: null,
+  boundingBox: null,
+  fillRule: null,
+  holePathIndices: [],
+
+  // Pattern editor state (for mask pattern)
   patternCanvas: null,
   patternCtx: null,
+  patternPixelData: [],
+  patternSize: 16,
+  patternEditorZoom: 100,
+  patternPixelSize: 16,
+  patternBoundarySize: 256,
+  patternBoundaryOffsetX: 0,
+  patternBoundaryOffsetY: 0,
+  isPatternDrawing: false,
+  patternDrawColor: 1,
+  patternStartPixel: null,
+  patternCurrentPixel: null,
+  isPatternLineMode: false,
+  patternPreviewData: null,
+  isPatternSpacebarHeld: false,
+  isPatternPanning: false,
+  patternHasPanned: false,
+  patternPanStartX: 0,
+  patternPanStartY: 0,
+  patternOffsetX: 0,
+  patternOffsetY: 0,
+
+  // Preview canvas
   previewCanvas: null,
   previewCtx: null,
 
-  // Grid selector state (5x5 max)
-  maxGridSize: 5,
-
   // Editor dimensions
   editorSize: 400,
-  previewSize: 150,
-
-  // Drag state for shape placement
-  isDragging: false,
-  draggedShape: null,
-  dragOffset: { x: 0, y: 0 },
-
-  // Pattern editor state (reuses pattern editor logic)
-  patternEditorActive: false,
-
-  // Zoom and pan for shape editor
-  shapeZoom: 1,
-  shapePan: { x: 0, y: 0 },
-  isPanning: false,
-  panStart: { x: 0, y: 0 }
+  editorMargin: 40,
+  previewSize: 150
 };
+
+// Constants for combination shape editor (same as shape editor)
+const COMB_EDITOR_SIZE = 400;
+const COMB_ANCHOR_RADIUS = 8;
+const COMB_CONTROL_RADIUS = 6;
+const COMB_EDITOR_MARGIN = 40;
+const COMB_EDITOR_SHAPE_SIZE = COMB_EDITOR_SIZE - COMB_EDITOR_MARGIN * 2;
+const COMB_HANDLE_SIZE = 8;
 
 // Reset editor state
 function resetCombinationEditorState() {
   CombinationEditorState.currentEditingCombinationIndex = null;
   CombinationEditorState.combinationData = null;
   CombinationEditorState.activeTab = 'shape';
-  CombinationEditorState.selectedCell = { x: 0, y: 0 };
-  CombinationEditorState.shapeCanvas = null;
-  CombinationEditorState.shapeCtx = null;
+
+  // Reset shape editor state
+  CombinationEditorState.two = null;
+  CombinationEditorState.paths = [];
+  CombinationEditorState.anchors = [];
+  CombinationEditorState.selectedAnchors = [];
+  CombinationEditorState.selectedPathIndices = [];
+  CombinationEditorState.currentPathIndex = 0;
+  CombinationEditorState.isDragging = false;
+  CombinationEditorState.newShapePoints = [];
+  CombinationEditorState.ghostPoint = null;
+  CombinationEditorState.boundingBox = null;
+  CombinationEditorState.fillRule = null;
+  CombinationEditorState.holePathIndices = [];
+
+  // Reset pattern editor state
   CombinationEditorState.patternCanvas = null;
   CombinationEditorState.patternCtx = null;
+  CombinationEditorState.patternPixelData = [];
+  CombinationEditorState.isPatternDrawing = false;
+  CombinationEditorState.patternStartPixel = null;
+  CombinationEditorState.patternCurrentPixel = null;
+  CombinationEditorState.isPatternLineMode = false;
+  CombinationEditorState.patternPreviewData = null;
+  CombinationEditorState.isPatternSpacebarHeld = false;
+  CombinationEditorState.isPatternPanning = false;
+  CombinationEditorState.patternOffsetX = 0;
+  CombinationEditorState.patternOffsetY = 0;
+
+  // Reset preview
   CombinationEditorState.previewCanvas = null;
   CombinationEditorState.previewCtx = null;
-  CombinationEditorState.isDragging = false;
-  CombinationEditorState.draggedShape = null;
-  CombinationEditorState.shapeZoom = 1;
-  CombinationEditorState.shapePan = { x: 0, y: 0 };
-  CombinationEditorState.isPanning = false;
 }
 
-// Get the cell at a given position in the combination
-function getCombinationCell(x, y) {
-  const data = CombinationEditorState.combinationData;
-  if (!data || !data.cells) return null;
-  if (y < 0 || y >= data.gridHeight || x < 0 || x >= data.gridWidth) return null;
-  return data.cells[y] && data.cells[y][x];
+// Get the current path in the combination shape editor
+function getCombCurrentPath() {
+  return CombinationEditorState.paths[CombinationEditorState.currentPathIndex] || null;
 }
 
-// Set cell enabled state
-function setCombinationCellEnabled(x, y, enabled) {
-  const data = CombinationEditorState.combinationData;
-  if (!data || !data.cells) return;
-  if (y < 0 || y >= data.gridHeight || x < 0 || x >= data.gridWidth) return;
-
-  if (data.cells[y] && data.cells[y][x]) {
-    data.cells[y][x].enabled = enabled;
-  }
-}
-
-// Set cell shape
-function setCombinationCellShape(x, y, shapeName) {
-  const data = CombinationEditorState.combinationData;
-  if (!data || !data.cells) return;
-  if (y < 0 || y >= data.gridHeight || x < 0 || x >= data.gridWidth) return;
-
-  if (data.cells[y] && data.cells[y][x]) {
-    data.cells[y][x].shape = shapeName;
-  }
-}
-
-// Set cell pattern
-function setCombinationCellPattern(x, y, patternName) {
-  const data = CombinationEditorState.combinationData;
-  if (!data || !data.cells) return;
-  if (y < 0 || y >= data.gridHeight || x < 0 || x >= data.gridWidth) return;
-
-  if (data.cells[y] && data.cells[y][x]) {
-    data.cells[y][x].pattern = patternName;
-  }
-}
-
-// Get the currently selected cell
-function getSelectedCombinationCell() {
-  const { x, y } = CombinationEditorState.selectedCell;
-  return getCombinationCell(x, y);
-}
-
-// Update selected cell
-function selectCombinationCell(x, y) {
-  const data = CombinationEditorState.combinationData;
-  if (!data) return;
-
-  // Clamp to valid range
-  x = Math.max(0, Math.min(x, data.gridWidth - 1));
-  y = Math.max(0, Math.min(y, data.gridHeight - 1));
-
-  CombinationEditorState.selectedCell = { x, y };
-}
-
-// Toggle cell enabled state at position
-function toggleCombinationCell(x, y) {
-  const cell = getCombinationCell(x, y);
-  if (cell) {
-    cell.enabled = !cell.enabled;
-    return cell.enabled;
-  }
-  return false;
-}
-
-// Resize the combination grid
-function resizeCombinationGrid(newWidth, newHeight) {
-  const data = CombinationEditorState.combinationData;
-  if (!data) return;
-
-  // Use the helper function from combinationData.js
-  resizeCombination(data, newWidth, newHeight);
-
-  // Update selected cell if out of bounds
-  if (CombinationEditorState.selectedCell.x >= newWidth) {
-    CombinationEditorState.selectedCell.x = newWidth - 1;
-  }
-  if (CombinationEditorState.selectedCell.y >= newHeight) {
-    CombinationEditorState.selectedCell.y = newHeight - 1;
-  }
-}
-
-// Get grid dimensions
-function getCombinationGridSize() {
-  const data = CombinationEditorState.combinationData;
-  if (!data) return { width: 1, height: 1 };
+// Get tile grid dimensions
+function getCombinationTileSize() {
   return {
-    width: data.gridWidth || 1,
-    height: data.gridHeight || 1
+    rows: CombinationEditorState.tileRows,
+    cols: CombinationEditorState.tileCols
   };
+}
+
+// Set tile grid dimensions
+function setCombinationTileSize(rows, cols) {
+  CombinationEditorState.tileRows = Math.max(1, Math.min(8, rows));
+  CombinationEditorState.tileCols = Math.max(1, Math.min(8, cols));
+
+  // Update the combination data
+  if (CombinationEditorState.combinationData) {
+    CombinationEditorState.combinationData.tileRows = CombinationEditorState.tileRows;
+    CombinationEditorState.combinationData.tileCols = CombinationEditorState.tileCols;
+  }
+
+  // Redraw the tile grid overlay
+  drawCombinationTileGridOverlay();
+
+  // Update preview
+  updateCombinationPreview();
+}
+
+// Check if crop is enabled for combination shape editor
+function isCombCropEnabled() {
+  const checkbox = document.getElementById('combCropToBoundsCheckbox');
+  return checkbox ? checkbox.checked : true;
 }

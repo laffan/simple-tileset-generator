@@ -831,76 +831,135 @@ FFFFFF, 000000, </textarea
             <div class="modal-content combination-editor-modal">
                 <div class="modal-body">
                     <div class="combination-editor-workspace">
-                        <!-- Tab bar -->
-                        <div class="combination-editor-tabs">
-                            <button
-                                id="combinationTabShape"
-                                class="combination-tab active"
-                            >
-                                Edit Shape
-                            </button>
-                            <button
-                                id="combinationTabPattern"
-                                class="combination-tab"
-                            >
-                                Edit Pattern
-                            </button>
-                        </div>
-
-                        <!-- Left side: Toolbar (placeholder for future tools) -->
-                        <div class="combination-toolbar">
-                            <span class="combination-toolbar-label"
-                                >Click cells to place shapes</span
-                            >
-                        </div>
-
-                        <!-- Center: Editor canvas area -->
-                        <div class="combination-editor-container">
-                            <div
-                                id="combinationShapeCanvasContainer"
-                                class="combination-canvas-container"
-                            >
-                                <canvas id="combinationShapeCanvas"></canvas>
+                        <!-- Tab bar with tile size controls -->
+                        <div class="combination-editor-header">
+                            <div class="combination-editor-tabs">
+                                <button
+                                    id="combinationTabShape"
+                                    class="combination-tab active"
+                                >
+                                    Edit Shape
+                                </button>
+                                <button
+                                    id="combinationTabPattern"
+                                    class="combination-tab"
+                                >
+                                    Edit Pattern
+                                </button>
                             </div>
-                            <div
-                                id="combinationPatternCanvasContainer"
-                                class="combination-canvas-container"
-                                style="display: none"
-                            >
-                                <canvas id="combinationPatternCanvas"></canvas>
+                            <div class="combination-tile-size">
+                                <span class="combination-tile-size-label">Tile Size:</span>
+                                <input
+                                    type="number"
+                                    id="combinationTileRows"
+                                    class="combination-tile-input"
+                                    min="1"
+                                    max="8"
+                                    value="2"
+                                />
+                                <span class="combination-tile-x">×</span>
+                                <input
+                                    type="number"
+                                    id="combinationTileCols"
+                                    class="combination-tile-input"
+                                    min="1"
+                                    max="8"
+                                    value="2"
+                                />
                             </div>
                         </div>
 
-                        <!-- Right side: Palette -->
-                        <div class="combination-palette-container">
-                            <div class="combination-palette-label">Palette</div>
-                            <div
-                                id="combinationShapePalette"
-                                class="combination-palette"
-                            ></div>
-                            <div
-                                id="combinationPatternPalette"
-                                class="combination-palette"
-                                style="display: none"
-                            ></div>
-                        </div>
-
-                        <!-- Grid selector and preview column -->
-                        <div class="combination-right-column">
-                            <div class="combination-grid-section">
-                                <div class="combination-grid-label">
-                                    Grid Size
+                        <!-- Shape Editor Tab Content -->
+                        <div id="combinationShapeTab" class="combination-tab-content active">
+                            <!-- Toolbar (same as shape editor) -->
+                            <div class="shape-toolbar combination-shape-toolbar">
+                                <div class="toolbar-tool" data-tool="add">
+                                    <span class="tool-label">Add</span>
+                                    <div class="tool-submenu">
+                                        <button class="tool-action" data-action="comb-add-circle">Circle</button>
+                                        <button class="tool-action" data-action="comb-add-square">Square</button>
+                                        <button class="tool-action" data-action="comb-add-triangle">Triangle</button>
+                                        <button class="tool-action" data-action="comb-add-hexagon">Hexagon</button>
+                                    </div>
                                 </div>
-                                <div id="combinationGridSelector"></div>
+                                <div class="toolbar-tool" data-tool="reflect">
+                                    <span class="tool-label">Reflect</span>
+                                    <div class="tool-submenu">
+                                        <button class="tool-action" data-action="comb-reflect-horizontal">Horizontal</button>
+                                        <button class="tool-action" data-action="comb-reflect-vertical">Vertical</button>
+                                    </div>
+                                </div>
+                                <div class="toolbar-tool" data-tool="align">
+                                    <span class="tool-label">Align</span>
+                                    <div class="tool-submenu align-submenu">
+                                        <small class="submenu-hint">Shift+click paths to multi-select</small>
+                                        <button class="tool-action" data-action="comb-align-center">Center</button>
+                                        <button class="tool-action" data-action="comb-align-top">Top</button>
+                                        <button class="tool-action" data-action="comb-align-bottom">Bottom</button>
+                                        <button class="tool-action" data-action="comb-align-left">Left</button>
+                                        <button class="tool-action" data-action="comb-align-right">Right</button>
+                                    </div>
+                                </div>
+                                <div class="toolbar-tool" data-tool="cut">
+                                    <span class="tool-label">Cut</span>
+                                    <div class="tool-submenu">
+                                        <button class="tool-action" data-action="comb-boolean-cut">Boolean Cut</button>
+                                        <button class="tool-action" data-action="comb-toggle-hole">Toggle Hole</button>
+                                    </div>
+                                </div>
+                                <div class="toolbar-spacer"></div>
+                                <button id="combShapeUploadBtn" class="toolbar-btn" title="Upload SVG">Upload</button>
+                                <button id="combShapeDownloadBtn" class="toolbar-btn" title="Download SVG">Download</button>
+                                <input type="file" id="combShapeUploadInput" accept=".svg,image/svg+xml" style="display: none" />
+                                <div class="toolbar-divider"></div>
+                                <label class="toolbar-checkbox">
+                                    <input type="checkbox" id="combCropToBoundsCheckbox" checked />
+                                    <span>Crop</span>
+                                </label>
                             </div>
+                            <!-- Shape editor canvas (Two.js) -->
+                            <div id="combinationShapeEditorCanvas" class="combination-shape-canvas"></div>
+                        </div>
+
+                        <!-- Pattern Editor Tab Content -->
+                        <div id="combinationPatternTab" class="combination-tab-content" style="display: none;">
+                            <!-- Toolbar (same as pattern editor) -->
+                            <div class="pattern-toolbar combination-pattern-toolbar">
+                                <div class="pattern-size-control">
+                                    <span class="pattern-toolbar-label">Grid Size</span>
+                                    <div class="pattern-size-btn-group">
+                                        <button class="pattern-size-btn comb-pattern-size-btn" data-size="4">4</button>
+                                        <button class="pattern-size-btn comb-pattern-size-btn active" data-size="8">8</button>
+                                        <button class="pattern-size-btn comb-pattern-size-btn" data-size="16">16</button>
+                                        <button class="pattern-size-btn comb-pattern-size-btn" data-size="32">32</button>
+                                        <button class="pattern-size-btn comb-pattern-size-btn pattern-size-custom-btn" id="combPatternSizeCustomBtn">Custom</button>
+                                    </div>
+                                    <input type="hidden" id="combPatternSizeInput" value="8" />
+                                </div>
+                                <div class="pattern-toolbar-divider"></div>
+                                <button id="combPatternInvertBtn" class="pattern-tool-btn" title="Invert pattern">Invert</button>
+                                <button id="combPatternUploadBtn" class="pattern-tool-btn" title="Upload image">Upload</button>
+                                <button id="combPatternDownloadBtn" class="pattern-tool-btn" title="Download pattern">Download</button>
+                                <input type="file" id="combPatternUploadInput" accept="image/*" style="display: none" />
+                            </div>
+                            <!-- Pattern editor canvas -->
+                            <div class="pattern-editor-container combination-pattern-container">
+                                <div class="pattern-editor-zoom">
+                                    <span id="combPatternEditorZoomDisplay">1:1</span>
+                                    <input type="range" id="combPatternEditorZoom" min="1" max="100" value="100" step="1" />
+                                </div>
+                                <div class="pattern-canvas-wrapper">
+                                    <canvas id="combinationPatternEditorCanvas"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Preview section (always visible) -->
+                        <div class="combination-preview-column">
                             <div class="combination-preview-section">
-                                <div class="combination-preview-label">
-                                    Preview
-                                </div>
+                                <div class="combination-preview-label">Preview</div>
                                 <div class="combination-preview-wrapper">
-                                    <canvas
-                                        id="combinationPreviewCanvas"
-                                    ></canvas>
+                                    <canvas id="combinationPreviewCanvas"></canvas>
                                 </div>
                             </div>
                         </div>
@@ -947,34 +1006,32 @@ FFFFFF, 000000, </textarea
                         </thead>
                         <tbody>
                             <tr>
-                                <td>Add/remove cells</td>
-                                <td>Click cells in Grid Size panel</td>
+                                <td>Set tile grid size</td>
+                                <td>Enter rows × columns in the Tile Size inputs</td>
                             </tr>
                             <tr>
-                                <td>Place shape in cell</td>
-                                <td>
-                                    Drag shape from palette or click cell then
-                                    click palette
-                                </td>
+                                <td>Edit shape</td>
+                                <td>Use the Edit Shape tab - works like the Shape Editor</td>
                             </tr>
                             <tr>
-                                <td>Apply pattern to shape</td>
-                                <td>
-                                    Switch to Edit Pattern tab and click a
-                                    pattern
-                                </td>
+                                <td>Add anchor points</td>
+                                <td>Click on path edges (ghost point preview)</td>
                             </tr>
                             <tr>
-                                <td>Select cell</td>
-                                <td>Click on cell in the canvas</td>
+                                <td>Delete points</td>
+                                <td>Select anchor(s) and press Delete/Backspace</td>
                             </tr>
                             <tr>
-                                <td>Navigate cells</td>
-                                <td>Arrow keys</td>
+                                <td>Edit pattern mask</td>
+                                <td>Use the Edit Pattern tab - works like the Pattern Editor</td>
                             </tr>
                             <tr>
-                                <td>Clear pattern from cell</td>
-                                <td>Delete/Backspace</td>
+                                <td>Draw pattern</td>
+                                <td>Click/drag to draw, Shift+drag for lines</td>
+                            </tr>
+                            <tr>
+                                <td>Pattern as mask</td>
+                                <td>Dark areas of the pattern are kept, white areas are removed</td>
                             </tr>
                         </tbody>
                     </table>
@@ -1080,9 +1137,9 @@ FFFFFF, 000000, </textarea
 
         <!-- Combination Editor function modules -->
         <script src="scripts/combinationEditorFunctions/state.js"></script>
-        <script src="scripts/combinationEditorFunctions/canvas.js"></script>
-        <script src="scripts/combinationEditorFunctions/gridSelector.js"></script>
-        <script src="scripts/combinationEditorFunctions/palette.js"></script>
+        <script src="scripts/combinationEditorFunctions/shapeEditor.js"></script>
+        <script src="scripts/combinationEditorFunctions/patternEditor.js"></script>
+        <script src="scripts/combinationEditorFunctions/preview.js"></script>
         <script src="scripts/combinationEditorFunctions/events.js"></script>
         <script src="scripts/combinationEditorFunctions/modalManager.js"></script>
 

@@ -106,21 +106,23 @@ function createCombinationPreview(combinationName) {
   const combinationData = getCombinationData(combinationName);
   if (!combinationData) return document.createElement('canvas');
 
-  const { gridWidth, gridHeight } = combinationData;
+  // Support both old and new data formats
+  const tileCols = combinationData.tileCols || combinationData.gridWidth || 2;
+  const tileRows = combinationData.tileRows || combinationData.gridHeight || 2;
 
   // Calculate preview size (fit into 40x40 or larger based on aspect ratio)
   const maxSize = 60;
-  const aspectRatio = gridWidth / gridHeight;
+  const aspectRatio = tileCols / tileRows;
   let previewWidth, previewHeight, tileSize;
 
   if (aspectRatio >= 1) {
     previewWidth = maxSize;
-    tileSize = previewWidth / gridWidth;
-    previewHeight = tileSize * gridHeight;
+    tileSize = previewWidth / tileCols;
+    previewHeight = tileSize * tileRows;
   } else {
     previewHeight = maxSize;
-    tileSize = previewHeight / gridHeight;
-    previewWidth = tileSize * gridWidth;
+    tileSize = previewHeight / tileRows;
+    previewWidth = tileSize * tileCols;
   }
 
   const previewCanvas = document.createElement('canvas');
@@ -130,7 +132,7 @@ function createCombinationPreview(combinationName) {
 
   // Draw with black fill
   previewCtx.fillStyle = 'black';
-  drawCombination(0, 0, tileSize, previewCtx, combinationData);
+  drawCombination(0, 0, tileSize, previewCtx, combinationData, 'black');
 
   return previewCanvas;
 }
