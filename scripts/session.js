@@ -4,7 +4,6 @@ function getSessionData() {
   // Gather current session state
   const colorInput = document.getElementById('colorInput').value;
   const sizeInput = document.getElementById('sizeInput').value;
-  const paletteComplexity = document.getElementById('paletteComplexity').value;
 
   // Get selected shape indices (to handle duplicates correctly)
   const selectedShapeIndices = [];
@@ -37,7 +36,6 @@ function getSessionData() {
     version: 6,
     colors: colorInput,
     tileSize: sizeInput,
-    paletteComplexity: paletteComplexity,
     shapeOrder: [...shapeOrder], // Save full shape order (with duplicates and custom shapes)
     selectedIndices: selectedShapeIndices, // Save which shape indices are selected (keep name for backwards compat)
     patternOrder: [...patternOrder], // Save full pattern order
@@ -61,12 +59,6 @@ function applySessionData(data) {
   // Apply tile size
   if (data.tileSize !== undefined) {
     document.getElementById('sizeInput').value = data.tileSize;
-  }
-
-  // Apply palette complexity
-  if (data.paletteComplexity !== undefined) {
-    document.getElementById('paletteComplexity').value = data.paletteComplexity;
-    generateColorPalette(parseInt(data.paletteComplexity));
   }
 
   // Load custom shapes first (before rebuilding UI)

@@ -89,12 +89,6 @@ async function loadPalettes() {
       const sourceDiv = document.createElement('div');
       sourceDiv.className = 'palette-source';
 
-      // Header with name and link
-      const header = document.createElement('div');
-      header.className = 'palette-source-header';
-      header.innerHTML = `<h4>${source.name}</h4><a href="${source.url}" target="_blank">${source.url}</a>`;
-      sourceDiv.appendChild(header);
-
       // Palette rows
       source.palettes.forEach(palette => {
         const row = document.createElement('div');
@@ -119,6 +113,12 @@ async function loadPalettes() {
 
         sourceDiv.appendChild(row);
       });
+
+      // Footer with credit link (above divider)
+      const footer = document.createElement('div');
+      footer.className = 'palette-source-footer';
+      footer.innerHTML = `<a href="${source.url}" target="_blank">${source.url}</a>`;
+      sourceDiv.appendChild(footer);
 
       container.appendChild(sourceDiv);
     });
@@ -371,23 +371,78 @@ function addColorSquareToPalette(color, palette) {
 }
 
 
-function generateColorPalette(complexity) {
+function generateColorPalette() {
   const palette = document.getElementById('colorPalette');
   palette.innerHTML = '';
 
-  // Generate grayscales
-  for (let gray = 0; gray < 256; gray += complexity) {
-    const color = rgbToHex(gray, gray, gray);
-    addColorSquareToPalette(color, palette);
-  }
+  // Configuration for rainbow grid
+  const hueSteps = 36;          // Rows: hue from 0-360 in 10-degree steps
+  const saturationSteps = 3;    // Saturation levels: 100%, 66%, 33%
+  const lightnessSteps = 9;     // Columns: lightness from 10% to 90%
 
-  // Generate the rest of the colors
-  for (let r = 0; r < 256; r += complexity) {
-    for (let g = 0; g < 256; g += complexity) {
-      for (let b = 0; b < 256; b += complexity) {
+  // Create rows organized by hue
+  for (let hueIndex = 0; hueIndex < hueSteps; hueIndex++) {
+    const hue = (hueIndex / hueSteps) * 360;
+    const row = document.createElement('div');
+    row.className = 'swatch-row';
+
+    // For each hue, add columns with varying lightness and saturation
+    for (let satIndex = 0; satIndex < saturationSteps; satIndex++) {
+      const saturation = 100 - (satIndex * 33); // 100, 67, 34
+
+      for (let lightIndex = 0; lightIndex < lightnessSteps; lightIndex++) {
+        const lightness = 10 + (lightIndex * 10); // 10 to 90
+
+        const [r, g, b] = hslToRgb(hue, saturation, lightness);
         const color = rgbToHex(r, g, b);
-        addColorSquareToPalette(color, palette);
+
+        const swatch = document.createElement('div');
+        swatch.className = 'colorSquare';
+        swatch.style.backgroundColor = `#${color}`;
+        swatch.setAttribute('data-color', color);
+        swatch.title = `#${color}`;
+        swatch.addEventListener('click', function () {
+          const colorInput = document.getElementById('colorInput');
+          if (colorInput.value) {
+            colorInput.value += `, ${this.getAttribute('data-color')}`;
+          } else {
+            colorInput.value = this.getAttribute('data-color');
+          }
+          updateColorsPreview();
+          generateTileset();
+        });
+        row.appendChild(swatch);
       }
     }
+
+    palette.appendChild(row);
   }
+
+  // Add grayscale row at the end
+  const grayRow = document.createElement('div');
+  grayRow.className = 'swatch-row swatch-row-gray';
+
+  for (let i = 0; i < 27; i++) {
+    const gray = Math.round((i / 26) * 255);
+    const color = rgbToHex(gray, gray, gray);
+
+    const swatch = document.createElement('div');
+    swatch.className = 'colorSquare';
+    swatch.style.backgroundColor = `#${color}`;
+    swatch.setAttribute('data-color', color);
+    swatch.title = `#${color}`;
+    swatch.addEventListener('click', function () {
+      const colorInput = document.getElementById('colorInput');
+      if (colorInput.value) {
+        colorInput.value += `, ${this.getAttribute('data-color')}`;
+      } else {
+        colorInput.value = this.getAttribute('data-color');
+      }
+      updateColorsPreview();
+      generateTileset();
+    });
+    grayRow.appendChild(swatch);
+  }
+
+  palette.appendChild(grayRow);
 }

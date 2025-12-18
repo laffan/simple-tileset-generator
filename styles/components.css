@@ -140,20 +140,34 @@
 
 .palette {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 1px;
   padding: 4px;
+}
 
+.swatch-row {
+  display: flex;
+  gap: 1px;
+}
+
+.swatch-row-gray {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #ddd;
 }
 
 .colorSquare {
-  width: 20px;
-  height: 20px;
+  flex: 1;
+  min-width: 8px;
+  height: 12px;
   cursor: pointer;
-  margin: 1px;
+  transition: transform 0.1s ease;
 }
 
-.complexity_slider_wrapper {
-  margin-bottom: 10px;
+.colorSquare:hover {
+  transform: scaleY(1.5);
+  z-index: 1;
+  position: relative;
 }
 
 /* Complexity slider - fix fill direction */
@@ -1236,38 +1250,36 @@
 
 .palette-source {
   margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #eee;
 }
 
 .palette-source:last-child {
   margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
 }
 
-.palette-source-header {
-  margin-bottom: 10px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #eee;
+.palette-source-footer {
+  margin-top: 8px;
+  text-align: right;
 }
 
-.palette-source-header h4 {
-  margin: 0 0 4px 0;
-  font-size: 14px;
-  color: #333;
-}
-
-.palette-source-header a {
-  font-size: 12px;
-  color: #007bff;
+.palette-source-footer a {
+  font-size: 11px;
+  color: #999;
   text-decoration: none;
 }
 
-.palette-source-header a:hover {
+.palette-source-footer a:hover {
+  color: #007bff;
   text-decoration: underline;
 }
 
 .palette-row {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
   margin-bottom: 6px;
   padding: 4px;
   border-radius: 4px;
@@ -1278,21 +1290,23 @@
 }
 
 .palette-color {
-  width: 24px;
+  flex: 1;
+  min-width: 20px;
   height: 24px;
   cursor: pointer;
   border: 1px solid rgba(0, 0, 0, 0.1);
-  transition: transform 0.1s ease;
+  transition: transform 0.1s ease, flex 0.1s ease;
 }
 
 .palette-color:hover {
-  transform: scale(1.15);
+  transform: scaleY(1.15);
   z-index: 1;
   position: relative;
 }
 
 .palette-use-btn {
-  margin-left: auto;
+  flex-shrink: 0;
+  margin-left: 8px;
   padding: 4px 10px;
   font-size: 11px;
   background: #f0f0f0;

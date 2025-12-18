@@ -166,38 +166,10 @@ window.onload = function () {
 
   const defaultColors = document.getElementById('colorInput').value.split(',');
   const defaultSize = parseInt(document.getElementById('sizeInput').value, 10);
-  const complexitySlider = document.getElementById('paletteComplexity');
-
-  // Function to invert slider value (so right = more colors)
-  // Slider range is 14-128, where lower step = more colors
-  function getInvertedComplexity(slider) {
-    const min = parseInt(slider.min);
-    const max = parseInt(slider.max);
-    const value = parseInt(slider.value);
-    return max - value + min; // Invert: left=128 (few), right=14 (many)
-  }
 
   // Draw initial shapes and generate initial palette
   drawShapes(defaultColors, defaultSize);
-  generateColorPalette(getInvertedComplexity(complexitySlider));
-
-  // Function to update slider fill
-  function updateSliderFill(slider) {
-    const min = slider.min || 0;
-    const max = slider.max || 100;
-    const value = slider.value;
-    const percentage = ((value - min) / (max - min)) * 100;
-    slider.style.setProperty('--slider-fill', percentage + '%');
-  }
-
-  // Initialize slider fill
-  updateSliderFill(complexitySlider);
-
-  // Add listener to the complexity slider to regenerate palette on change
-  complexitySlider.addEventListener('input', function () {
-    generateColorPalette(getInvertedComplexity(this));
-    updateSliderFill(this);
-  });
+  generateColorPalette();
 
   // Shape listeners and previews
   addShapeCheckboxesListeners();
@@ -377,4 +349,4 @@ function drawPreviewCheckerboard(ctx, width, height) {
 
 
 // Initial palette generation (will be overwritten by window.onload)
-generateColorPalette(40);
+generateColorPalette();
