@@ -165,9 +165,11 @@
 }
 
 .colorSquare:hover {
-  transform: scaleY(1.5);
+  transform: scale(1.3, 1.8);
   z-index: 1;
   position: relative;
+  border: 1px solid white;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
 }
 
 /* Complexity slider - fix fill direction */
@@ -389,17 +391,19 @@
 .wheel-add-btn {
   width: 80px;
   padding: 8px 0;
-  background: #007bff;
-  color: white;
-  border: none;
+  background: #f0f0f0;
+  color: #666;
+  border: 1px solid #ccc;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 12px;
   text-align: center;
 }
 
 .wheel-add-btn:hover {
-  background: #0056b3;
+  background: #007bff;
+  border-color: #007bff;
+  color: white;
 }
 
 /* Custom tiles preview section (from tile tester) */
