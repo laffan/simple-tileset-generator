@@ -464,6 +464,9 @@ function setupCombShapeToolbar() {
         case 'comb-align-left': alignCombLeft(); break;
         case 'comb-align-right': alignCombRight(); break;
         case 'comb-boolean-cut': combBooleanCut(); break;
+        case 'comb-distribute-horizontal': distributeComb('horizontal'); break;
+        case 'comb-distribute-vertical': distributeComb('vertical'); break;
+        case 'comb-distribute-along-line': distributeComb('along-line'); break;
         // comb-toggle-hole handled by executeCombinationToolAction in modalManager.js
         // using the shape editor's toggleHole() which already works with EditorState
       }
@@ -510,6 +513,15 @@ function alignCombRight() {
 function combBooleanCut() {
   // Boolean cut operation
   updateCombinationPreview();
+}
+
+// Distribute wrapper for combination editor - delegates to main distributePaths
+function distributeComb(mode) {
+  // When in combination mode, EditorState is used, so we can call distributePaths directly
+  if (EditorState.editorMode === 'combination' && typeof distributePaths === 'function') {
+    distributePaths(mode);
+    updateCombinationPreview();
+  }
 }
 
 function combToggleHole() {

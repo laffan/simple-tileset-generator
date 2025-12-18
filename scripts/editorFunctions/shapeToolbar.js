@@ -99,6 +99,15 @@ function executeToolAction(actionType) {
     case 'toggle-hole':
       toggleHole();
       break;
+    case 'distribute-horizontal':
+      distributePaths('horizontal');
+      break;
+    case 'distribute-vertical':
+      distributePaths('vertical');
+      break;
+    case 'distribute-along-line':
+      distributePaths('along-line');
+      break;
   }
 }
 
@@ -459,6 +468,153 @@ function alignPathsToEachOther(alignment) {
     }
 
     path.vertices.forEach(vertex => {
+      vertex.x += deltaX;
+      vertex.y += deltaY;
+    });
+  });
+}
+
+// ============================================
+// DISTRIBUTE OPERATIONS
+// ============================================
+
+// Distribute paths - requires 3+ selected paths
+function distributePaths(mode) {
+  if (EditorState.selectedPathIndices.length < 3) {
+    // Need at least 3 paths to distribute
+    return;
+  }
+
+  const paths = EditorState.selectedPathIndices.map(i => EditorState.paths[i]).filter(p => p);
+  if (paths.length < 3) return;
+
+  // Get bounding boxes for all selected paths
+  const pathsWithBboxes = paths.map((path, i) => ({
+    path,
+    index: EditorState.selectedPathIndices[i],
+    bbox: getPathBoundingBox(path)
+  })).filter(p => p.bbox);
+
+  if (pathsWithBboxes.length < 3) return;
+
+  switch (mode) {
+    case 'horizontal':
+      distributeHorizontally(pathsWithBboxes);
+      break;
+    case 'vertical':
+      distributeVertically(pathsWithBboxes);
+      break;
+    case 'along-line':
+      distributeAlongLine(pathsWithBboxes);
+      break;
+  }
+
+  updateAnchorVisuals();
+  updateBoundingBox();
+  EditorState.two.update();
+}
+
+// Distribute paths evenly along horizontal axis
+function distributeHorizontally(pathsWithBboxes) {
+  // Sort by center X position
+  pathsWithBboxes.sort((a, b) => a.bbox.centerX - b.bbox.centerX);
+
+  const leftmost = pathsWithBboxes[0];
+  const rightmost = pathsWithBboxes[pathsWithBboxes.length - 1];
+
+  // Calculate total span (from leftmost center to rightmost center)
+  const totalSpan = rightmost.bbox.centerX - leftmost.bbox.centerX;
+  const spacing = totalSpan / (pathsWithBboxes.length - 1);
+
+  // Move intermediate paths
+  for (let i = 1; i < pathsWithBboxes.length - 1; i++) {
+    const item = pathsWithBboxes[i];
+    const targetX = leftmost.bbox.centerX + spacing * i;
+    const deltaX = targetX - item.bbox.centerX;
+
+    item.path.vertices.forEach(vertex => {
+      vertex.x += deltaX;
+    });
+  }
+}
+
+// Distribute paths evenly along vertical axis
+function distributeVertically(pathsWithBboxes) {
+  // Sort by center Y position
+  pathsWithBboxes.sort((a, b) => a.bbox.centerY - b.bbox.centerY);
+
+  const topmost = pathsWithBboxes[0];
+  const bottommost = pathsWithBboxes[pathsWithBboxes.length - 1];
+
+  // Calculate total span (from topmost center to bottommost center)
+  const totalSpan = bottommost.bbox.centerY - topmost.bbox.centerY;
+  const spacing = totalSpan / (pathsWithBboxes.length - 1);
+
+  // Move intermediate paths
+  for (let i = 1; i < pathsWithBboxes.length - 1; i++) {
+    const item = pathsWithBboxes[i];
+    const targetY = topmost.bbox.centerY + spacing * i;
+    const deltaY = targetY - item.bbox.centerY;
+
+    item.path.vertices.forEach(vertex => {
+      vertex.y += deltaY;
+    });
+  }
+}
+
+// Distribute paths evenly along the line between the two farthest apart paths
+function distributeAlongLine(pathsWithBboxes) {
+  // Find the two paths that are farthest apart
+  let maxDistance = 0;
+  let endpoint1 = null;
+  let endpoint2 = null;
+
+  for (let i = 0; i < pathsWithBboxes.length; i++) {
+    for (let j = i + 1; j < pathsWithBboxes.length; j++) {
+      const dx = pathsWithBboxes[j].bbox.centerX - pathsWithBboxes[i].bbox.centerX;
+      const dy = pathsWithBboxes[j].bbox.centerY - pathsWithBboxes[i].bbox.centerY;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      if (distance > maxDistance) {
+        maxDistance = distance;
+        endpoint1 = pathsWithBboxes[i];
+        endpoint2 = pathsWithBboxes[j];
+      }
+    }
+  }
+
+  if (!endpoint1 || !endpoint2 || maxDistance === 0) return;
+
+  // Get all paths except the two endpoints
+  const otherPaths = pathsWithBboxes.filter(p => p !== endpoint1 && p !== endpoint2);
+
+  // Calculate the line direction vector
+  const lineX = endpoint2.bbox.centerX - endpoint1.bbox.centerX;
+  const lineY = endpoint2.bbox.centerY - endpoint1.bbox.centerY;
+
+  // Project each path onto the line and calculate its position parameter (0-1)
+  otherPaths.forEach(item => {
+    const dx = item.bbox.centerX - endpoint1.bbox.centerX;
+    const dy = item.bbox.centerY - endpoint1.bbox.centerY;
+    // Project onto the line (dot product divided by line length squared)
+    item.projectionT = (dx * lineX + dy * lineY) / (maxDistance * maxDistance);
+  });
+
+  // Sort by projection parameter
+  otherPaths.sort((a, b) => a.projectionT - b.projectionT);
+
+  // Calculate even spacing along the line
+  const numSegments = otherPaths.length + 1;
+
+  // Move each path to its evenly spaced position on the line
+  otherPaths.forEach((item, i) => {
+    const t = (i + 1) / numSegments;
+    const targetX = endpoint1.bbox.centerX + t * lineX;
+    const targetY = endpoint1.bbox.centerY + t * lineY;
+    const deltaX = targetX - item.bbox.centerX;
+    const deltaY = targetY - item.bbox.centerY;
+
+    item.path.vertices.forEach(vertex => {
       vertex.x += deltaX;
       vertex.y += deltaY;
     });
