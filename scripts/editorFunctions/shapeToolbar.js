@@ -59,6 +59,7 @@ function closeAllSubmenus() {
 
 // Execute a tool action
 function executeToolAction(actionType) {
+  console.log('executeToolAction called with:', actionType);
   switch (actionType) {
     case 'add-circle':
       addPrimitiveShape('circle');
