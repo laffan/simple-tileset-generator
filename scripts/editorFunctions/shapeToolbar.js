@@ -480,6 +480,10 @@ function alignPathsToEachOther(alignment) {
 
 // Distribute paths - requires 3+ selected paths (or all paths if 3+ exist)
 function distributePaths(mode) {
+  console.log('distributePaths called with mode:', mode);
+  console.log('EditorState.paths.length:', EditorState.paths.length);
+  console.log('EditorState.selectedPathIndices:', EditorState.selectedPathIndices);
+
   // First, determine which paths to distribute
   let pathIndices = [];
 
@@ -493,10 +497,14 @@ function distributePaths(mode) {
   }
   // Not enough paths to distribute
   else {
+    console.log('Not enough paths, returning early');
     return;
   }
 
+  console.log('pathIndices:', pathIndices);
+
   const paths = pathIndices.map(i => EditorState.paths[i]).filter(p => p);
+  console.log('paths.length after filter:', paths.length);
   if (paths.length < 3) return;
 
   // Get bounding boxes for all selected paths
@@ -505,6 +513,9 @@ function distributePaths(mode) {
     index: pathIndices[i],
     bbox: getPathBoundingBox(path)
   })).filter(p => p.bbox);
+
+  console.log('pathsWithBboxes.length:', pathsWithBboxes.length);
+  console.log('bboxes:', pathsWithBboxes.map(p => p.bbox));
 
   if (pathsWithBboxes.length < 3) return;
 
@@ -520,6 +531,7 @@ function distributePaths(mode) {
       break;
   }
 
+  console.log('Distribution complete, updating visuals');
   updateAnchorVisuals();
   updateBoundingBox();
   EditorState.two.update();
