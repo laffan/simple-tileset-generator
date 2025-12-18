@@ -55,7 +55,10 @@ var TileTesterState = {
   // Canvas selection state for creating custom tiles (grid-based like palette selection)
   isCanvasSelecting: false,
   canvasSelectionStart: null,  // {row, col}
-  canvasSelection: null        // {startRow, startCol, endRow, endCol}
+  canvasSelection: null,       // {startRow, startCol, endRow, endCol}
+
+  // Ghost preview state - shows tile preview before placing
+  hoverPosition: null  // {gridX, gridY} - current hover position for ghost preview
 };
 
 // Create a new layer
@@ -210,6 +213,7 @@ function resetTileTesterState() {
   TileTesterState.isCanvasSelecting = false;
   TileTesterState.canvasSelectionStart = null;
   TileTesterState.canvasSelection = null;
+  TileTesterState.hoverPosition = null;
 }
 
 // Calculate grid size based on window dimensions

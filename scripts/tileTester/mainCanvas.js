@@ -44,6 +44,9 @@ function renderTileTesterMainCanvas() {
     }
   }
 
+  // Draw ghost preview if hovering with a selection
+  drawGhostPreview();
+
   // Update grid overlay
   updateGridOverlay();
 }
@@ -248,6 +251,97 @@ function getGridPositionFromCanvasClick(e) {
   const gridY = Math.floor(y / tileSize);
 
   return { gridX, gridY };
+}
+
+// Draw ghost preview of selected tile(s) at hover position
+function drawGhostPreview() {
+  const hoverPos = TileTesterState.hoverPosition;
+  if (!hoverPos) return;
+
+  const ctx = TileTesterState.mainCtx;
+  const tileSize = TileTesterState.tileSize;
+  const sourceCanvas = document.getElementById('canvas');
+
+  if (!ctx || !sourceCanvas) return;
+
+  // Set ghost opacity
+  ctx.globalAlpha = 0.5;
+
+  // Handle custom tile selection
+  if (TileTesterState.selectedCustomTile) {
+    const customTile = TileTesterState.selectedCustomTile;
+    const sortedRefs = [...customTile.tileRefs].sort((a, b) => (a.layerIndex || 0) - (b.layerIndex || 0));
+
+    sortedRefs.forEach(ref => {
+      const coords = getTileCanvasCoords(ref);
+      if (!coords) return;
+
+      const srcX = coords.col * tileSize;
+      const srcY = coords.row * tileSize;
+      const destX = (hoverPos.gridX + ref.localX) * tileSize;
+      const destY = (hoverPos.gridY + ref.localY) * tileSize;
+
+      // Check bounds
+      if (destX >= 0 && destX < TileTesterState.gridWidth * tileSize &&
+          destY >= 0 && destY < TileTesterState.gridHeight * tileSize) {
+        ctx.drawImage(
+          sourceCanvas,
+          srcX, srcY, tileSize, tileSize,
+          destX, destY, tileSize, tileSize
+        );
+      }
+    });
+  }
+  // Handle multi-tile selection
+  else if (TileTesterState.selectedTiles) {
+    const sel = TileTesterState.selectedTiles;
+    const minRow = Math.min(sel.startRow, sel.endRow);
+    const maxRow = Math.max(sel.startRow, sel.endRow);
+    const minCol = Math.min(sel.startCol, sel.endCol);
+    const maxCol = Math.max(sel.startCol, sel.endCol);
+
+    const height = maxRow - minRow + 1;
+    const width = maxCol - minCol + 1;
+
+    for (let dy = 0; dy < height; dy++) {
+      for (let dx = 0; dx < width; dx++) {
+        const srcRow = minRow + dy;
+        const srcCol = minCol + dx;
+        const destX = (hoverPos.gridX + dx) * tileSize;
+        const destY = (hoverPos.gridY + dy) * tileSize;
+
+        // Check bounds
+        if (destX >= 0 && destX < TileTesterState.gridWidth * tileSize &&
+            destY >= 0 && destY < TileTesterState.gridHeight * tileSize) {
+          const srcX = srcCol * tileSize;
+          const srcY = srcRow * tileSize;
+
+          ctx.drawImage(
+            sourceCanvas,
+            srcX, srcY, tileSize, tileSize,
+            destX, destY, tileSize, tileSize
+          );
+        }
+      }
+    }
+  }
+  // Handle single tile selection
+  else if (TileTesterState.selectedTile) {
+    const { row, col } = TileTesterState.selectedTile;
+    const srcX = col * tileSize;
+    const srcY = row * tileSize;
+    const destX = hoverPos.gridX * tileSize;
+    const destY = hoverPos.gridY * tileSize;
+
+    ctx.drawImage(
+      sourceCanvas,
+      srcX, srcY, tileSize, tileSize,
+      destX, destY, tileSize, tileSize
+    );
+  }
+
+  // Reset opacity
+  ctx.globalAlpha = 1;
 }
 
 // Download the canvas as an image (without grid lines)

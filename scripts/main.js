@@ -271,6 +271,110 @@ document.getElementById('fitPreview').addEventListener('change', function() {
   }
 });
 
+// Render custom tiles from tile tester in the main preview section
+function renderCustomTilesPreview() {
+  const section = document.getElementById('customTilesPreviewSection');
+  const container = document.getElementById('customTilesPreviewContainer');
+
+  if (!section || !container) return;
+
+  const customTiles = TileTesterState && TileTesterState.customTiles ? TileTesterState.customTiles : [];
+
+  if (customTiles.length === 0) {
+    section.style.display = 'none';
+    container.innerHTML = '';
+    return;
+  }
+
+  // Show the section
+  section.style.display = 'block';
+
+  // Clear container
+  container.innerHTML = '';
+
+  const tileSize = parseInt(document.getElementById('sizeInput').value, 10) || 64;
+  const sourceCanvas = document.getElementById('canvas');
+
+  // Render each custom tile
+  customTiles.forEach((customTile) => {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'custom-tile-preview-item';
+
+    // Create canvas for preview
+    const previewCanvas = document.createElement('canvas');
+    previewCanvas.width = customTile.width * tileSize;
+    previewCanvas.height = customTile.height * tileSize;
+    const previewCtx = previewCanvas.getContext('2d');
+
+    // Fill with checkerboard for transparency indication
+    drawPreviewCheckerboard(previewCtx, previewCanvas.width, previewCanvas.height);
+
+    // Draw the tile references
+    if (sourceCanvas) {
+      // Sort by layer index to draw in correct order (bottom to top)
+      const sortedRefs = [...customTile.tileRefs].sort((a, b) => (a.layerIndex || 0) - (b.layerIndex || 0));
+
+      sortedRefs.forEach(ref => {
+        // Get canvas coordinates - handles both semantic refs and old-style {row, col}
+        const coords = typeof getTileCanvasCoords === 'function' ? getTileCanvasCoords(ref) : null;
+        if (!coords) {
+          // Fallback for old-style refs
+          if (ref.row !== undefined && ref.col !== undefined) {
+            const srcX = ref.col * tileSize;
+            const srcY = ref.row * tileSize;
+            const destX = ref.localX * tileSize;
+            const destY = ref.localY * tileSize;
+
+            previewCtx.drawImage(
+              sourceCanvas,
+              srcX, srcY, tileSize, tileSize,
+              destX, destY, tileSize, tileSize
+            );
+          }
+          return;
+        }
+
+        const srcX = coords.col * tileSize;
+        const srcY = coords.row * tileSize;
+        const destX = ref.localX * tileSize;
+        const destY = ref.localY * tileSize;
+
+        previewCtx.drawImage(
+          sourceCanvas,
+          srcX, srcY, tileSize, tileSize,
+          destX, destY, tileSize, tileSize
+        );
+      });
+    }
+
+    // Scale down preview for display (max 80px)
+    const maxPreviewSize = 80;
+    const scale = Math.min(maxPreviewSize / previewCanvas.width, maxPreviewSize / previewCanvas.height, 1);
+
+    previewCanvas.style.width = (previewCanvas.width * scale) + 'px';
+    previewCanvas.style.height = (previewCanvas.height * scale) + 'px';
+
+    wrapper.appendChild(previewCanvas);
+    container.appendChild(wrapper);
+  });
+}
+
+// Draw checkerboard pattern for transparency indication in preview
+function drawPreviewCheckerboard(ctx, width, height) {
+  const checkSize = 8;
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, width, height);
+
+  ctx.fillStyle = '#e0e0e0';
+  for (let y = 0; y < height; y += checkSize) {
+    for (let x = 0; x < width; x += checkSize) {
+      if ((x / checkSize + y / checkSize) % 2 === 0) {
+        ctx.fillRect(x, y, checkSize, checkSize);
+      }
+    }
+  }
+}
+
 
 // Initial palette generation (will be overwritten by window.onload)
 generateColorPalette(40);

@@ -388,6 +388,40 @@
   background: #0056b3;
 }
 
+/* Custom tiles preview section (from tile tester) */
+.custom-tiles-preview-section {
+  margin-bottom: 20px;
+  padding: 10px;
+  background: #f8f8f8;
+  border-radius: 4px;
+}
+
+.custom-tiles-preview-section h4 {
+  margin: 0 0 10px 0;
+  font-size: 14px;
+  color: #555;
+}
+
+.custom-tiles-preview-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.custom-tile-preview-item {
+  position: relative;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.custom-tile-preview-item canvas {
+  display: block;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
 /* Selected colors section */
 .selected-colors-section {
   margin-bottom: 20px;

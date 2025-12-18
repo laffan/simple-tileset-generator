@@ -90,6 +90,11 @@ function addCustomTileFromSelection() {
 
   // Update palette to show new custom tile
   renderCustomTilesInPalette();
+
+  // Update main preview window custom tiles
+  if (typeof renderCustomTilesPreview === 'function') {
+    renderCustomTilesPreview();
+  }
 }
 
 // Remove a custom tile by ID
@@ -98,6 +103,11 @@ function removeCustomTile(tileId) {
   if (index !== -1) {
     TileTesterState.customTiles.splice(index, 1);
     renderCustomTilesInPalette();
+
+    // Update main preview window custom tiles
+    if (typeof renderCustomTilesPreview === 'function') {
+      renderCustomTilesPreview();
+    }
   }
 }
 

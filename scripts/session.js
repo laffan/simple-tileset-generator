@@ -164,6 +164,11 @@ function applySessionData(data) {
   // Update the UI
   updateColorsPreview();
   generateTileset();
+
+  // Update custom tiles preview in main window
+  if (typeof renderCustomTilesPreview === 'function') {
+    renderCustomTilesPreview();
+  }
 }
 
 function saveSession() {

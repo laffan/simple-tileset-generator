@@ -110,6 +110,11 @@ function closeTileTester() {
   // Clean up
   removeTileTesterEvents();
   resetTileTesterState();
+
+  // Update custom tiles preview in main window
+  if (typeof renderCustomTilesPreview === 'function') {
+    renderCustomTilesPreview();
+  }
 }
 
 // Setup the test button

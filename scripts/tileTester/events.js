@@ -13,6 +13,7 @@ var tileTesterEventHandlers = {
   mainCanvasMouseUp: null,
   mainCanvasMouseLeave: null,
   mainCanvasContextMenu: null,
+  mainCanvasHoverMove: null,
   paletteClick: null,
   paletteMouseDown: null,
   paletteMouseMove: null,
@@ -67,11 +68,27 @@ function setupMainCanvasEvents() {
     }
   };
 
-  // Mouse move - continue painting
+  // Mouse move - continue painting or update hover position for ghost preview
   tileTesterEventHandlers.mainCanvasMouseMove = function(e) {
+    const pos = getGridPositionFromCanvasClick(e);
+
+    // Update hover position for ghost preview (when not painting and not space panning)
+    if (!TileTesterState.isPainting && !TileTesterState.isSpacePanning && !TileTesterState.isCanvasSelecting) {
+      if (pos) {
+        const hasSelection = TileTesterState.selectedTile || TileTesterState.selectedTiles || TileTesterState.selectedCustomTile;
+        if (hasSelection) {
+          const prevPos = TileTesterState.hoverPosition;
+          if (!prevPos || prevPos.gridX !== pos.gridX || prevPos.gridY !== pos.gridY) {
+            TileTesterState.hoverPosition = { gridX: pos.gridX, gridY: pos.gridY };
+            renderTileTesterMainCanvas();
+          }
+        }
+      }
+      return;
+    }
+
     if (!TileTesterState.isPainting) return;
 
-    const pos = getGridPositionFromCanvasClick(e);
     if (pos) {
       if (TileTesterState.lastPaintedCell &&
           TileTesterState.lastPaintedCell.x === pos.gridX &&
@@ -96,11 +113,16 @@ function setupMainCanvasEvents() {
     tileTesterEraseMode = false;
   };
 
-  // Mouse leave - stop painting
+  // Mouse leave - stop painting and clear hover position
   tileTesterEventHandlers.mainCanvasMouseLeave = function() {
     TileTesterState.isPainting = false;
     TileTesterState.lastPaintedCell = null;
     tileTesterEraseMode = false;
+    // Clear hover position and redraw to remove ghost preview
+    if (TileTesterState.hoverPosition) {
+      TileTesterState.hoverPosition = null;
+      renderTileTesterMainCanvas();
+    }
   };
 
   // Context menu for erase
