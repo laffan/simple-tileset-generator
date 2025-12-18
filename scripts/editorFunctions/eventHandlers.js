@@ -49,6 +49,9 @@ function setupEditorEvents() {
     }
   });
 
+  // Track if we captured state this mousedown (to avoid double captures)
+  let capturedThisMousedown = false;
+
   svg.addEventListener('mousedown', (e) => {
     const rect = svg.getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -58,6 +61,7 @@ function setupEditorEvents() {
     dragStartPos = { x, y };
     constrainedAxis = null;
     hideGhostPoint();
+    capturedThisMousedown = false;
 
     // Cancel any new shape creation if we're clicking on something
     if (EditorState.newShapePoints.length > 0) {
@@ -73,6 +77,15 @@ function setupEditorEvents() {
     if (e.metaKey || e.ctrlKey) {
       const handleHit = findBoundingBoxHandle(x, y);
       if (handleHit) {
+        // Capture state before transform operation
+        if (!capturedThisMousedown && typeof UndoRedoManager !== 'undefined') {
+          if (EditorState.editorMode === 'combination') {
+            UndoRedoManager.captureCombinationState();
+          } else {
+            UndoRedoManager.captureShapeState();
+          }
+          capturedThisMousedown = true;
+        }
         EditorState.isDragging = true;
         if (handleHit.type === 'rotate') {
           const bbox = EditorState.boundingBox.bounds;
@@ -120,6 +133,15 @@ function setupEditorEvents() {
       if (anchorHit.type === 'anchor') {
         // Option+click toggles between curve and angle point
         if (e.altKey) {
+          // Capture state before toggling point type
+          if (!capturedThisMousedown && typeof UndoRedoManager !== 'undefined') {
+            if (EditorState.editorMode === 'combination') {
+              UndoRedoManager.captureCombinationState();
+            } else {
+              UndoRedoManager.captureShapeState();
+            }
+            capturedThisMousedown = true;
+          }
           selectAnchor(anchorHit.data);
           togglePointCurve();
           return;
@@ -129,6 +151,15 @@ function setupEditorEvents() {
           toggleAnchorSelection(anchorHit.data);
           // If anchor is now selected, prepare for drag
           if (isAnchorSelected(anchorHit.data)) {
+            // Capture state before drag
+            if (!capturedThisMousedown && typeof UndoRedoManager !== 'undefined') {
+              if (EditorState.editorMode === 'combination') {
+                UndoRedoManager.captureCombinationState();
+              } else {
+                UndoRedoManager.captureShapeState();
+              }
+              capturedThisMousedown = true;
+            }
             EditorState.isDragging = true;
             isDraggingMultiple = true;
             dragTarget = { type: 'multiAnchor' };
@@ -139,6 +170,15 @@ function setupEditorEvents() {
           }
         } else {
           // Normal click - if clicking on already selected anchor, drag all selected
+          // Capture state before drag
+          if (!capturedThisMousedown && typeof UndoRedoManager !== 'undefined') {
+            if (EditorState.editorMode === 'combination') {
+              UndoRedoManager.captureCombinationState();
+            } else {
+              UndoRedoManager.captureShapeState();
+            }
+            capturedThisMousedown = true;
+          }
           EditorState.isDragging = true;
           if (isAnchorSelected(anchorHit.data) && EditorState.selectedAnchors.length > 1) {
             isDraggingMultiple = true;
@@ -152,6 +192,15 @@ function setupEditorEvents() {
         }
       } else {
         // Control point hit - single drag only
+        // Capture state before drag
+        if (!capturedThisMousedown && typeof UndoRedoManager !== 'undefined') {
+          if (EditorState.editorMode === 'combination') {
+            UndoRedoManager.captureCombinationState();
+          } else {
+            UndoRedoManager.captureShapeState();
+          }
+          capturedThisMousedown = true;
+        }
         EditorState.isDragging = true;
         dragTarget = anchorHit;
         isDraggingMultiple = false;
@@ -168,6 +217,15 @@ function setupEditorEvents() {
         EditorState.selectedPathIndices.length > 1;
 
       if (hasMultiSelection && isInSelection) {
+        // Capture state before drag/duplicate
+        if (!capturedThisMousedown && typeof UndoRedoManager !== 'undefined') {
+          if (EditorState.editorMode === 'combination') {
+            UndoRedoManager.captureCombinationState();
+          } else {
+            UndoRedoManager.captureShapeState();
+          }
+          capturedThisMousedown = true;
+        }
         // Option+drag duplicates all selected paths
         if (e.altKey) {
           const newIndices = duplicateSelectedPaths();
@@ -193,6 +251,16 @@ function setupEditorEvents() {
       // If clicked on a different path, select it first
       if (pathHit.pathIndex !== EditorState.currentPathIndex) {
         selectPath(pathHit.pathIndex);
+      }
+
+      // Capture state before drag/duplicate
+      if (!capturedThisMousedown && typeof UndoRedoManager !== 'undefined') {
+        if (EditorState.editorMode === 'combination') {
+          UndoRedoManager.captureCombinationState();
+        } else {
+          UndoRedoManager.captureShapeState();
+        }
+        capturedThisMousedown = true;
       }
 
       // Option+drag duplicates the current path
@@ -223,6 +291,15 @@ function setupEditorEvents() {
     // Check if clicking near an edge of the current path (to insert a point)
     const edgeHit = findClosestEdge(x, y);
     if (edgeHit) {
+      // Capture state before inserting point
+      if (!capturedThisMousedown && typeof UndoRedoManager !== 'undefined') {
+        if (EditorState.editorMode === 'combination') {
+          UndoRedoManager.captureCombinationState();
+        } else {
+          UndoRedoManager.captureShapeState();
+        }
+        capturedThisMousedown = true;
+      }
       insertPointAtEdge(edgeHit, edgeHit.point.x, edgeHit.point.y);
       return;
     }
@@ -595,8 +672,24 @@ function setupKeyboardEvents() {
 
       // If anchors are selected, delete those points
       if (EditorState.selectedAnchors && EditorState.selectedAnchors.length > 0) {
+        // Capture state before delete
+        if (typeof UndoRedoManager !== 'undefined') {
+          if (EditorState.editorMode === 'combination') {
+            UndoRedoManager.captureCombinationState();
+          } else {
+            UndoRedoManager.captureShapeState();
+          }
+        }
         deleteSelectedPoints();
       } else if (EditorState.paths.length > 1) {
+        // Capture state before delete
+        if (typeof UndoRedoManager !== 'undefined') {
+          if (EditorState.editorMode === 'combination') {
+            UndoRedoManager.captureCombinationState();
+          } else {
+            UndoRedoManager.captureShapeState();
+          }
+        }
         // No anchors selected - delete only the current path (not multi-selected ones)
         // First, clear multi-selection to ensure only current path is deleted
         EditorState.selectedPathIndices = [];
@@ -614,6 +707,14 @@ function setupKeyboardEvents() {
     // Shift+D to duplicate current path in place
     if (e.shiftKey && (e.key === 'd' || e.key === 'D')) {
       e.preventDefault();
+      // Capture state before duplicate
+      if (typeof UndoRedoManager !== 'undefined') {
+        if (EditorState.editorMode === 'combination') {
+          UndoRedoManager.captureCombinationState();
+        } else {
+          UndoRedoManager.captureShapeState();
+        }
+      }
       duplicateCurrentPath();
     }
   });

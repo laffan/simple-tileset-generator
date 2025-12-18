@@ -150,6 +150,11 @@ function resizePatternGrid(newSize) {
   const oldSize = state.patternSize;
   const oldData = state.pixelData;
 
+  // Capture state before resize
+  if (typeof UndoRedoManager !== 'undefined') {
+    UndoRedoManager.capturePatternState();
+  }
+
   // Create new grid
   const newData = [];
   for (let row = 0; row < newSize; row++) {
@@ -206,6 +211,11 @@ function handlePatternUpload(e) {
 
 function loadPatternFromImage(img) {
   const state = PatternEditorState;
+
+  // Capture state before loading image
+  if (typeof UndoRedoManager !== 'undefined') {
+    UndoRedoManager.capturePatternState();
+  }
 
   // Create temporary canvas to read pixels
   const tempCanvas = document.createElement('canvas');

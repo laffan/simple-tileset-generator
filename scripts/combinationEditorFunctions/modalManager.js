@@ -114,6 +114,11 @@ function openCombinationEditor(combinationIndex) {
   initCombinationPreviewCanvas();
   updateCombinationPreview();
 
+  // Clear undo history for fresh start
+  if (typeof UndoRedoManager !== 'undefined') {
+    UndoRedoManager.clearCombinationHistory();
+  }
+
   // Setup combination-specific UI events
   setupCombinationEditorUI();
 
@@ -598,6 +603,11 @@ function updateGridSizeDisplay() {
 
 // Handle grid size +/- button clicks
 function handleGridSizeChange(action) {
+  // Capture state before grid size change
+  if (typeof UndoRedoManager !== 'undefined') {
+    UndoRedoManager.captureCombinationState();
+  }
+
   let rows = EditorState.combinationTileRows;
   let cols = EditorState.combinationTileCols;
 
@@ -699,6 +709,11 @@ function closeCombinationSubmenus() {
 
 // Execute a combination toolbar action
 function executeCombinationToolAction(actionType) {
+  // Capture state before toolbar action
+  if (typeof UndoRedoManager !== 'undefined') {
+    UndoRedoManager.captureCombinationState();
+  }
+
   switch (actionType) {
     case 'comb-add-circle':
       addPrimitiveShape('circle');
@@ -799,6 +814,11 @@ function buildCombinationShapePalette() {
 
 // Load a shape from the palette into the combination editor (ADD, not replace)
 function loadShapeIntoCombinationEditor(shapeName) {
+  // Capture state before adding shape
+  if (typeof UndoRedoManager !== 'undefined') {
+    UndoRedoManager.captureCombinationState();
+  }
+
   // Get shape data from registry
   const shapeData = getShapePathData(shapeName);
   if (!shapeData) {
@@ -1039,6 +1059,11 @@ function getCombPatternData() {
 // Select a pattern for the combination (or null for no pattern)
 // Now stores pattern per-path, and applies to all selected paths if multiple are selected
 function selectCombinationPattern(patternName, size, invert) {
+  // Capture state before pattern change
+  if (typeof UndoRedoManager !== 'undefined') {
+    UndoRedoManager.captureCombinationState();
+  }
+
   const shouldInvert = invert !== undefined ? invert : false;
   const patternSize = size || 16;
 

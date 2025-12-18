@@ -63,6 +63,11 @@ function openPatternEditor(patternIndex) {
   // Set zoom so pattern fills the boundary
   updateZoomForPatternSize(state.patternSize);
 
+  // Clear undo history for fresh start
+  if (typeof UndoRedoManager !== 'undefined') {
+    UndoRedoManager.clearPatternHistory();
+  }
+
   // Setup events
   setupPatternEditorEvents();
 

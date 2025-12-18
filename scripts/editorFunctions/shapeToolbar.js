@@ -59,6 +59,15 @@ function closeAllSubmenus() {
 
 // Execute a tool action
 function executeToolAction(actionType) {
+  // Capture state before executing any toolbar action that modifies the shape
+  if (typeof UndoRedoManager !== 'undefined') {
+    if (EditorState.editorMode === 'combination') {
+      UndoRedoManager.captureCombinationState();
+    } else {
+      UndoRedoManager.captureShapeState();
+    }
+  }
+
   switch (actionType) {
     case 'add-circle':
       addPrimitiveShape('circle');

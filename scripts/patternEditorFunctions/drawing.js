@@ -5,12 +5,21 @@ function startPatternDrawing(e) {
 
   // If spacebar is held, start panning instead of drawing
   if (state.isSpacebarHeld) {
+    // Capture state before panning starts
+    if (typeof UndoRedoManager !== 'undefined') {
+      UndoRedoManager.capturePatternState();
+    }
     startPatternPanning(e);
     return;
   }
 
   const pixel = getPixelFromEvent(e);
   if (!pixel || !isPixelInBounds(pixel)) return;
+
+  // Capture state before drawing starts
+  if (typeof UndoRedoManager !== 'undefined') {
+    UndoRedoManager.capturePatternState();
+  }
 
   state.isDrawing = true;
   state.startPixel = pixel;
@@ -171,6 +180,11 @@ function copyPatternPixels(data) {
 
 function invertPatternEditorPixels() {
   const state = PatternEditorState;
+
+  // Capture state before invert
+  if (typeof UndoRedoManager !== 'undefined') {
+    UndoRedoManager.capturePatternState();
+  }
 
   for (let row = 0; row < state.patternSize; row++) {
     if (!state.pixelData[row]) state.pixelData[row] = [];

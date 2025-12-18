@@ -30,6 +30,11 @@ function openShapeEditor(shapeIndex) {
     initEditor();
   }
 
+  // Clear undo history for fresh start
+  if (typeof UndoRedoManager !== 'undefined') {
+    UndoRedoManager.clearShapeHistory();
+  }
+
   // Load the shape
   const shapeName = shapeOrder[shapeIndex];
   loadShapeIntoEditor(shapeName);
