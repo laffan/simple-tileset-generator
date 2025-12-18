@@ -533,6 +533,9 @@ function initCombinationPreviewCanvas() {
 
 // Setup combination-specific UI events
 function setupCombinationEditorUI() {
+  // Setup shape toolbar (Add, Reflect, Align, Distribute, Cut)
+  setupCombShapeToolbar();
+
   // Palette tab switching (Shapes / Patterns)
   const paletteTabs = document.querySelectorAll('.combination-palette-tab');
   paletteTabs.forEach(tab => {
