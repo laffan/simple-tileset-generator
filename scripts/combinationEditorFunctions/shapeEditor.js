@@ -458,11 +458,12 @@ function setupCombShapeToolbar() {
         case 'comb-add-hexagon': addCombHexagon(); break;
         case 'comb-reflect-horizontal': reflectCombHorizontal(); break;
         case 'comb-reflect-vertical': reflectCombVertical(); break;
-        case 'comb-align-center': alignCombCenter(); break;
-        case 'comb-align-top': alignCombTop(); break;
-        case 'comb-align-bottom': alignCombBottom(); break;
-        case 'comb-align-left': alignCombLeft(); break;
-        case 'comb-align-right': alignCombRight(); break;
+        case 'comb-align-h-left': alignComb('left'); break;
+        case 'comb-align-h-center': alignComb('h-center'); break;
+        case 'comb-align-h-right': alignComb('right'); break;
+        case 'comb-align-v-top': alignComb('top'); break;
+        case 'comb-align-v-middle': alignComb('v-middle'); break;
+        case 'comb-align-v-bottom': alignComb('bottom'); break;
         case 'comb-boolean-cut': combBooleanCut(); break;
         case 'comb-distribute-horizontal': distributeComb('horizontal'); break;
         case 'comb-distribute-vertical': distributeComb('vertical'); break;
@@ -488,26 +489,13 @@ function setupCombShapeToolbar() {
   }
 }
 
-// Align functions (stub implementations - can be expanded)
-function alignCombCenter() {
-  // Center all selected anchors or current path
-  updateCombinationPreview();
-}
-
-function alignCombTop() {
-  updateCombinationPreview();
-}
-
-function alignCombBottom() {
-  updateCombinationPreview();
-}
-
-function alignCombLeft() {
-  updateCombinationPreview();
-}
-
-function alignCombRight() {
-  updateCombinationPreview();
+// Align wrapper for combination editor - delegates to main alignPaths
+function alignComb(alignment) {
+  // When in combination mode, EditorState is used, so we can call alignPaths directly
+  if (EditorState.editorMode === 'combination' && typeof alignPaths === 'function') {
+    alignPaths(alignment);
+    updateCombinationPreview();
+  }
 }
 
 function combBooleanCut() {
@@ -517,16 +505,10 @@ function combBooleanCut() {
 
 // Distribute wrapper for combination editor - delegates to main distributePaths
 function distributeComb(mode) {
-  console.log('distributeComb called with mode:', mode);
-  console.log('EditorState.editorMode:', EditorState.editorMode);
-  console.log('typeof distributePaths:', typeof distributePaths);
-
   // When in combination mode, EditorState is used, so we can call distributePaths directly
   if (EditorState.editorMode === 'combination' && typeof distributePaths === 'function') {
     distributePaths(mode);
     updateCombinationPreview();
-  } else {
-    console.log('Condition failed, not calling distributePaths');
   }
 }
 

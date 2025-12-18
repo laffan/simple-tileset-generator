@@ -59,7 +59,6 @@ function closeAllSubmenus() {
 
 // Execute a tool action
 function executeToolAction(actionType) {
-  console.log('executeToolAction called with:', actionType);
   switch (actionType) {
     case 'add-circle':
       addPrimitiveShape('circle');
@@ -79,20 +78,23 @@ function executeToolAction(actionType) {
     case 'reflect-vertical':
       reflectPath('vertical');
       break;
-    case 'align-center':
-      alignPaths('center');
-      break;
-    case 'align-top':
-      alignPaths('top');
-      break;
-    case 'align-bottom':
-      alignPaths('bottom');
-      break;
-    case 'align-left':
+    case 'align-h-left':
       alignPaths('left');
       break;
-    case 'align-right':
+    case 'align-h-center':
+      alignPaths('h-center');
+      break;
+    case 'align-h-right':
       alignPaths('right');
+      break;
+    case 'align-v-top':
+      alignPaths('top');
+      break;
+    case 'align-v-middle':
+      alignPaths('v-middle');
+      break;
+    case 'align-v-bottom':
+      alignPaths('bottom');
       break;
     case 'boolean-cut':
       booleanCut();
@@ -394,8 +396,10 @@ function alignPathToWorkspace(path, alignment) {
   let deltaY = 0;
 
   switch (alignment) {
-    case 'center':
+    case 'h-center':
       deltaX = workspaceCenter - bbox.centerX;
+      break;
+    case 'v-middle':
       deltaY = workspaceCenter - bbox.centerY;
       break;
     case 'top':
@@ -450,8 +454,10 @@ function alignPathsToEachOther(alignment) {
     let deltaY = 0;
 
     switch (alignment) {
-      case 'center':
+      case 'h-center':
         deltaX = combinedCenterX - bbox.centerX;
+        break;
+      case 'v-middle':
         deltaY = combinedCenterY - bbox.centerY;
         break;
       case 'top':
@@ -481,10 +487,6 @@ function alignPathsToEachOther(alignment) {
 
 // Distribute paths - requires 3+ selected paths (or all paths if 3+ exist)
 function distributePaths(mode) {
-  console.log('distributePaths called with mode:', mode);
-  console.log('EditorState.paths.length:', EditorState.paths.length);
-  console.log('EditorState.selectedPathIndices:', EditorState.selectedPathIndices);
-
   // First, determine which paths to distribute
   let pathIndices = [];
 
@@ -498,14 +500,10 @@ function distributePaths(mode) {
   }
   // Not enough paths to distribute
   else {
-    console.log('Not enough paths, returning early');
     return;
   }
 
-  console.log('pathIndices:', pathIndices);
-
   const paths = pathIndices.map(i => EditorState.paths[i]).filter(p => p);
-  console.log('paths.length after filter:', paths.length);
   if (paths.length < 3) return;
 
   // Get bounding boxes for all selected paths
@@ -514,9 +512,6 @@ function distributePaths(mode) {
     index: pathIndices[i],
     bbox: getPathBoundingBox(path)
   })).filter(p => p.bbox);
-
-  console.log('pathsWithBboxes.length:', pathsWithBboxes.length);
-  console.log('bboxes:', pathsWithBboxes.map(p => p.bbox));
 
   if (pathsWithBboxes.length < 3) return;
 
@@ -532,7 +527,6 @@ function distributePaths(mode) {
       break;
   }
 
-  console.log('Distribution complete, updating visuals');
   updateAnchorVisuals();
   updateBoundingBox();
   EditorState.two.update();
