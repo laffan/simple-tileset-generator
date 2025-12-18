@@ -300,7 +300,8 @@ function deleteCombSelectedAnchors() {
 
 // Add shape functions (circle, square, triangle, hexagon)
 function addCombCircle() {
-  const state = CombinationEditorState;
+  // Use EditorState when in combination mode for consistency with align/distribute
+  const state = EditorState.editorMode === 'combination' ? EditorState : CombinationEditorState;
   if (!state.two) return;
 
   const centerX = COMB_EDITOR_SIZE / 2;
@@ -330,12 +331,12 @@ function addCombCircle() {
 
   state.paths.push(path);
   state.currentPathIndex = state.paths.length - 1;
-  createCombAnchorVisuals();
+  createAnchorVisuals();
   updateCombinationPreview();
 }
 
 function addCombSquare() {
-  const state = CombinationEditorState;
+  const state = EditorState.editorMode === 'combination' ? EditorState : CombinationEditorState;
   if (!state.two) return;
 
   const centerX = COMB_EDITOR_SIZE / 2;
@@ -355,12 +356,12 @@ function addCombSquare() {
 
   state.paths.push(path);
   state.currentPathIndex = state.paths.length - 1;
-  createCombAnchorVisuals();
+  createAnchorVisuals();
   updateCombinationPreview();
 }
 
 function addCombTriangle() {
-  const state = CombinationEditorState;
+  const state = EditorState.editorMode === 'combination' ? EditorState : CombinationEditorState;
   if (!state.two) return;
 
   const centerX = COMB_EDITOR_SIZE / 2;
@@ -382,12 +383,12 @@ function addCombTriangle() {
 
   state.paths.push(path);
   state.currentPathIndex = state.paths.length - 1;
-  createCombAnchorVisuals();
+  createAnchorVisuals();
   updateCombinationPreview();
 }
 
 function addCombHexagon() {
-  const state = CombinationEditorState;
+  const state = EditorState.editorMode === 'combination' ? EditorState : CombinationEditorState;
   if (!state.two) return;
 
   const centerX = COMB_EDITOR_SIZE / 2;
@@ -409,13 +410,13 @@ function addCombHexagon() {
 
   state.paths.push(path);
   state.currentPathIndex = state.paths.length - 1;
-  createCombAnchorVisuals();
+  createAnchorVisuals();
   updateCombinationPreview();
 }
 
 // Reflect shape horizontally
 function reflectCombHorizontal() {
-  const state = CombinationEditorState;
+  const state = EditorState.editorMode === 'combination' ? EditorState : CombinationEditorState;
   const currentPath = state.paths[state.currentPathIndex];
   if (!currentPath) return;
 
@@ -425,13 +426,13 @@ function reflectCombHorizontal() {
     v.x = centerX - (v.x - centerX);
   });
 
-  updateCombAnchorPositions();
+  updateAnchorVisuals();
   updateCombinationPreview();
 }
 
 // Reflect shape vertically
 function reflectCombVertical() {
-  const state = CombinationEditorState;
+  const state = EditorState.editorMode === 'combination' ? EditorState : CombinationEditorState;
   const currentPath = state.paths[state.currentPathIndex];
   if (!currentPath) return;
 
@@ -441,7 +442,7 @@ function reflectCombVertical() {
     v.y = centerY - (v.y - centerY);
   });
 
-  updateCombAnchorPositions();
+  updateAnchorVisuals();
   updateCombinationPreview();
 }
 
