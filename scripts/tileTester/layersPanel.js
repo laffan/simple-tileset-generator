@@ -164,7 +164,7 @@ function setupLayersPanelEvents() {
 
   container.addEventListener('dragstart', function(e) {
     // Only allow drag from the drag handle
-    if (!e.target.classList.contains('tester-layer-drag-handle')) {
+    if (!e.target.classList || !e.target.classList.contains('tester-layer-drag-handle')) {
       e.preventDefault();
       return;
     }
