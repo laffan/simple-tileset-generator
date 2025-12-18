@@ -478,20 +478,31 @@ function alignPathsToEachOther(alignment) {
 // DISTRIBUTE OPERATIONS
 // ============================================
 
-// Distribute paths - requires 3+ selected paths
+// Distribute paths - requires 3+ selected paths (or all paths if 3+ exist)
 function distributePaths(mode) {
-  if (EditorState.selectedPathIndices.length < 3) {
-    // Need at least 3 paths to distribute
+  // First, determine which paths to distribute
+  let pathIndices = [];
+
+  // If we have 3+ explicitly selected paths, use those
+  if (EditorState.selectedPathIndices.length >= 3) {
+    pathIndices = [...EditorState.selectedPathIndices];
+  }
+  // Otherwise, if there are 3+ paths total, use all of them
+  else if (EditorState.paths.length >= 3) {
+    pathIndices = EditorState.paths.map((_, i) => i);
+  }
+  // Not enough paths to distribute
+  else {
     return;
   }
 
-  const paths = EditorState.selectedPathIndices.map(i => EditorState.paths[i]).filter(p => p);
+  const paths = pathIndices.map(i => EditorState.paths[i]).filter(p => p);
   if (paths.length < 3) return;
 
   // Get bounding boxes for all selected paths
   const pathsWithBboxes = paths.map((path, i) => ({
     path,
-    index: EditorState.selectedPathIndices[i],
+    index: pathIndices[i],
     bbox: getPathBoundingBox(path)
   })).filter(p => p.bbox);
 
