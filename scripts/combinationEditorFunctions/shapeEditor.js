@@ -475,19 +475,6 @@ function setupCombShapeToolbar() {
     });
   });
 
-  // Upload SVG button
-  const uploadBtn = document.getElementById('combShapeUploadBtn');
-  const uploadInput = document.getElementById('combShapeUploadInput');
-  if (uploadBtn && uploadInput) {
-    uploadBtn.addEventListener('click', () => uploadInput.click());
-    uploadInput.addEventListener('change', handleCombSvgUpload);
-  }
-
-  // Download SVG button
-  const downloadBtn = document.getElementById('combShapeDownloadBtn');
-  if (downloadBtn) {
-    downloadBtn.addEventListener('click', downloadCombSvg);
-  }
 }
 
 // Align wrapper for combination editor - delegates to main alignPaths

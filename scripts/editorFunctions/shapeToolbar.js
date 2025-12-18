@@ -365,8 +365,17 @@ function reflectPath(direction) {
   updateBoundingBox();
 }
 
-// Align paths - if multiple selected, align to each other; otherwise align to workspace
+// Align paths - if multiple points selected, align points; if multiple paths selected, align paths; otherwise align to workspace
 function alignPaths(alignment) {
+  // Check if multiple anchors are selected - if so, align those points
+  if (EditorState.selectedAnchors && EditorState.selectedAnchors.length > 1) {
+    alignSelectedPoints(alignment);
+    updateAnchorVisuals();
+    updateBoundingBox();
+    EditorState.two.update();
+    return;
+  }
+
   const paths = getSelectedPaths();
   if (paths.length === 0) return;
 
@@ -381,6 +390,71 @@ function alignPaths(alignment) {
   updateAnchorVisuals();
   updateBoundingBox();
   EditorState.two.update();
+}
+
+// Align selected anchor points to each other
+function alignSelectedPoints(alignment) {
+  if (!EditorState.selectedAnchors || EditorState.selectedAnchors.length < 2) return;
+
+  // Get absolute positions of selected anchors
+  const anchorPositions = EditorState.selectedAnchors.map(anchorData => {
+    const vertex = anchorData.vertex;
+    const path = anchorData.path || getCurrentPath();
+    const tx = path.translation ? path.translation.x : 0;
+    const ty = path.translation ? path.translation.y : 0;
+    return {
+      anchorData,
+      absX: vertex.x + tx,
+      absY: vertex.y + ty
+    };
+  });
+
+  // Calculate bounds of selected points
+  let minX = Infinity, maxX = -Infinity;
+  let minY = Infinity, maxY = -Infinity;
+  anchorPositions.forEach(p => {
+    minX = Math.min(minX, p.absX);
+    maxX = Math.max(maxX, p.absX);
+    minY = Math.min(minY, p.absY);
+    maxY = Math.max(maxY, p.absY);
+  });
+  const centerX = (minX + maxX) / 2;
+  const centerY = (minY + maxY) / 2;
+
+  // Align each point based on the alignment type
+  anchorPositions.forEach(p => {
+    const vertex = p.anchorData.vertex;
+    const path = p.anchorData.path || getCurrentPath();
+    const tx = path.translation ? path.translation.x : 0;
+    const ty = path.translation ? path.translation.y : 0;
+
+    let targetX = p.absX;
+    let targetY = p.absY;
+
+    switch (alignment) {
+      case 'left':
+        targetX = minX;
+        break;
+      case 'h-center':
+        targetX = centerX;
+        break;
+      case 'right':
+        targetX = maxX;
+        break;
+      case 'top':
+        targetY = minY;
+        break;
+      case 'v-middle':
+        targetY = centerY;
+        break;
+      case 'bottom':
+        targetY = maxY;
+        break;
+    }
+
+    vertex.x = targetX - tx;
+    vertex.y = targetY - ty;
+  });
 }
 
 // Align a single path to workspace bounds
@@ -486,7 +560,17 @@ function alignPathsToEachOther(alignment) {
 // ============================================
 
 // Distribute paths - requires 3+ selected paths (or all paths if 3+ exist)
+// If 3+ points are selected, distribute those points instead
 function distributePaths(mode) {
+  // Check if multiple anchors are selected - if so, distribute those points
+  if (EditorState.selectedAnchors && EditorState.selectedAnchors.length >= 3) {
+    distributeSelectedPoints(mode);
+    updateAnchorVisuals();
+    updateBoundingBox();
+    EditorState.two.update();
+    return;
+  }
+
   // First, determine which paths to distribute
   let pathIndices = [];
 
@@ -636,6 +720,129 @@ function distributeAlongLine(pathsWithBboxes) {
       vertex.x += deltaX;
       vertex.y += deltaY;
     });
+  });
+}
+
+// Distribute selected anchor points evenly
+function distributeSelectedPoints(mode) {
+  if (!EditorState.selectedAnchors || EditorState.selectedAnchors.length < 3) return;
+
+  // Get absolute positions of selected anchors
+  const anchorPositions = EditorState.selectedAnchors.map(anchorData => {
+    const vertex = anchorData.vertex;
+    const path = anchorData.path || getCurrentPath();
+    const tx = path.translation ? path.translation.x : 0;
+    const ty = path.translation ? path.translation.y : 0;
+    return {
+      anchorData,
+      vertex,
+      path,
+      tx, ty,
+      absX: vertex.x + tx,
+      absY: vertex.y + ty
+    };
+  });
+
+  switch (mode) {
+    case 'horizontal':
+      distributePointsHorizontally(anchorPositions);
+      break;
+    case 'vertical':
+      distributePointsVertically(anchorPositions);
+      break;
+    case 'along-line':
+      distributePointsAlongLine(anchorPositions);
+      break;
+  }
+}
+
+// Distribute points evenly along horizontal axis
+function distributePointsHorizontally(anchorPositions) {
+  // Sort by X position
+  anchorPositions.sort((a, b) => a.absX - b.absX);
+
+  const leftmost = anchorPositions[0];
+  const rightmost = anchorPositions[anchorPositions.length - 1];
+
+  const totalSpan = rightmost.absX - leftmost.absX;
+  const spacing = totalSpan / (anchorPositions.length - 1);
+
+  // Move intermediate points (keep endpoints in place)
+  for (let i = 1; i < anchorPositions.length - 1; i++) {
+    const p = anchorPositions[i];
+    const targetX = leftmost.absX + spacing * i;
+    p.vertex.x = targetX - p.tx;
+  }
+}
+
+// Distribute points evenly along vertical axis
+function distributePointsVertically(anchorPositions) {
+  // Sort by Y position
+  anchorPositions.sort((a, b) => a.absY - b.absY);
+
+  const topmost = anchorPositions[0];
+  const bottommost = anchorPositions[anchorPositions.length - 1];
+
+  const totalSpan = bottommost.absY - topmost.absY;
+  const spacing = totalSpan / (anchorPositions.length - 1);
+
+  // Move intermediate points (keep endpoints in place)
+  for (let i = 1; i < anchorPositions.length - 1; i++) {
+    const p = anchorPositions[i];
+    const targetY = topmost.absY + spacing * i;
+    p.vertex.y = targetY - p.ty;
+  }
+}
+
+// Distribute points evenly along the line between the two farthest points
+function distributePointsAlongLine(anchorPositions) {
+  // Find the two points that are farthest apart
+  let maxDistance = 0;
+  let endpoint1 = null;
+  let endpoint2 = null;
+
+  for (let i = 0; i < anchorPositions.length; i++) {
+    for (let j = i + 1; j < anchorPositions.length; j++) {
+      const dx = anchorPositions[j].absX - anchorPositions[i].absX;
+      const dy = anchorPositions[j].absY - anchorPositions[i].absY;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      if (distance > maxDistance) {
+        maxDistance = distance;
+        endpoint1 = anchorPositions[i];
+        endpoint2 = anchorPositions[j];
+      }
+    }
+  }
+
+  if (!endpoint1 || !endpoint2 || maxDistance === 0) return;
+
+  // Get all points except the two endpoints
+  const otherPoints = anchorPositions.filter(p => p !== endpoint1 && p !== endpoint2);
+
+  // Calculate the line direction vector
+  const lineX = endpoint2.absX - endpoint1.absX;
+  const lineY = endpoint2.absY - endpoint1.absY;
+
+  // Project each point onto the line and sort by projection
+  otherPoints.forEach(p => {
+    const dx = p.absX - endpoint1.absX;
+    const dy = p.absY - endpoint1.absY;
+    p.projectionT = (dx * lineX + dy * lineY) / (maxDistance * maxDistance);
+  });
+
+  otherPoints.sort((a, b) => a.projectionT - b.projectionT);
+
+  // Calculate even spacing along the line
+  const numSegments = otherPoints.length + 1;
+
+  // Move each point to its evenly spaced position on the line
+  otherPoints.forEach((p, i) => {
+    const t = (i + 1) / numSegments;
+    const targetX = endpoint1.absX + t * lineX;
+    const targetY = endpoint1.absY + t * lineY;
+    p.vertex.x = targetX - p.tx;
+    p.vertex.y = targetY - p.ty;
   });
 }
 

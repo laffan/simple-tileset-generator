@@ -1037,26 +1037,43 @@ function getCombPatternData() {
 }
 
 // Select a pattern for the combination (or null for no pattern)
-// Now stores pattern per-path
+// Now stores pattern per-path, and applies to all selected paths if multiple are selected
 function selectCombinationPattern(patternName, size, invert) {
-  const pathIndex = EditorState.currentPathIndex;
   const shouldInvert = invert !== undefined ? invert : false;
+  const patternSize = size || 16;
 
   CombinationEditorState.selectedPatternName = patternName;
-  CombinationEditorState.selectedPatternSize = size || 16;
+  CombinationEditorState.selectedPatternSize = patternSize;
   CombinationEditorState.selectedPatternInvert = shouldInvert;
 
-  // Store per-path pattern data
-  if (patternName) {
-    CombinationEditorState.pathPatterns[pathIndex] = {
-      patternName: patternName,
-      patternSize: size || 16,
-      patternInvert: shouldInvert
-    };
+  // Determine which paths to apply the pattern to
+  let pathIndicesToUpdate = [];
+
+  // If multiple paths are selected, apply to all of them
+  if (EditorState.selectedPathIndices && EditorState.selectedPathIndices.length > 0) {
+    pathIndicesToUpdate = [...EditorState.selectedPathIndices];
+    // Also include current path if not in selection
+    if (!pathIndicesToUpdate.includes(EditorState.currentPathIndex)) {
+      pathIndicesToUpdate.push(EditorState.currentPathIndex);
+    }
   } else {
-    // Clear pattern for this path
-    delete CombinationEditorState.pathPatterns[pathIndex];
+    // Otherwise just apply to current path
+    pathIndicesToUpdate = [EditorState.currentPathIndex];
   }
+
+  // Store per-path pattern data for all selected paths
+  pathIndicesToUpdate.forEach(pathIndex => {
+    if (patternName) {
+      CombinationEditorState.pathPatterns[pathIndex] = {
+        patternName: patternName,
+        patternSize: patternSize,
+        patternInvert: shouldInvert
+      };
+    } else {
+      // Clear pattern for this path
+      delete CombinationEditorState.pathPatterns[pathIndex];
+    }
+  });
 
   // Update the UI
   updatePatternPaletteSelection();

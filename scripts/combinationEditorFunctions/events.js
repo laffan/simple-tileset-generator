@@ -331,8 +331,15 @@ function drawCombPatternLinePreview() {
   }
 }
 
-// Setup keyboard events
+// Track if combination keyboard events have been set up
+var combKeyboardEventsInitialized = false;
+
+// Setup keyboard events (only once)
 function setupCombKeyboardEvents() {
+  // Prevent adding duplicate handlers
+  if (combKeyboardEventsInitialized) return;
+  combKeyboardEventsInitialized = true;
+
   document.addEventListener('keydown', function(e) {
     const modal = document.getElementById('combinationEditorModal');
     if (!modal || !modal.classList.contains('active')) return;

@@ -573,8 +573,15 @@ function setupEditorEvents() {
   setupKeyboardEvents();
 }
 
-// Set up keyboard event handlers
+// Track if keyboard events have been set up to prevent duplicate handlers
+var keyboardEventsInitialized = false;
+
+// Set up keyboard event handlers (only once)
 function setupKeyboardEvents() {
+  // Prevent adding duplicate handlers
+  if (keyboardEventsInitialized) return;
+  keyboardEventsInitialized = true;
+
   document.addEventListener('keydown', (e) => {
     // Only handle if the active editor modal is visible
     if (!isActiveEditorOpen()) return;
@@ -590,7 +597,9 @@ function setupKeyboardEvents() {
       if (EditorState.selectedAnchors && EditorState.selectedAnchors.length > 0) {
         deleteSelectedPoints();
       } else if (EditorState.paths.length > 1) {
-        // No anchors selected - delete current path (if more than one)
+        // No anchors selected - delete only the current path (not multi-selected ones)
+        // First, clear multi-selection to ensure only current path is deleted
+        EditorState.selectedPathIndices = [];
         deleteSelectedPath();
       }
     }

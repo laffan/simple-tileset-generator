@@ -158,6 +158,8 @@ function duplicateCurrentPath() {
   const currentPath = getCurrentPath();
   if (!currentPath) return null;
 
+  const oldPathIndex = EditorState.currentPathIndex;
+
   // Clone the vertices with their control points
   const clonedAnchors = currentPath.vertices.map((vertex, index) => {
     const ctrlLeftX = vertex.controls ? vertex.controls.left.x : 0;
@@ -189,11 +191,20 @@ function duplicateCurrentPath() {
   newPath.translation.set(currentPath.translation.x, currentPath.translation.y);
 
   // Add to paths array and Two.js scene
+  const newPathIndex = EditorState.paths.length;
   EditorState.paths.push(newPath);
   EditorState.two.add(newPath);
 
+  // Copy pattern data if in combination mode
+  if (EditorState.editorMode === 'combination' && typeof CombinationEditorState !== 'undefined') {
+    const oldPatternData = CombinationEditorState.pathPatterns[oldPathIndex];
+    if (oldPatternData) {
+      CombinationEditorState.pathPatterns[newPathIndex] = { ...oldPatternData };
+    }
+  }
+
   // Select the new path
-  EditorState.currentPathIndex = EditorState.paths.length - 1;
+  EditorState.currentPathIndex = newPathIndex;
   updatePathStyles();
   createAnchorVisuals();
 
@@ -247,6 +258,14 @@ window.duplicateSelectedPaths = function duplicateSelectedPaths() {
     EditorState.paths.push(newPath);
     EditorState.two.add(newPath);
     newIndices.push(newIndex);
+
+    // Copy pattern data if in combination mode
+    if (EditorState.editorMode === 'combination' && typeof CombinationEditorState !== 'undefined') {
+      const oldPatternData = CombinationEditorState.pathPatterns[pathIndex];
+      if (oldPatternData) {
+        CombinationEditorState.pathPatterns[newIndex] = { ...oldPatternData };
+      }
+    }
   });
 
   EditorState.two.update();
