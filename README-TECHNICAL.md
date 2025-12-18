@@ -68,6 +68,7 @@ simple-tileset-generator/
 │   │   ├── preview.js      # Live preview rendering
 │   │   ├── events.js       # Event handlers
 │   │   └── patternEditor.js # Pattern selection for paths
+│   ├── undoRedoManager.js  # Undo/redo system for all editors
 │   ├── combinations.js     # Combination list UI, selection
 │   ├── combinationData.js  # Combination registry, rendering
 │   └── tileTester/         # Tile tester modules
@@ -417,7 +418,121 @@ When the tileset is generated, combinations are rendered as multi-tile units:
 | `events.js` | Mouse/keyboard event handlers |
 | `patternEditor.js` | Pattern palette and per-path pattern selection |
 
-### 8. Tile Tester (`tileTester/`)
+### 8. Undo/Redo System (`undoRedoManager.js`)
+
+A snapshot-based undo/redo system for all three editors (shape, pattern, combination).
+
+#### Architecture
+
+The system uses a simple snapshot approach rather than command pattern:
+- Captures full editor state before each modifying operation
+- Stores serialized JSON snapshots in history stacks
+- Restores by deserializing and reinitializing the editor
+
+```javascript
+const UndoRedoManager = {
+  // Separate stacks for each editor
+  shapeHistory: [],
+  shapeRedoStack: [],
+  patternHistory: [],
+  patternRedoStack: [],
+  combinationHistory: [],
+  combinationRedoStack: [],
+
+  maxHistory: 10,      // Last N operations
+  isRestoring: false   // Prevents capture during restore
+};
+```
+
+#### Keyboard Shortcuts
+
+- **Cmd/Ctrl + Z** - Undo last operation
+- **Cmd/Ctrl + Shift + Z** - Redo last undone operation
+
+The keyboard handler auto-detects which editor is active based on modal visibility.
+
+#### State Serialization
+
+**Shape Editor:**
+```javascript
+{
+  paths: [{ vertices: [{x, y, ctrlLeft, ctrlRight}, ...], closed }],
+  currentPathIndex: number,
+  fillRule: string | null,
+  holePathIndices: [],
+  combinationTileRows: number,  // For combination mode
+  combinationTileCols: number
+}
+```
+
+**Pattern Editor:**
+```javascript
+{
+  pixelData: [[0,1,0,...], ...],  // 2D array copy
+  patternSize: number
+}
+```
+
+**Combination Editor:**
+```javascript
+{
+  paths: [...],                    // Same as shape
+  currentPathIndex: number,
+  fillRule: string | null,
+  holePathIndices: [],
+  tileRows: number,
+  tileCols: number,
+  pathPatterns: { "0": { patternName, patternSize, patternInvert }, ... }
+}
+```
+
+#### Capture Points
+
+State is captured **before** each modifying operation:
+
+| Editor | Operations |
+|--------|------------|
+| Shape | Drag anchor/control/path, resize, rotate, reflect, add/delete/duplicate path, insert point, toggle curve, toolbar actions |
+| Pattern | Freehand draw, line draw, invert, resize grid, load image, pan (spacebar+drag) |
+| Combination | All shape operations + grid size changes + pattern assignments + load from palette |
+
+#### Key Functions
+
+```javascript
+// Capture before operation
+UndoRedoManager.captureShapeState();
+UndoRedoManager.capturePatternState();
+UndoRedoManager.captureCombinationState();
+
+// Undo/Redo
+UndoRedoManager.undoShape();    // Returns true if successful
+UndoRedoManager.redoShape();
+UndoRedoManager.undoPattern();
+UndoRedoManager.redoPattern();
+UndoRedoManager.undoCombination();
+UndoRedoManager.redoCombination();
+
+// Clear history (called when opening editor)
+UndoRedoManager.clearShapeHistory();
+UndoRedoManager.clearPatternHistory();
+UndoRedoManager.clearCombinationHistory();
+
+// Check availability
+UndoRedoManager.canUndo('shape');  // Returns boolean
+UndoRedoManager.canRedo('pattern');
+```
+
+#### Implementation Details
+
+1. **Double-capture prevention:** Uses `capturedThisMousedown` flag in event handlers to prevent multiple captures during a single mouse interaction
+
+2. **Continuous operations:** Drag operations capture once at `mousedown`, not during `mousemove`
+
+3. **History isolation:** Each editor session starts fresh - history is cleared when opening a modal
+
+4. **Restore process:** On undo/redo, the editor is fully reinitialized from the snapshot (paths cleared, recreated from serialized data, anchor visuals rebuilt)
+
+### 9. Tile Tester (`tileTester/`)
 
 Full-screen modal for testing tileset appearance.
 
@@ -551,8 +666,9 @@ Scripts must be loaded in dependency order (see `index.html`):
 9. **Pattern editor modules** - patternEditorFunctions/*.js
 10. **Combination editor modules** - combinationEditorFunctions/*.js
 11. **Tile tester modules** - tileTester/*.js
-12. **main.js** - Entry point
-13. **session.js** - Must be last (uses all above)
+12. **undoRedoManager.js** - Undo/redo system (after all editors, before main.js)
+13. **main.js** - Entry point
+14. **session.js** - Must be last (uses all above)
 
 ## Global Variables
 
@@ -571,6 +687,7 @@ Due to vanilla JS architecture, these are globally accessible:
 | `PatternEditorState` | patternEditorFunctions/state.js | Pattern editor state |
 | `CombinationEditorState` | combinationEditorFunctions/state.js | Combination editor state |
 | `TileTesterState` | tileTester/state.js | Tile tester state |
+| `UndoRedoManager` | undoRedoManager.js | Undo/redo history management |
 | `customCombinationRegistry` | combinationData.js | Custom combination storage |
 | `canvas`, `ctx` | index.html | Main tileset canvas |
 | `shapes` | Referenced in shapes.js | Default shapes list |
