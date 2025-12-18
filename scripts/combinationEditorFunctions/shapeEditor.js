@@ -517,10 +517,16 @@ function combBooleanCut() {
 
 // Distribute wrapper for combination editor - delegates to main distributePaths
 function distributeComb(mode) {
+  console.log('distributeComb called with mode:', mode);
+  console.log('EditorState.editorMode:', EditorState.editorMode);
+  console.log('typeof distributePaths:', typeof distributePaths);
+
   // When in combination mode, EditorState is used, so we can call distributePaths directly
   if (EditorState.editorMode === 'combination' && typeof distributePaths === 'function') {
     distributePaths(mode);
     updateCombinationPreview();
+  } else {
+    console.log('Condition failed, not calling distributePaths');
   }
 }
 
