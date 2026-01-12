@@ -104,9 +104,19 @@ footer {
 .footer__left {
   display: flex;
   gap: 10px;
+  flex: 1;
+}
+
+.footer__center {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex: 1;
 }
 
 .footer__right {
   display: flex;
   gap: 10px;
+  justify-content: flex-end;
+  flex: 1;
 }
