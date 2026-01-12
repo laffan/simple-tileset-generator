@@ -192,10 +192,14 @@ function loadSession(file) {
   reader.readAsText(file);
 }
 
-// Set up event listeners for session buttons
-document.getElementById('saveSessionBtn').addEventListener('click', saveSession);
+// Set up event listeners for session links
+document.getElementById('saveSessionLink').addEventListener('click', function(e) {
+  e.preventDefault();
+  saveSession();
+});
 
-document.getElementById('loadSessionBtn').addEventListener('click', function() {
+document.getElementById('loadSessionLink').addEventListener('click', function(e) {
+  e.preventDefault();
   document.getElementById('loadSessionInput').click();
 });
 

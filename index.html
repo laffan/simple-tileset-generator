@@ -188,12 +188,11 @@
                 <h1>Simple Tileset Generator</h1>
             </div>
             <div class="footer__right">
-                <button id="saveSessionBtn" class="sessionBtn">
-                    Save Session
-                </button>
-                <button id="loadSessionBtn" class="sessionBtn">
-                    Load Session
-                </button>
+                <div class="session-links">
+                    <a href="#" class="session-link" id="saveSessionLink">Save Session</a>
+                    <span class="link-separator">|</span>
+                    <a href="#" class="session-link" id="loadSessionLink">Load Session</a>
+                </div>
                 <input type="file" id="loadSessionInput" accept=".json" />
                 <div class="download-links" id="tilesetDownloadLinks">
                     <span class="download-label">Download Tileset:</span>
@@ -807,51 +806,33 @@
                         ></div>
                     </div>
 
-                    <!-- Bottom Left Zoom Controls -->
-                    <div class="tester-zoom-controls">
-                        <a
-                            href="#"
-                            class="tester-zoom-link active"
-                            data-zoom="1"
-                            >1x</a
-                        >
-                        <a href="#" class="tester-zoom-link" data-zoom="2"
-                            >2x</a
-                        >
-                        <a href="#" class="tester-zoom-link" data-zoom="3"
-                            >3x</a
-                        >
-                        <a href="#" class="tester-zoom-link" data-zoom="4"
-                            >4x</a
-                        >
-                    </div>
-
-                    <!-- Bottom Right Controls -->
-                    <div class="tester-controls">
+                    <!-- Bottom Bar with all controls -->
+                    <div class="tester-bottom-bar">
                         <input
                             type="color"
                             id="tileTesterBgColorPicker"
                             class="tester-color-picker-hidden"
                         />
-                        <button
-                            id="tileTesterBgColorBtn"
-                            class="tester-control-btn"
-                        >
-                            Background
-                        </button>
-                        <button
-                            id="tileTesterClearBtn"
-                            class="tester-control-btn"
-                        >
-                            Clear
-                        </button>
-                    </div>
-                    <div class="tester-bottom-bar">
-                        <div class="download-links tester-download-links" id="tileTesterDownloadLinks">
-                            <span class="download-label">Download:</span>
-                            <a href="#" class="download-link" data-format="png">PNG</a>
-                            <span class="download-separator">|</span>
-                            <a href="#" class="download-link" data-format="svg">SVG</a>
+                        <!-- Left: Zoom controls -->
+                        <div class="tester-bar-left">
+                            <span class="bar-label">Zoom:</span>
+                            <a href="#" class="bar-link tester-zoom-link active" data-zoom="1">1x</a>
+                            <a href="#" class="bar-link tester-zoom-link" data-zoom="2">2x</a>
+                            <a href="#" class="bar-link tester-zoom-link" data-zoom="3">3x</a>
+                            <a href="#" class="bar-link tester-zoom-link" data-zoom="4">4x</a>
+                        </div>
+                        <!-- Center: Download -->
+                        <div class="tester-bar-center" id="tileTesterDownloadLinks">
+                            <span class="bar-label">Download:</span>
+                            <a href="#" class="bar-link download-link" data-format="png">PNG</a>
+                            <span class="bar-separator">|</span>
+                            <a href="#" class="bar-link download-link" data-format="svg">SVG</a>
+                        </div>
+                        <!-- Right: Background & Clear -->
+                        <div class="tester-bar-right">
+                            <a href="#" class="bar-link" id="tileTesterBgColorLink">Background</a>
+                            <span class="bar-separator">|</span>
+                            <a href="#" class="bar-link" id="tileTesterClearLink">Clear</a>
                         </div>
                     </div>
                 </div>

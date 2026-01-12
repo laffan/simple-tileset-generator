@@ -1552,36 +1552,10 @@
   color: #333;
 }
 
-/* Zoom controls - bottom left of canvas */
-.tester-zoom-controls {
-  position: absolute;
-  bottom: 20px;
-  left: 20px;
-  display: flex;
-  gap: 8px;
-}
-
-.tester-zoom-link {
-  padding: 8px 16px;
-  font-size: 13px;
-  border: 1px solid #ccc;
-  background: white;
-  border-radius: 4px;
-  cursor: pointer;
-  text-decoration: none;
-  color: #333;
-  transition: all 0.15s ease;
-}
-
-.tester-zoom-link:hover {
-  background: #f0f0f0;
-  border-color: #999;
-}
-
+/* Zoom link active state - used in bottom bar */
 .tester-zoom-link.active {
-  background: #007bff;
-  color: white;
-  border-color: #007bff;
+  color: #4da3ff;
+  font-weight: 600;
 }
 
 /* Hidden state for palette window content */
@@ -1679,41 +1653,6 @@
 
 #tileTesterMainCanvas.painting-mode {
   cursor: crosshair;
-}
-
-/* Bottom controls */
-.tester-controls {
-  position: absolute;
-  bottom: 20px;
-  right: 20px;
-  display: flex;
-  gap: 8px;
-}
-
-.tester-control-btn {
-  padding: 8px 16px;
-  font-size: 13px;
-  border: 1px solid #ccc;
-  background: white;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.tester-control-btn:hover {
-  background: #f0f0f0;
-  border-color: #999;
-}
-
-.tester-download-btn {
-  background: #28a745;
-  color: white;
-  border-color: #28a745;
-}
-
-.tester-download-btn:hover {
-  background: #218838;
-  border-color: #218838;
 }
 
 .tester-color-picker-hidden {
@@ -2701,6 +2640,31 @@
   background: #0056b3;
 }
 
+/* Session Links Styles */
+.session-links {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  margin-right: 20px;
+}
+
+.session-link {
+  color: #007bff;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.session-link:hover {
+  color: #0056b3;
+  text-decoration: underline;
+}
+
+.link-separator {
+  color: #999;
+}
+
 /* Download Links Styles */
 .download-links {
   display: inline-flex;
@@ -2736,23 +2700,51 @@
   bottom: 0;
   left: 0;
   right: 0;
-  background: rgba(255, 255, 255, 0.95);
-  border-top: 1px solid #ddd;
-  padding: 8px 16px;
+  background: #1a1a1a;
+  padding: 10px 20px;
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
   z-index: 10;
 }
 
-.tester-download-links {
+.tester-bar-left,
+.tester-bar-center,
+.tester-bar-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-size: 13px;
 }
 
-.tester-download-links .download-label {
-  color: #555;
+.tester-bar-center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
-.tester-download-links .download-link {
+.bar-label {
+  color: #999;
   font-weight: 500;
+}
+
+.bar-link {
+  color: #fff;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.bar-link:hover {
+  color: #4da3ff;
+  text-decoration: underline;
+}
+
+.bar-link.active {
+  color: #4da3ff;
+  font-weight: 600;
+}
+
+.bar-separator {
+  color: #666;
 }

@@ -210,11 +210,12 @@ function setupPaletteCanvasEvents() {
 
 // Setup control button events
 function setupControlButtonEvents() {
-  const bgColorBtn = document.getElementById('tileTesterBgColorBtn');
+  const bgColorLink = document.getElementById('tileTesterBgColorLink');
   const bgColorPicker = document.getElementById('tileTesterBgColorPicker');
 
-  if (bgColorBtn && bgColorPicker) {
-    bgColorBtn.addEventListener('click', function() {
+  if (bgColorLink && bgColorPicker) {
+    bgColorLink.addEventListener('click', function(e) {
+      e.preventDefault();
       bgColorPicker.click();
     });
 
@@ -226,9 +227,10 @@ function setupControlButtonEvents() {
     bgColorPicker.value = TileTesterState.backgroundColor;
   }
 
-  const clearBtn = document.getElementById('tileTesterClearBtn');
-  if (clearBtn) {
-    clearBtn.addEventListener('click', function() {
+  const clearLink = document.getElementById('tileTesterClearLink');
+  if (clearLink) {
+    clearLink.addEventListener('click', function(e) {
+      e.preventDefault();
       if (confirm('Clear all tiles from the current layer?')) {
         clearTileTesterGrid();
         updateLayerThumbnail(TileTesterState.activeLayerId);
