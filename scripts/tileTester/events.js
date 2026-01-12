@@ -212,6 +212,8 @@ function setupPaletteCanvasEvents() {
 function setupControlButtonEvents() {
   const bgColorLink = document.getElementById('tileTesterBgColorLink');
   const bgColorPicker = document.getElementById('tileTesterBgColorPicker');
+  const clearBgLink = document.getElementById('tileTesterClearBgLink');
+  const clearBgSeparator = document.getElementById('tileTesterClearBgSeparator');
 
   if (bgColorLink && bgColorPicker) {
     bgColorLink.addEventListener('click', function(e) {
@@ -222,11 +224,26 @@ function setupControlButtonEvents() {
     bgColorPicker.addEventListener('input', function() {
       TileTesterState.backgroundColor = this.value;
       renderTileTesterMainCanvas();
+      updateClearBackgroundVisibility();
     });
 
     bgColorPicker.value = TileTesterState.backgroundColor;
   }
 
+  // Clear background link - resets background to default transparent
+  if (clearBgLink) {
+    clearBgLink.addEventListener('click', function(e) {
+      e.preventDefault();
+      TileTesterState.backgroundColor = '#d0d0d0';
+      if (bgColorPicker) {
+        bgColorPicker.value = TileTesterState.backgroundColor;
+      }
+      renderTileTesterMainCanvas();
+      updateClearBackgroundVisibility();
+    });
+  }
+
+  // Clear shapes link
   const clearLink = document.getElementById('tileTesterClearLink');
   if (clearLink) {
     clearLink.addEventListener('click', function(e) {
@@ -253,6 +270,22 @@ function setupControlButtonEvents() {
         }
       });
     });
+  }
+
+  // Initial visibility check for clear background link
+  updateClearBackgroundVisibility();
+}
+
+// Show/hide clear background link based on whether a custom background is set
+function updateClearBackgroundVisibility() {
+  const clearBgLink = document.getElementById('tileTesterClearBgLink');
+  const clearBgSeparator = document.getElementById('tileTesterClearBgSeparator');
+  const defaultBg = '#d0d0d0';
+
+  if (clearBgLink && clearBgSeparator) {
+    const isCustomBg = TileTesterState.backgroundColor !== defaultBg;
+    clearBgLink.style.display = isCustomBg ? 'inline' : 'none';
+    clearBgSeparator.style.display = isCustomBg ? 'inline' : 'none';
   }
 
   const closeBtn = document.getElementById('tileTesterCloseBtn');

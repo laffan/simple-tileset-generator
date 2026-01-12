@@ -1655,8 +1655,19 @@
   cursor: crosshair;
 }
 
+/* Wrapper for background color picker positioning */
+.tester-bg-picker-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
 .tester-color-picker-hidden {
   position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 8px;
   opacity: 0;
   pointer-events: none;
 }

@@ -808,11 +808,6 @@
 
                     <!-- Bottom Bar with all controls -->
                     <div class="tester-bottom-bar">
-                        <input
-                            type="color"
-                            id="tileTesterBgColorPicker"
-                            class="tester-color-picker-hidden"
-                        />
                         <!-- Left: Zoom controls -->
                         <div class="tester-bar-left">
                             <span class="bar-label">Zoom:</span>
@@ -830,9 +825,18 @@
                         </div>
                         <!-- Right: Background & Clear -->
                         <div class="tester-bar-right">
-                            <a href="#" class="bar-link" id="tileTesterBgColorLink">Background</a>
+                            <div class="tester-bg-picker-wrapper">
+                                <a href="#" class="bar-link" id="tileTesterBgColorLink">Background</a>
+                                <input
+                                    type="color"
+                                    id="tileTesterBgColorPicker"
+                                    class="tester-color-picker-hidden"
+                                />
+                            </div>
+                            <span class="bar-separator" id="tileTesterClearBgSeparator" style="display: none;">|</span>
+                            <a href="#" class="bar-link" id="tileTesterClearBgLink" style="display: none;">Clear Background</a>
                             <span class="bar-separator">|</span>
-                            <a href="#" class="bar-link" id="tileTesterClearLink">Clear</a>
+                            <a href="#" class="bar-link" id="tileTesterClearLink">Clear Shapes</a>
                         </div>
                     </div>
                 </div>

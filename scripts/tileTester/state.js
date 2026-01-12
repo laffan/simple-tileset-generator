@@ -183,6 +183,15 @@ function loadTileTesterData(data) {
   }
   if (data.backgroundColor !== undefined) {
     TileTesterState.backgroundColor = data.backgroundColor;
+    // Update color picker if it exists
+    const bgColorPicker = document.getElementById('tileTesterBgColorPicker');
+    if (bgColorPicker) {
+      bgColorPicker.value = data.backgroundColor;
+    }
+    // Update clear background visibility
+    if (typeof updateClearBackgroundVisibility === 'function') {
+      updateClearBackgroundVisibility();
+    }
   }
   if (data.paletteFitMode !== undefined) {
     TileTesterState.paletteFitMode = data.paletteFitMode;
