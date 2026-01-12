@@ -54,6 +54,7 @@ var TileTesterState = {
 
   // Canvas selection state for creating custom tiles (grid-based like palette selection)
   isCanvasSelecting: false,
+  isCanvasSelectionFinalized: false,  // true when selection is complete (after mouseup)
   canvasSelectionStart: null,  // {row, col}
   canvasSelection: null,       // {startRow, startCol, endRow, endCol}
 
@@ -211,6 +212,7 @@ function resetTileTesterState() {
   TileTesterState.lastPaintedCell = null;
   TileTesterState.tilesetImageData = null;
   TileTesterState.isCanvasSelecting = false;
+  TileTesterState.isCanvasSelectionFinalized = false;
   TileTesterState.canvasSelectionStart = null;
   TileTesterState.canvasSelection = null;
   TileTesterState.hoverPosition = null;

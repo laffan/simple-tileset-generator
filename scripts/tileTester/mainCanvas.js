@@ -47,6 +47,11 @@ function renderTileTesterMainCanvas() {
   // Draw ghost preview if hovering with a selection
   drawGhostPreview();
 
+  // Draw canvas selection overlay if present (for custom tile creation)
+  if (TileTesterState.canvasSelection) {
+    renderCanvasSelection();
+  }
+
   // Update grid overlay
   updateGridOverlay();
 }

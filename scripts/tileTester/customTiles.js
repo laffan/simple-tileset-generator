@@ -114,6 +114,7 @@ function removeCustomTile(tileId) {
 // Clear the canvas drag selection
 function clearCanvasSelection() {
   TileTesterState.isCanvasSelecting = false;
+  TileTesterState.isCanvasSelectionFinalized = false;
   TileTesterState.canvasSelectionStart = null;
   TileTesterState.canvasSelection = null;
   hideSelectionUI();
@@ -142,6 +143,7 @@ function setupCanvasSelectionEvents() {
       if (!pos) return;
 
       TileTesterState.isCanvasSelecting = true;
+      TileTesterState.isCanvasSelectionFinalized = false;
       TileTesterState.canvasSelectionStart = { row: pos.gridY, col: pos.gridX };
       TileTesterState.canvasSelection = {
         startRow: pos.gridY,
@@ -151,7 +153,7 @@ function setupCanvasSelectionEvents() {
       };
 
       hideSelectionUI();
-      renderCanvasSelection();
+      renderTileTesterMainCanvas();
       return;
     }
 
@@ -180,7 +182,7 @@ function setupCanvasSelectionEvents() {
           endRow: pos.gridY,
           endCol: pos.gridX
         };
-        renderCanvasSelection();
+        renderTileTesterMainCanvas();
       }
       return;
     }
@@ -201,6 +203,8 @@ function setupCanvasSelectionEvents() {
 
       // Check if we have a valid selection (at least one tile)
       if (TileTesterState.canvasSelection) {
+        // Mark selection as finalized to show dashed border
+        TileTesterState.isCanvasSelectionFinalized = true;
         showSelectionUI();
       }
       return;
@@ -231,9 +235,6 @@ function setupCanvasSelectionEvents() {
 
 // Render selection rectangle on canvas (blue color to differentiate from palette red)
 function renderCanvasSelection() {
-  // First render the normal canvas
-  renderTileTesterMainCanvas();
-
   const sel = TileTesterState.canvasSelection;
   if (!sel) return;
 
@@ -250,14 +251,25 @@ function renderCanvasSelection() {
   const width = (maxCol - minCol + 1) * tileSize;
   const height = (maxRow - minRow + 1) * tileSize;
 
-  // Semi-transparent blue fill
-  ctx.fillStyle = 'rgba(0, 123, 255, 0.2)';
-  ctx.fillRect(x, y, width, height);
+  // Check if selection is finalized (after mouseup) or active (during drag)
+  const isFinalized = TileTesterState.isCanvasSelectionFinalized;
 
-  // Blue border
-  ctx.strokeStyle = '#007bff';
-  ctx.lineWidth = 3;
-  ctx.strokeRect(x + 1.5, y + 1.5, width - 3, height - 3);
+  if (isFinalized) {
+    // Finalized selection: dashed blue border only, no fill
+    ctx.strokeStyle = '#007bff';
+    ctx.lineWidth = 3;
+    ctx.setLineDash([10, 5]);  // Dashed line pattern
+    ctx.strokeRect(x + 1.5, y + 1.5, width - 3, height - 3);
+    ctx.setLineDash([]);  // Reset to solid line
+  } else {
+    // Active selection (during drag): semi-transparent fill with solid border
+    ctx.fillStyle = 'rgba(0, 123, 255, 0.2)';
+    ctx.fillRect(x, y, width, height);
+
+    ctx.strokeStyle = '#007bff';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(x + 1.5, y + 1.5, width - 3, height - 3);
+  }
 }
 
 // Show the "Add to custom tile" button UI
@@ -308,8 +320,8 @@ function showSelectionUI() {
   ui.appendChild(btn);
   document.body.appendChild(ui);
 
-  // Render the selection overlay
-  renderCanvasSelection();
+  // Trigger a re-render to show the finalized selection
+  renderTileTesterMainCanvas();
 }
 
 // Hide the selection UI
