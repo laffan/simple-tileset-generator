@@ -1486,22 +1486,63 @@
   background: rgba(0, 0, 0, 0.7);
 }
 
-/* Floating Palette Window */
+/* Fixed Sidebar */
 .tester-palette-window {
-  position: absolute;
-  top: 20px;
-  left: 20px;
+  position: fixed;
+  top: 0;
+  left: 0;
   background: white;
-  border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
   z-index: 50;
   width: 320px;
-  height: 80vh;
-  min-height: 200px;
-  max-height: 90vh;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  transition: transform 0.3s ease;
+}
+
+.tester-palette-window.collapsed {
+  transform: translateX(-320px);
+}
+
+.tester-sidebar-content {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.tester-sidebar-toggle {
+  position: absolute;
+  right: -30px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 30px;
+  height: 60px;
+  background: white;
+  border: 1px solid #ccc;
+  border-left: none;
+  border-radius: 0 6px 6px 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+  transition: background 0.2s;
+}
+
+.tester-sidebar-toggle:hover {
+  background: #f0f0f0;
+}
+
+.tester-sidebar-toggle .toggle-arrow {
+  font-size: 18px;
+  color: #666;
+  transition: transform 0.3s ease;
+}
+
+.tester-palette-window.collapsed .tester-sidebar-toggle .toggle-arrow {
+  transform: rotate(180deg);
 }
 
 .tester-palette-header {
@@ -1511,9 +1552,7 @@
   padding: 10px 15px;
   background: #f5f5f5;
   border-bottom: 1px solid #ddd;
-  border-radius: 8px 8px 0 0;
-  cursor: move;
-  user-select: none;
+  flex-shrink: 0;
 }
 
 .tester-palette-header span {
@@ -1541,35 +1580,10 @@
   margin: 0;
 }
 
-.tester-hide-link {
-  font-size: 11px;
-  color: #666;
-  text-decoration: underline;
-  cursor: pointer;
-}
-
-.tester-hide-link:hover {
-  color: #333;
-}
-
 /* Zoom link active state - used in bottom bar */
 .tester-zoom-link.active {
   color: #4da3ff;
   font-weight: 600;
-}
-
-/* Hidden state for palette window content */
-.tester-palette-window.content-hidden .tester-palette-container,
-.tester-palette-window.content-hidden .tester-section-divider,
-.tester-palette-window.content-hidden .tester-layers-section,
-.tester-palette-window.content-hidden .tester-custom-tiles-section,
-.tester-palette-window.content-hidden .tester-resize-handle {
-  display: none;
-}
-
-.tester-palette-window.content-hidden {
-  height: auto !important;
-  min-height: auto;
 }
 
 .tester-palette-container {
@@ -1612,13 +1626,19 @@
 .tester-main-area {
   position: absolute;
   top: 0;
-  left: 0;
-  width: 100%;
+  left: 320px;
+  width: calc(100% - 320px);
   height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  transition: left 0.3s ease, width 0.3s ease;
+}
+
+.tester-palette-window.collapsed ~ .tester-main-area {
+  left: 0;
+  width: 100%;
 }
 
 .tester-canvas-container {
@@ -1673,79 +1693,15 @@
 }
 
 /* =============================================
-   TILE TESTER RESIZE HANDLES
-   ============================================= */
-
-/* Section divider between palette and layers */
-.tester-section-divider {
-  height: 8px;
-  background: linear-gradient(to bottom, #e0e0e0, #ccc, #e0e0e0);
-  cursor: ns-resize;
-  flex-shrink: 0;
-  position: relative;
-}
-
-.tester-section-divider::after {
-  content: '';
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: 30px;
-  height: 3px;
-  background: #999;
-  border-radius: 2px;
-}
-
-.tester-section-divider:hover {
-  background: linear-gradient(to bottom, #d0d0d0, #bbb, #d0d0d0);
-}
-
-.tester-section-divider:hover::after {
-  background: #666;
-}
-
-/* Bottom resize handle for window height */
-.tester-resize-handle {
-  height: 8px;
-  background: linear-gradient(to bottom, #e0e0e0, #ccc);
-  cursor: ns-resize;
-  flex-shrink: 0;
-  border-radius: 0 0 8px 8px;
-  position: relative;
-}
-
-.tester-resize-handle::after {
-  content: '';
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: 30px;
-  height: 3px;
-  background: #999;
-  border-radius: 2px;
-}
-
-.tester-resize-handle:hover {
-  background: linear-gradient(to bottom, #d0d0d0, #bbb);
-}
-
-.tester-resize-handle:hover::after {
-  background: #666;
-}
-
-/* =============================================
    TILE TESTER LAYERS SECTION
    ============================================= */
 
 .tester-layers-section {
   padding: 10px;
-  flex: 0 0 30%;
-  min-height: 100px;
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  border-top: 1px solid #ddd;
 }
 
 .tester-layers-header {
@@ -2525,12 +2481,10 @@
 /* Custom tiles section in palette window */
 .tester-custom-tiles-section {
   padding: 10px;
-  flex: 0 0 auto;
-  min-height: 80px;
-  max-height: 200px;
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  border-top: 1px solid #ddd;
 }
 
 .tester-custom-tiles-header {

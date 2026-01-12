@@ -23,14 +23,8 @@ function setupTileTesterPalette() {
     });
   }
 
-  // Setup hide button
-  setupPaletteHideButton();
-
-  // Setup dragging for palette window
-  setupPaletteWindowDrag();
-
-  // Setup resize handles
-  setupPaletteWindowResize();
+  // Setup sidebar toggle
+  setupSidebarToggle();
 
   // Initial fit mode
   updatePaletteFitMode();
@@ -90,17 +84,15 @@ function drawPaletteGridLines() {
   }
 }
 
-// Setup hide button
-function setupPaletteHideButton() {
-  const hideBtn = document.getElementById('tileTesterHideBtn');
+// Setup sidebar toggle button
+function setupSidebarToggle() {
+  const toggleBtn = document.getElementById('tileTesterSidebarToggle');
   const paletteWindow = document.getElementById('tileTesterPaletteWindow');
 
-  if (!hideBtn || !paletteWindow) return;
+  if (!toggleBtn || !paletteWindow) return;
 
-  hideBtn.addEventListener('click', function(e) {
-    e.preventDefault();
-    const isHidden = paletteWindow.classList.toggle('content-hidden');
-    this.textContent = isHidden ? 'Show' : 'Hide';
+  toggleBtn.addEventListener('click', function() {
+    paletteWindow.classList.toggle('collapsed');
   });
 }
 
@@ -271,43 +263,6 @@ function handlePaletteMouseUp(e) {
   updateCursorPreview();
 }
 
-// Setup palette window dragging
-function setupPaletteWindowDrag() {
-  const paletteWindow = document.getElementById('tileTesterPaletteWindow');
-  const header = document.getElementById('tileTesterPaletteHeader');
-
-  if (!paletteWindow || !header) return;
-
-  let isDragging = false;
-  let startX, startY, startLeft, startTop;
-
-  header.addEventListener('mousedown', function(e) {
-    // Don't drag if clicking on controls
-    if (e.target.closest('.tester-palette-controls')) return;
-
-    isDragging = true;
-    startX = e.clientX;
-    startY = e.clientY;
-    startLeft = paletteWindow.offsetLeft;
-    startTop = paletteWindow.offsetTop;
-
-    e.preventDefault();
-  });
-
-  document.addEventListener('mousemove', function(e) {
-    if (!isDragging) return;
-
-    const dx = e.clientX - startX;
-    const dy = e.clientY - startY;
-
-    paletteWindow.style.left = (startLeft + dx) + 'px';
-    paletteWindow.style.top = (startTop + dy) + 'px';
-  });
-
-  document.addEventListener('mouseup', function() {
-    isDragging = false;
-  });
-}
 
 // Update cursor preview based on selected tile
 function updateCursorPreview() {
@@ -322,60 +277,3 @@ function updateCursorPreview() {
   }
 }
 
-// Setup resize handles for palette window
-function setupPaletteWindowResize() {
-  const paletteWindow = document.getElementById('tileTesterPaletteWindow');
-  const resizeHandle = document.getElementById('tileTesterResizeHandle');
-  const sectionDivider = document.getElementById('tileTesterSectionDivider');
-  const paletteContainer = document.getElementById('tileTesterPaletteContainer');
-  const layersSection = document.getElementById('tileTesterLayersSection');
-
-  if (!paletteWindow || !resizeHandle || !sectionDivider) return;
-
-  // Bottom resize handle - resizes entire window height
-  let isResizingWindow = false;
-  let startHeight, startMouseY;
-
-  resizeHandle.addEventListener('mousedown', function(e) {
-    isResizingWindow = true;
-    startHeight = paletteWindow.offsetHeight;
-    startMouseY = e.clientY;
-    e.preventDefault();
-  });
-
-  // Section divider - resizes palette vs layers
-  let isResizingSection = false;
-  let startPaletteHeight, startLayersHeight, dividerStartY;
-
-  sectionDivider.addEventListener('mousedown', function(e) {
-    isResizingSection = true;
-    startPaletteHeight = paletteContainer.offsetHeight;
-    startLayersHeight = layersSection.offsetHeight;
-    dividerStartY = e.clientY;
-    e.preventDefault();
-  });
-
-  document.addEventListener('mousemove', function(e) {
-    if (isResizingWindow) {
-      const dy = e.clientY - startMouseY;
-      const newHeight = Math.max(200, Math.min(window.innerHeight * 0.9, startHeight + dy));
-      paletteWindow.style.height = newHeight + 'px';
-    }
-
-    if (isResizingSection && paletteContainer && layersSection) {
-      const dy = e.clientY - dividerStartY;
-      const newPaletteHeight = Math.max(80, startPaletteHeight + dy);
-      const newLayersHeight = Math.max(60, startLayersHeight - dy);
-
-      // Use flex-basis for controlled sizing
-      paletteContainer.style.flex = 'none';
-      paletteContainer.style.height = newPaletteHeight + 'px';
-      layersSection.style.height = newLayersHeight + 'px';
-    }
-  });
-
-  document.addEventListener('mouseup', function() {
-    isResizingWindow = false;
-    isResizingSection = false;
-  });
-}

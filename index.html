@@ -75,7 +75,7 @@
                     <span>Preview</span>
                     <div class="previewHeaderControls">
                         <a href="#" id="testTilesetBtn" class="testLink"
-                            >Test</a
+                            >Test &amp; Combine</a
                         >
                         <label class="fitCheckboxLabel">
                             <input type="checkbox" id="fitPreview" /> Fit
@@ -706,12 +706,15 @@
                     &times;
                 </button>
 
-                <!-- Floating Palette Window -->
+                <!-- Fixed Sidebar -->
                 <div id="tileTesterPaletteWindow" class="tester-palette-window">
-                    <div
-                        id="tileTesterPaletteHeader"
-                        class="tester-palette-header"
-                    >
+                    <!-- Toggle button on right edge -->
+                    <button id="tileTesterSidebarToggle" class="tester-sidebar-toggle">
+                        <span class="toggle-arrow">&lsaquo;</span>
+                    </button>
+
+                    <div class="tester-sidebar-content">
+                    <div class="tester-palette-header">
                         <span>Tile Palette</span>
                         <div class="tester-palette-controls">
                             <label class="tester-fit-label">
@@ -721,12 +724,6 @@
                                 />
                                 Fit
                             </label>
-                            <a
-                                href="#"
-                                id="tileTesterHideBtn"
-                                class="tester-hide-link"
-                                >Hide</a
-                            >
                         </div>
                     </div>
                     <div
@@ -740,12 +737,6 @@
                             <canvas id="tileTesterPaletteCanvas"></canvas>
                         </div>
                     </div>
-
-                    <!-- Section Divider (resizes palette vs layers) -->
-                    <div
-                        id="tileTesterSectionDivider"
-                        class="tester-section-divider"
-                    ></div>
 
                     <!-- Layers Section -->
                     <div
@@ -769,12 +760,6 @@
                         </div>
                     </div>
 
-                    <!-- Custom Tiles Section Divider -->
-                    <div
-                        id="tileTesterCustomTilesDivider"
-                        class="tester-section-divider"
-                    ></div>
-
                     <!-- Custom Tiles Section -->
                     <div
                         id="tileTesterCustomTilesSection"
@@ -790,12 +775,7 @@
                             <!-- Custom tiles will be rendered here dynamically -->
                         </div>
                     </div>
-
-                    <!-- Bottom Resize Handle (resizes entire window height) -->
-                    <div
-                        id="tileTesterResizeHandle"
-                        class="tester-resize-handle"
-                    ></div>
+                    </div><!-- end .tester-sidebar-content -->
                 </div>
 
                 <!-- Main Canvas Area -->
