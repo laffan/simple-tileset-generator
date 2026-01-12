@@ -24,8 +24,44 @@ document.getElementById('selectAllCombinations').addEventListener('click', selec
 document.getElementById('deselectAllCombinations').addEventListener('click', deselectAllCombinations);
 
 
-// Function to trigger download
-document.getElementById('downloadBtn').onclick = function () {
+// Download dropdown handling for main tileset
+(function() {
+  const dropdown = document.getElementById('tilesetDownloadDropdown');
+  const downloadBtn = document.getElementById('downloadBtn');
+
+  if (!dropdown || !downloadBtn) return;
+
+  // Toggle dropdown on button click
+  downloadBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    dropdown.classList.toggle('active');
+  });
+
+  // Handle download option selection
+  dropdown.querySelectorAll('.download-option').forEach(option => {
+    option.addEventListener('click', function(e) {
+      e.stopPropagation();
+      const format = this.dataset.format;
+      dropdown.classList.remove('active');
+
+      if (format === 'svg') {
+        downloadTilesetSVG();
+      } else {
+        downloadTilesetPNG();
+      }
+    });
+  });
+
+  // Close dropdown when clicking outside
+  document.addEventListener('click', function(e) {
+    if (!dropdown.contains(e.target)) {
+      dropdown.classList.remove('active');
+    }
+  });
+})();
+
+// Download tileset as PNG
+function downloadTilesetPNG() {
   // Check if there are custom tiles to include
   const customTiles = TileTesterState && TileTesterState.customTiles ? TileTesterState.customTiles : [];
 
@@ -50,7 +86,7 @@ document.getElementById('downloadBtn').onclick = function () {
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
-};
+}
 
 // Create a combined canvas that includes both main tileset and custom tiles
 function createCombinedTilesetCanvas() {

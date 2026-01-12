@@ -236,9 +236,38 @@ function setupControlButtonEvents() {
     });
   }
 
+  // Download dropdown handling
+  const downloadDropdown = document.getElementById('tileTesterDownloadDropdown');
   const downloadBtn = document.getElementById('tileTesterDownloadBtn');
-  if (downloadBtn) {
-    downloadBtn.addEventListener('click', downloadTileTesterCanvas);
+
+  if (downloadDropdown && downloadBtn) {
+    // Toggle dropdown on button click
+    downloadBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      downloadDropdown.classList.toggle('active');
+    });
+
+    // Handle download option selection
+    downloadDropdown.querySelectorAll('.download-option').forEach(option => {
+      option.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const format = this.dataset.format;
+        downloadDropdown.classList.remove('active');
+
+        if (format === 'svg') {
+          downloadTilemapSVG();
+        } else {
+          downloadTileTesterCanvas();
+        }
+      });
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+      if (!downloadDropdown.contains(e.target)) {
+        downloadDropdown.classList.remove('active');
+      }
+    });
   }
 
   const closeBtn = document.getElementById('tileTesterCloseBtn');
