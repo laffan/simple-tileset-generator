@@ -195,12 +195,11 @@
                     Load Session
                 </button>
                 <input type="file" id="loadSessionInput" accept=".json" />
-                <div class="download-dropdown" id="tilesetDownloadDropdown">
-                    <button id="downloadBtn" class="download-dropdown-btn">Download Tileset!</button>
-                    <div class="download-dropdown-menu">
-                        <button class="download-option" data-format="png">PNG</button>
-                        <button class="download-option" data-format="svg">SVG</button>
-                    </div>
+                <div class="download-links" id="tilesetDownloadLinks">
+                    <span class="download-label">Download Tileset:</span>
+                    <a href="#" class="download-link" data-format="png">PNG</a>
+                    <span class="download-separator">|</span>
+                    <a href="#" class="download-link" data-format="svg">SVG</a>
                 </div>
             </div>
         </footer>
@@ -846,17 +845,13 @@
                         >
                             Clear
                         </button>
-                        <div class="download-dropdown tester-download-dropdown" id="tileTesterDownloadDropdown">
-                            <button
-                                id="tileTesterDownloadBtn"
-                                class="tester-control-btn tester-download-btn download-dropdown-btn"
-                            >
-                                Download
-                            </button>
-                            <div class="download-dropdown-menu">
-                                <button class="download-option" data-format="png">PNG</button>
-                                <button class="download-option" data-format="svg">SVG</button>
-                            </div>
+                    </div>
+                    <div class="tester-bottom-bar">
+                        <div class="download-links tester-download-links" id="tileTesterDownloadLinks">
+                            <span class="download-label">Download:</span>
+                            <a href="#" class="download-link" data-format="png">PNG</a>
+                            <span class="download-separator">|</span>
+                            <a href="#" class="download-link" data-format="svg">SVG</a>
                         </div>
                     </div>
                 </div>

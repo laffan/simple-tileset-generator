@@ -2701,66 +2701,58 @@
   background: #0056b3;
 }
 
-/* Download Dropdown Styles */
-.download-dropdown {
-  position: relative;
-  display: inline-block;
-}
-
-.download-dropdown-btn {
-  cursor: pointer;
-}
-
-.download-dropdown-menu {
-  display: none;
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  background: white;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  padding: 4px 0;
-  margin-bottom: 4px;
-  z-index: 1000;
-  min-width: 80px;
-}
-
-.download-dropdown.active .download-dropdown-menu {
-  display: block;
-}
-
-.download-option {
-  display: block;
-  width: 100%;
-  padding: 8px 16px;
-  border: none;
-  background: none;
-  text-align: left;
-  cursor: pointer;
+/* Download Links Styles */
+.download-links {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-size: 14px;
-  color: #333;
-  white-space: nowrap;
-  transition: background-color 0.1s ease;
 }
 
-.download-option:hover {
-  background: #f0f0f0;
+.download-label {
+  color: #666;
+  font-weight: 500;
 }
 
-.download-option:first-child {
-  border-radius: 4px 4px 0 0;
+.download-link {
+  color: #007bff;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.15s ease;
 }
 
-.download-option:last-child {
-  border-radius: 0 0 4px 4px;
+.download-link:hover {
+  color: #0056b3;
+  text-decoration: underline;
 }
 
-/* Tile tester download dropdown positioning */
-.tester-download-dropdown .download-dropdown-menu {
-  bottom: auto;
-  top: 100%;
-  margin-top: 4px;
-  margin-bottom: 0;
+.download-separator {
+  color: #999;
+}
+
+/* Tile tester bottom bar */
+.tester-bottom-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(255, 255, 255, 0.95);
+  border-top: 1px solid #ddd;
+  padding: 8px 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+}
+
+.tester-download-links {
+  font-size: 13px;
+}
+
+.tester-download-links .download-label {
+  color: #555;
+}
+
+.tester-download-links .download-link {
+  font-weight: 500;
 }

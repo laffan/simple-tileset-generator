@@ -236,23 +236,13 @@ function setupControlButtonEvents() {
     });
   }
 
-  // Download dropdown handling
-  const downloadDropdown = document.getElementById('tileTesterDownloadDropdown');
-  const downloadBtn = document.getElementById('tileTesterDownloadBtn');
-
-  if (downloadDropdown && downloadBtn) {
-    // Toggle dropdown on button click
-    downloadBtn.addEventListener('click', function(e) {
-      e.stopPropagation();
-      downloadDropdown.classList.toggle('active');
-    });
-
-    // Handle download option selection
-    downloadDropdown.querySelectorAll('.download-option').forEach(option => {
-      option.addEventListener('click', function(e) {
-        e.stopPropagation();
+  // Download link handling
+  const downloadLinks = document.getElementById('tileTesterDownloadLinks');
+  if (downloadLinks) {
+    downloadLinks.querySelectorAll('.download-link').forEach(link => {
+      link.addEventListener('click', function(e) {
+        e.preventDefault();
         const format = this.dataset.format;
-        downloadDropdown.classList.remove('active');
 
         if (format === 'svg') {
           downloadTilemapSVG();
@@ -260,13 +250,6 @@ function setupControlButtonEvents() {
           downloadTileTesterCanvas();
         }
       });
-    });
-
-    // Close dropdown when clicking outside
-    document.addEventListener('click', function(e) {
-      if (!downloadDropdown.contains(e.target)) {
-        downloadDropdown.classList.remove('active');
-      }
     });
   }
 

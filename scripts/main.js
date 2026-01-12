@@ -24,25 +24,15 @@ document.getElementById('selectAllCombinations').addEventListener('click', selec
 document.getElementById('deselectAllCombinations').addEventListener('click', deselectAllCombinations);
 
 
-// Download dropdown handling for main tileset
+// Download link handling for main tileset
 (function() {
-  const dropdown = document.getElementById('tilesetDownloadDropdown');
-  const downloadBtn = document.getElementById('downloadBtn');
+  const downloadLinks = document.getElementById('tilesetDownloadLinks');
+  if (!downloadLinks) return;
 
-  if (!dropdown || !downloadBtn) return;
-
-  // Toggle dropdown on button click
-  downloadBtn.addEventListener('click', function(e) {
-    e.stopPropagation();
-    dropdown.classList.toggle('active');
-  });
-
-  // Handle download option selection
-  dropdown.querySelectorAll('.download-option').forEach(option => {
-    option.addEventListener('click', function(e) {
-      e.stopPropagation();
+  downloadLinks.querySelectorAll('.download-link').forEach(link => {
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
       const format = this.dataset.format;
-      dropdown.classList.remove('active');
 
       if (format === 'svg') {
         downloadTilesetSVG();
@@ -50,13 +40,6 @@ document.getElementById('deselectAllCombinations').addEventListener('click', des
         downloadTilesetPNG();
       }
     });
-  });
-
-  // Close dropdown when clicking outside
-  document.addEventListener('click', function(e) {
-    if (!dropdown.contains(e.target)) {
-      dropdown.classList.remove('active');
-    }
   });
 })();
 
