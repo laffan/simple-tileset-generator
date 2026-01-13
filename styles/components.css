@@ -1443,7 +1443,7 @@
 
 /* Tile tester modal - full screen */
 .tester-modal {
-  background: rgba(0, 0, 0, 0.85);
+  background: #000;
 }
 
 .tester-modal.active {
