@@ -49,8 +49,8 @@ function openTileTester() {
   // Reset palette window position
   const paletteWindow = document.getElementById('tileTesterPaletteWindow');
   if (paletteWindow) {
-    paletteWindow.style.left = '20px';
-    paletteWindow.style.top = '20px';
+    paletteWindow.style.left = '0px';
+    paletteWindow.style.top = '0px';
   }
 
   // Reset hide button state
