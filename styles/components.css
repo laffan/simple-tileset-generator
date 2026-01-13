@@ -1626,10 +1626,10 @@
 /* Main canvas area - fills the window */
 .tester-main-area {
   position: absolute;
-  top: 50px;
-  left: calc(320px + 50px);
-  width: calc(100% - 320px - 100px);
-  height: calc(100% - 100px - 50px); /* 50px top, 50px bottom margin, 50px bottom bar */
+  top: 0;
+  left: 320px;
+  width: calc(100% - 320px);
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1638,8 +1638,8 @@
 }
 
 .tester-palette-window.collapsed ~ .tester-main-area {
-  left: 50px;
-  width: calc(100% - 100px);
+  left: 0;
+  width: 100%;
 }
 
 .tester-canvas-container {
