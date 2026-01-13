@@ -1507,7 +1507,7 @@
 
 .tester-sidebar-content {
   flex: 1;
-  overflow-y: auto;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
 }
@@ -1589,7 +1589,8 @@
 .tester-palette-container {
   padding: 10px;
   overflow: auto;
-  flex: 1;
+  flex: 0 1 50%;
+  max-height: 50%;
   min-height: 100px;
 }
 
@@ -1625,10 +1626,10 @@
 /* Main canvas area - fills the window */
 .tester-main-area {
   position: absolute;
-  top: 0;
-  left: 320px;
-  width: calc(100% - 320px);
-  height: 100%;
+  top: 50px;
+  left: calc(320px + 50px);
+  width: calc(100% - 320px - 100px);
+  height: calc(100% - 100px - 50px); /* 50px top, 50px bottom margin, 50px bottom bar */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1637,8 +1638,8 @@
 }
 
 .tester-palette-window.collapsed ~ .tester-main-area {
-  left: 0;
-  width: 100%;
+  left: 50px;
+  width: calc(100% - 100px);
 }
 
 .tester-canvas-container {
@@ -1698,10 +1699,12 @@
 
 .tester-layers-section {
   padding: 10px;
-  flex-shrink: 0;
+  flex: 1 1 25%;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   border-top: 1px solid #ddd;
+  overflow: hidden;
 }
 
 .tester-layers-header {
@@ -1709,6 +1712,7 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 8px;
+  flex-shrink: 0;
 }
 
 .tester-layers-header span {
@@ -2481,10 +2485,12 @@
 /* Custom tiles section in palette window */
 .tester-custom-tiles-section {
   padding: 10px;
-  flex-shrink: 0;
+  flex: 1 1 25%;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   border-top: 1px solid #ddd;
+  overflow: hidden;
 }
 
 .tester-custom-tiles-header {
@@ -2492,6 +2498,7 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 8px;
+  flex-shrink: 0;
 }
 
 .tester-custom-tiles-header span {
