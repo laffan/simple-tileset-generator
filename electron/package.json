@@ -83,6 +83,7 @@
     "linux": {
       "icon": "icons",
       "category": "Graphics",
+      "maintainer": "laffan <laffan@users.noreply.github.com>",
       "target": [
         {
           "target": "AppImage",
