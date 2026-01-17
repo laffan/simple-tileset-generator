@@ -77,26 +77,20 @@ jobs:
       - name: Build for macOS
         if: matrix.platform == 'mac'
         working-directory: electron
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          npx electron-builder --mac --${{ matrix.arch }}
+          npx electron-builder --mac --${{ matrix.arch }} --publish never
 
       # Windows build
       - name: Build for Windows
         if: matrix.platform == 'win'
         working-directory: electron
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npm run dist:win
+        run: npx electron-builder --win --publish never
 
       # Linux build
       - name: Build for Linux
         if: matrix.platform == 'linux'
         working-directory: electron
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npm run dist:linux
+        run: npx electron-builder --linux --publish never
 
       # Upload artifacts for each platform
       - name: Upload macOS x64 artifacts
