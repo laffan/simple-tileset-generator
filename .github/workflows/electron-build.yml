@@ -1,41 +1,29 @@
-# Electron build workflow for Simple Tileset Generator
-# Builds desktop apps for Windows, macOS, and Linux
-# Triggered by version tags (v*) or manual dispatch
-
-name: Build Electron App
+name: Build and Release Electron App
 
 on:
-  # Trigger on version tags (e.g., v1.0.0, v2.1.0)
+  # Trigger on version tags (e.g., v1.0.0, v1.2.3)
   push:
     tags:
       - 'v*'
 
-  # Allow manual triggering from the Actions tab
+  # Allow manual triggering
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to build (e.g., 1.0.0)'
-        required: false
-        default: ''
+        description: 'Version to release (e.g., v1.0.0)'
+        required: true
+        type: string
 
-# Required permissions for creating releases
 permissions:
   contents: write
 
 jobs:
-  # Build for all platforms
-  build:
+  release:
+    runs-on: ${{ matrix.os }}
+
     strategy:
       matrix:
-        include:
-          - os: macos-latest
-            platform: mac
-          - os: windows-latest
-            platform: win
-          - os: ubuntu-latest
-            platform: linux
-
-    runs-on: ${{ matrix.os }}
+        os: [macos-latest, ubuntu-latest, windows-latest]
 
     steps:
       - name: Checkout repository
@@ -45,13 +33,15 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: electron/package-lock.json
 
       - name: Install dependencies
         working-directory: electron
-        run: npm install
+        run: npm ci
 
       - name: Update version from tag
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: github.event_name == 'push'
         working-directory: electron
         shell: bash
         run: |
@@ -59,71 +49,49 @@ jobs:
           npm version $VERSION --no-git-tag-version --allow-same-version
 
       - name: Update version from input
-        if: github.event.inputs.version != ''
+        if: github.event_name == 'workflow_dispatch'
         working-directory: electron
         shell: bash
         run: |
-          npm version ${{ github.event.inputs.version }} --no-git-tag-version --allow-same-version
+          VERSION=${{ github.event.inputs.version }}
+          VERSION=${VERSION#v}
+          npm version $VERSION --no-git-tag-version --allow-same-version
 
-      # macOS build
-      - name: Build for macOS
-        if: matrix.platform == 'mac'
+      - name: Build Electron app
         working-directory: electron
+        run: npm run dist
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npm run dist:mac
 
-      # Windows build
-      - name: Build for Windows
-        if: matrix.platform == 'win'
-        working-directory: electron
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npm run dist:win
-
-      # Linux build
-      - name: Build for Linux
-        if: matrix.platform == 'linux'
-        working-directory: electron
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npm run dist:linux
-
-      # Upload artifacts for each platform
-      - name: Upload macOS artifacts
-        if: matrix.platform == 'mac'
+      - name: Upload artifacts (macOS)
+        if: matrix.os == 'macos-latest'
         uses: actions/upload-artifact@v4
         with:
-          name: macos-builds
+          name: macos-release
           path: |
             electron/dist/*.dmg
             electron/dist/*.zip
-          if-no-files-found: error
 
-      - name: Upload Windows artifacts
-        if: matrix.platform == 'win'
+      - name: Upload artifacts (Windows)
+        if: matrix.os == 'windows-latest'
         uses: actions/upload-artifact@v4
         with:
-          name: windows-builds
+          name: windows-release
           path: |
             electron/dist/*.exe
-          if-no-files-found: error
 
-      - name: Upload Linux artifacts
-        if: matrix.platform == 'linux'
+      - name: Upload artifacts (Linux)
+        if: matrix.os == 'ubuntu-latest'
         uses: actions/upload-artifact@v4
         with:
-          name: linux-builds
+          name: linux-release
           path: |
             electron/dist/*.AppImage
             electron/dist/*.deb
-          if-no-files-found: error
 
-  # Create a GitHub release with all artifacts
-  release:
-    needs: build
+  create-release:
+    needs: release
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
 
     steps:
       - name: Checkout repository
@@ -132,60 +100,29 @@ jobs:
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
-          path: artifacts
+          path: release-artifacts
 
       - name: Display downloaded files
-        run: ls -R artifacts
+        run: ls -R release-artifacts
 
       - name: Get version
         id: version
-        shell: bash
         run: |
-          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
-            echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
-            echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-          elif [[ -n "${{ github.event.inputs.version }}" ]]; then
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
             echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
-            echo "tag=v${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
           else
-            echo "version=dev" >> $GITHUB_OUTPUT
-            echo "tag=dev-$(date +%Y%m%d%H%M%S)" >> $GITHUB_OUTPUT
+            echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
           fi
 
       - name: Create Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ steps.version.outputs.tag }}
-          name: Simple Tileset Generator v${{ steps.version.outputs.version }}
+          tag_name: ${{ steps.version.outputs.version }}
+          name: Release ${{ steps.version.outputs.version }}
           draft: false
-          prerelease: ${{ !startsWith(github.ref, 'refs/tags/v') }}
-          generate_release_notes: true
+          prerelease: false
           files: |
-            artifacts/**/*.dmg
-            artifacts/**/*.zip
-            artifacts/**/*.exe
-            artifacts/**/*.AppImage
-            artifacts/**/*.deb
-          body: |
-            ## Simple Tileset Generator v${{ steps.version.outputs.version }}
-
-            Desktop application for creating tilesets - works offline!
-
-            ### Downloads
-
-            | Platform | Download |
-            |----------|----------|
-            | **macOS (Intel)** | `Simple.Tileset.Generator-*-x64.dmg` |
-            | **macOS (Apple Silicon)** | `Simple.Tileset.Generator-*-arm64.dmg` |
-            | **Windows (Installer)** | `Simple.Tileset.Generator.Setup.*.exe` |
-            | **Windows (Portable)** | `Simple.Tileset.Generator.*.exe` |
-            | **Linux (AppImage)** | `Simple.Tileset.Generator-*.AppImage` |
-            | **Linux (Debian)** | `simple-tileset-generator_*.deb` |
-
-            ### Installation
-
-            - **macOS**: Download the `.dmg` file, open it, and drag the app to your Applications folder
-            - **Windows**: Download and run the `.exe` installer, or use the portable version
-            - **Linux**: Download the `.AppImage` and make it executable (`chmod +x`), or install the `.deb` package
+            release-artifacts/**/*
+          generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
