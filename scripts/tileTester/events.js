@@ -18,7 +18,9 @@ var tileTesterEventHandlers = {
   paletteMouseDown: null,
   paletteMouseMove: null,
   paletteMouseUp: null,
-  paletteMouseLeave: null
+  paletteMouseLeave: null,
+  downloadLinkHandlers: [],  // Store download link handlers to prevent accumulation
+  closeBtnHandler: null      // Store close button handler to prevent accumulation
 };
 
 // Setup all event listeners for tile tester
@@ -255,11 +257,14 @@ function setupControlButtonEvents() {
     });
   }
 
-  // Download link handling
+  // Download link handling - store handlers to prevent accumulation
   const downloadLinks = document.getElementById('tileTesterDownloadLinks');
   if (downloadLinks) {
+    // Clear any previously stored handlers first
+    tileTesterEventHandlers.downloadLinkHandlers = [];
+
     downloadLinks.querySelectorAll('.download-link').forEach(link => {
-      link.addEventListener('click', function(e) {
+      const handler = function(e) {
         e.preventDefault();
         const format = this.dataset.format;
 
@@ -268,12 +273,23 @@ function setupControlButtonEvents() {
         } else {
           downloadTileTesterCanvas();
         }
-      });
+      };
+
+      // Store reference to link and handler for removal later
+      tileTesterEventHandlers.downloadLinkHandlers.push({ link, handler });
+      link.addEventListener('click', handler);
     });
   }
 
   // Initial visibility check for clear background link
   updateClearBackgroundVisibility();
+
+  // Close button - store handler to prevent accumulation
+  const closeBtn = document.getElementById('tileTesterCloseBtn');
+  if (closeBtn && !tileTesterEventHandlers.closeBtnHandler) {
+    tileTesterEventHandlers.closeBtnHandler = closeTileTester;
+    closeBtn.addEventListener('click', tileTesterEventHandlers.closeBtnHandler);
+  }
 }
 
 // Show/hide clear background link based on whether a custom background is set
@@ -287,11 +303,8 @@ function updateClearBackgroundVisibility() {
     clearBgLink.style.display = isCustomBg ? 'inline' : 'none';
     clearBgSeparator.style.display = isCustomBg ? 'inline' : 'none';
   }
-
-  const closeBtn = document.getElementById('tileTesterCloseBtn');
-  if (closeBtn) {
-    closeBtn.addEventListener('click', closeTileTester);
-  }
+  // Note: Close button handler is now set up in setupControlButtonEvents()
+  // to prevent listener accumulation
 }
 
 // Remove all event listeners (called when closing modal)
@@ -335,6 +348,21 @@ function removeTileTesterEvents() {
     if (tileTesterEventHandlers.paletteMouseLeave) {
       paletteCanvas.removeEventListener('mouseleave', tileTesterEventHandlers.paletteMouseLeave);
     }
+  }
+
+  // Remove download link handlers to prevent accumulation
+  if (tileTesterEventHandlers.downloadLinkHandlers) {
+    tileTesterEventHandlers.downloadLinkHandlers.forEach(({ link, handler }) => {
+      link.removeEventListener('click', handler);
+    });
+    tileTesterEventHandlers.downloadLinkHandlers = [];
+  }
+
+  // Remove close button handler
+  const closeBtn = document.getElementById('tileTesterCloseBtn');
+  if (closeBtn && tileTesterEventHandlers.closeBtnHandler) {
+    closeBtn.removeEventListener('click', tileTesterEventHandlers.closeBtnHandler);
+    tileTesterEventHandlers.closeBtnHandler = null;
   }
 
   // Reset zoom and pan
