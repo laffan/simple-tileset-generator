@@ -42,6 +42,14 @@ Click the pencil icon on any pattern to open the pixel editor.
 - **Save Session** - Downloads your configuration as JSON
 - **Load Session** - Restores a saved session
 
+## Desktop App
+
+A standalone desktop version is available for Windows, macOS, and Linux. The desktop app works offline and includes all features of the web version.
+
+Download the latest release from the [Releases page](https://github.com/laffan/simple-tileset-generator/releases).
+
+For development and build instructions, see [electron/README.md](electron/README.md).
+
 ## Credits
 
 Designed by me, coded by Claude.

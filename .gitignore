@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+electron/node_modules/
+
+# Build outputs
+electron/dist/
+
+# Local Two.js copy (generated during npm install)
+lib/two.min.js
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE/Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Temporary files
+*.tmp
+*.temp
+
+# Lock files (keep package-lock.json for reproducible builds)
+# package-lock.json
+
+# Environment files
+.env
+.env.local
+.env.*.local
