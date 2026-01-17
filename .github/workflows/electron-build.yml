@@ -165,6 +165,13 @@ jobs:
             echo "tag=dev-$(date +%Y%m%d%H%M%S)" >> $GITHUB_OUTPUT
           fi
 
+      - name: Delete existing release if present
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release delete ${{ steps.version.outputs.tag }} --yes || true
+
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
