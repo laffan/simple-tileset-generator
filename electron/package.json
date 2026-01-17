@@ -53,7 +53,7 @@
     "asar": true,
     "mac": {
       "category": "public.app-category.graphics-design",
-      "icon": "icons/icon.icns",
+      "icon": "icons/icon.png",
       "target": [
         {
           "target": "dmg",
@@ -68,7 +68,7 @@
       "gatekeeperAssess": false
     },
     "win": {
-      "icon": "icons/icon.ico",
+      "icon": "icons/icon.png",
       "target": [
         {
           "target": "nsis",
