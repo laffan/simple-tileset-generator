@@ -13,13 +13,16 @@ function openTileTester() {
   const tileSize = parseInt(document.getElementById('sizeInput').value, 10) || 64;
   TileTesterState.tileSize = tileSize;
 
-  // Calculate grid size based on window (for initial view)
-  calculateGridSize();
-
   // Initialize layers if empty
   if (!TileTesterState.layers || TileTesterState.layers.length === 0) {
     initTileTesterLayers();
   }
+
+  // Calculate grid size based on window and existing tiles
+  calculateGridSize();
+
+  // Reset pan - will be adjusted below if needed to center on tiles
+  TileTesterState.canvasPan = { x: 0, y: 0 };
 
   // Show modal
   modal.classList.add('active');
@@ -38,6 +41,10 @@ function openTileTester() {
   if (container) {
     container.style.backgroundColor = TileTesterState.backgroundColor;
   }
+
+  // Center view on existing tiles if any
+  centerViewOnTiles();
+  updateCanvasTransform();
 
   // Initialize custom tiles functionality
   if (typeof initCustomTiles === 'function') {

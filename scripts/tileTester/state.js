@@ -408,15 +408,83 @@ function resetTileTesterState() {
   TileTesterState.hoverPosition = null;
 }
 
-// Calculate grid size based on window dimensions
+// Center the view on existing tiles
+function centerViewOnTiles() {
+  const bounds = getTileBounds();
+  if (!bounds.hasTiles) return;
+
+  const tileSize = TileTesterState.tileSize;
+  const origin = TileTesterState.gridOrigin;
+  const zoom = TileTesterState.canvasZoom || 1;
+
+  // Calculate center of tile bounds in internal grid coordinates
+  const centerTileX = (bounds.minX + bounds.maxX) / 2;
+  const centerTileY = (bounds.minY + bounds.maxY) / 2;
+
+  // Convert to internal grid coordinates
+  const centerInternalX = centerTileX + origin.x;
+  const centerInternalY = centerTileY + origin.y;
+
+  // Calculate pixel position of center
+  const centerPixelX = centerInternalX * tileSize;
+  const centerPixelY = centerInternalY * tileSize;
+
+  // Calculate pan to center this in the viewport
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+
+  TileTesterState.canvasPan = {
+    x: (viewportWidth / 2 / zoom) - centerPixelX - (tileSize / 2),
+    y: (viewportHeight / 2 / zoom) - centerPixelY - (tileSize / 2)
+  };
+}
+
+// Calculate grid size based on window dimensions and existing tiles
 function calculateGridSize() {
   const tileSize = TileTesterState.tileSize;
 
-  // Fill entire window with no padding
-  TileTesterState.gridWidth = Math.floor(window.innerWidth / tileSize);
-  TileTesterState.gridHeight = Math.floor(window.innerHeight / tileSize);
+  // Calculate minimum grid size to fill window
+  let minWidth = Math.floor(window.innerWidth / tileSize);
+  let minHeight = Math.floor(window.innerHeight / tileSize);
 
   // Ensure minimum size
-  TileTesterState.gridWidth = Math.max(8, TileTesterState.gridWidth);
-  TileTesterState.gridHeight = Math.max(6, TileTesterState.gridHeight);
+  minWidth = Math.max(8, minWidth);
+  minHeight = Math.max(6, minHeight);
+
+  // Get bounds of existing tiles
+  const bounds = getTileBounds();
+
+  if (bounds.hasTiles) {
+    // Calculate grid size needed to encompass all tiles with margin
+    const margin = 5;
+    const origin = TileTesterState.gridOrigin;
+
+    // Calculate internal grid positions of tile bounds
+    const minInternalX = bounds.minX + origin.x;
+    const maxInternalX = bounds.maxX + origin.x;
+    const minInternalY = bounds.minY + origin.y;
+    const maxInternalY = bounds.maxY + origin.y;
+
+    // Expand origin if tiles are in negative internal coordinates
+    if (minInternalX < margin) {
+      const expandBy = margin - minInternalX;
+      TileTesterState.gridOrigin.x += expandBy;
+    }
+    if (minInternalY < margin) {
+      const expandBy = margin - minInternalY;
+      TileTesterState.gridOrigin.y += expandBy;
+    }
+
+    // Recalculate after origin adjustment
+    const newOrigin = TileTesterState.gridOrigin;
+    const neededWidth = (bounds.maxX + newOrigin.x) + margin + 1;
+    const neededHeight = (bounds.maxY + newOrigin.y) + margin + 1;
+
+    // Use the larger of window size or needed size
+    TileTesterState.gridWidth = Math.max(minWidth, neededWidth);
+    TileTesterState.gridHeight = Math.max(minHeight, neededHeight);
+  } else {
+    TileTesterState.gridWidth = minWidth;
+    TileTesterState.gridHeight = minHeight;
+  }
 }
