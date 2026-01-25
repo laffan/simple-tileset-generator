@@ -11,7 +11,7 @@ h3 {
 }
 
 body {
-  padding: 80px 30px 30px 30px; /* top accounts for 50px header-bar */
+  padding: 70px 30px 30px 30px; /* top accounts for 40px header-bar */
 }
 
 small {

@@ -1444,8 +1444,8 @@
 /* Tile tester modal - full screen (below header-bar) */
 .tester-modal {
   background: #000;
-  top: 50px;
-  height: calc(100% - 50px);
+  top: 40px;
+  height: calc(100% - 40px);
 }
 
 .tester-modal.active {
@@ -1491,13 +1491,13 @@
 /* Fixed Sidebar (below header-bar) */
 .tester-palette-window {
   position: fixed;
-  top: 50px;
+  top: 40px;
   left: 0;
   background: white;
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
   z-index: 50;
   width: 320px;
-  height: calc(100% - 50px);
+  height: calc(100% - 40px);
   display: flex;
   flex-direction: column;
   transition: transform 0.3s ease;
