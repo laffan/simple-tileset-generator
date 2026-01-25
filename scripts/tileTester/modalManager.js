@@ -33,6 +33,12 @@ function openTileTester() {
   setupLayersPanel();
   setupTileTesterEvents();
 
+  // Set container background to match canvas background for seamless panning
+  const container = document.querySelector('.tester-canvas-container');
+  if (container) {
+    container.style.backgroundColor = TileTesterState.backgroundColor;
+  }
+
   // Initialize custom tiles functionality
   if (typeof initCustomTiles === 'function') {
     initCustomTiles();

@@ -226,6 +226,9 @@ function setupControlButtonEvents() {
       TileTesterState.backgroundColor = this.value;
       renderTileTesterMainCanvas();
       updateClearBackgroundVisibility();
+      // Update container background to match for seamless panning
+      const container = document.querySelector('.tester-canvas-container');
+      if (container) container.style.backgroundColor = this.value;
     });
 
     bgColorPicker.value = TileTesterState.backgroundColor;
@@ -241,6 +244,9 @@ function setupControlButtonEvents() {
       }
       renderTileTesterMainCanvas();
       updateClearBackgroundVisibility();
+      // Update container background to match for seamless panning
+      const container = document.querySelector('.tester-canvas-container');
+      if (container) container.style.backgroundColor = TileTesterState.backgroundColor;
     });
   }
 
@@ -412,19 +418,24 @@ function updateCanvasTransform() {
 
   canvas.style.width = (baseWidth * zoom) + 'px';
   canvas.style.height = (baseHeight * zoom) + 'px';
-  canvas.style.marginLeft = (pan.x * zoom) + 'px';
-  canvas.style.marginTop = (pan.y * zoom) + 'px';
+
+  // Use CSS transform for positioning to support panning
+  canvas.style.transform = `translate(${pan.x * zoom}px, ${pan.y * zoom}px)`;
+  canvas.style.marginLeft = '0';
+  canvas.style.marginTop = '0';
 
   // Update grid overlay to match canvas position and zoom
   if (overlay) {
-    overlay.style.marginLeft = (pan.x * zoom) + 'px';
-    overlay.style.marginTop = (pan.y * zoom) + 'px';
+    overlay.style.transform = `translate(${pan.x * zoom}px, ${pan.y * zoom}px)`;
+    overlay.style.marginLeft = '0';
+    overlay.style.marginTop = '0';
   }
 
   // Update grid overlay size
   updateGridOverlay();
 
-  // Container always uses hidden overflow for infinite canvas panning
+  // Set container background to match canvas background to avoid black gaps when panning
+  container.style.backgroundColor = TileTesterState.backgroundColor;
   container.style.overflow = 'hidden';
 }
 
