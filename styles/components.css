@@ -1407,10 +1407,10 @@
 }
 
 /* =============================================
-   FOOTER TITLE STYLES
+   HEADER BAR TITLE STYLES
    ============================================= */
 
-.footer__left h1 {
+.header-bar__left h1 {
   margin: 0;
   font-size: 18px;
   font-weight: 600;
@@ -1441,9 +1441,11 @@
   color: #333;
 }
 
-/* Tile tester modal - full screen */
+/* Tile tester modal - full screen (below header-bar) */
 .tester-modal {
   background: #000;
+  top: 50px;
+  height: calc(100% - 50px);
 }
 
 .tester-modal.active {
@@ -1486,16 +1488,16 @@
   background: rgba(0, 0, 0, 0.7);
 }
 
-/* Fixed Sidebar */
+/* Fixed Sidebar (below header-bar) */
 .tester-palette-window {
   position: fixed;
-  top: 0;
+  top: 50px;
   left: 0;
   background: white;
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
   z-index: 50;
   width: 320px;
-  height: 100%;
+  height: calc(100% - 50px);
   display: flex;
   flex-direction: column;
   transition: transform 0.3s ease;

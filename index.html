@@ -6,6 +6,28 @@
     </head>
 
     <body>
+        <div class="header-bar" id="headerBar">
+            <div class="header-bar__left">
+                <h1>Simple Tileset Generator</h1>
+            </div>
+            <div class="header-bar__center">
+                <div class="session-links">
+                    <a href="#" class="session-link" id="saveSessionLink">Save</a>
+                    <span class="link-separator">|</span>
+                    <a href="#" class="session-link" id="loadSessionLink">Load</a>
+                </div>
+                <input type="file" id="loadSessionInput" accept=".json" />
+            </div>
+            <div class="header-bar__right">
+                <div class="download-links" id="tilesetDownloadLinks">
+                    <span class="download-label">Download Tileset:</span>
+                    <a href="#" class="download-link" data-format="png">PNG</a>
+                    <span class="download-separator">|</span>
+                    <a href="#" class="download-link" data-format="svg">SVG</a>
+                </div>
+            </div>
+        </div>
+
         <header>
             <div class="header-tile-size">
                 <h3>Tile Size</h3>
@@ -183,27 +205,6 @@
                 </div>
             </div>
         </div>
-        <footer>
-            <div class="footer__left">
-                <h1>Simple Tileset Generator</h1>
-            </div>
-            <div class="footer__center">
-                <div class="session-links">
-                    <a href="#" class="session-link" id="saveSessionLink">Save</a>
-                    <span class="link-separator">|</span>
-                    <a href="#" class="session-link" id="loadSessionLink">Load</a>
-                </div>
-                <input type="file" id="loadSessionInput" accept=".json" />
-            </div>
-            <div class="footer__right">
-                <div class="download-links" id="tilesetDownloadLinks">
-                    <span class="download-label">Download Tileset:</span>
-                    <a href="#" class="download-link" data-format="png">PNG</a>
-                    <span class="download-separator">|</span>
-                    <a href="#" class="download-link" data-format="svg">SVG</a>
-                </div>
-            </div>
-        </footer>
 
         <!-- Shape Editor Modal -->
         <div id="shapeEditorModal" class="modal">

@@ -86,35 +86,35 @@ header h1 {
   box-sizing: border-box;
 }
 
-footer {
+.header-bar {
   position: fixed;
-  bottom: 0;
+  top: 0;
   left: 0;
   background-color: #eeeeee;
   height: 50px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  z-index: 100;
+  z-index: 1100;
   width: 100%;
   padding: 0 30px;
   box-sizing: border-box;
 }
 
-.footer__left {
+.header-bar__left {
   display: flex;
   gap: 10px;
   flex: 1;
 }
 
-.footer__center {
+.header-bar__center {
   display: flex;
   gap: 10px;
   justify-content: center;
   flex: 1;
 }
 
-.footer__right {
+.header-bar__right {
   display: flex;
   gap: 10px;
   justify-content: flex-end;
