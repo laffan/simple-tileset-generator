@@ -90,7 +90,7 @@ header h1 {
   position: fixed;
   top: 0;
   left: 0;
-  background-color: #eeeeee;
+  background-color: #000;
   height: 40px;
   display: flex;
   align-items: center;
@@ -119,4 +119,15 @@ header h1 {
   gap: 10px;
   justify-content: flex-end;
   flex: 1;
+}
+
+.header-bar h1 {
+  color: #fff;
+}
+
+.header-bar a,
+.header-bar .download-label,
+.header-bar .link-separator,
+.header-bar .download-separator {
+  color: #fff;
 }
