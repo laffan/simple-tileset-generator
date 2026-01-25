@@ -403,14 +403,12 @@ function saveSelectionAsPNG() {
   clearCanvasSelection();
 }
 
-// Save selection as SVG
+// Save selection as SVG (vector paths)
 function saveSelectionAsSVG() {
   const sel = TileTesterState.canvasSelection;
   if (!sel) return;
 
   const tileSize = TileTesterState.tileSize;
-  const sourceCanvas = document.getElementById('canvas');
-  if (!sourceCanvas) return;
 
   // Calculate grid bounds (these are internal grid coordinates)
   const minGridX = Math.min(sel.startCol, sel.endCol);
@@ -421,61 +419,80 @@ function saveSelectionAsSVG() {
   const width = maxGridX - minGridX + 1;
   const height = maxGridY - minGridY + 1;
 
-  // Create temporary canvas to render the selection
-  const tempCanvas = document.createElement('canvas');
-  tempCanvas.width = width * tileSize;
-  tempCanvas.height = height * tileSize;
-  const tempCtx = tempCanvas.getContext('2d');
+  const svgWidth = width * tileSize;
+  const svgHeight = height * tileSize;
 
-  // Draw tiles from all visible layers (bottom to top)
-  for (let localY = 0; localY < height; localY++) {
-    for (let localX = 0; localX < width; localX++) {
-      const internalX = minGridX + localX;
-      const internalY = minGridY + localY;
+  const defs = [];
+  const content = [];
 
-      // Convert to tile coordinates for sparse lookup
-      const tileCoords = internalToTileCoords(internalX, internalY);
+  // Process each visible layer (bottom to top)
+  for (const layer of TileTesterState.layers) {
+    if (!layer.visible) continue;
+    if (!layer.tiles || !Array.isArray(layer.tiles)) continue;
 
-      // Draw tiles from all visible layers at this position
-      for (const layer of TileTesterState.layers) {
-        if (!layer.visible) continue;
+    const opacity = layer.opacity;
+    const layerContent = [];
+
+    // Iterate through the selection area
+    for (let localY = 0; localY < height; localY++) {
+      for (let localX = 0; localX < width; localX++) {
+        const internalX = minGridX + localX;
+        const internalY = minGridY + localY;
+
+        // Convert to tile coordinates for sparse lookup
+        const tileCoords = internalToTileCoords(internalX, internalY);
 
         const tile = getTileAtPosition(layer, tileCoords.x, tileCoords.y);
-        if (tile) {
-          const coords = getTileCanvasCoords(tile);
-          if (!coords) continue;
+        if (!tile) continue;
 
-          const srcX = coords.col * tileSize;
-          const srcY = coords.row * tileSize;
-          const destX = localX * tileSize;
-          const destY = localY * tileSize;
+        // Get the tile's canvas coordinates
+        const coords = getTileCanvasCoords(tile);
+        if (!coords) continue;
 
-          tempCtx.globalAlpha = layer.opacity;
-          tempCtx.drawImage(
-            sourceCanvas,
-            srcX, srcY, tileSize, tileSize,
-            destX, destY, tileSize, tileSize
-          );
-        }
+        // Calculate destination position in the SVG
+        const destX = localX * tileSize;
+        const destY = localY * tileSize;
+
+        // Generate SVG elements for this tile using the existing SVG exporter
+        const tileElements = generateTileSVGFromCoords(coords, tileSize, destX, destY);
+
+        tileElements.forEach(el => {
+          if (el.type === 'mask' || el.type === 'clipPath') {
+            defs.push(el.content);
+          } else {
+            layerContent.push(el.content);
+          }
+        });
+      }
+    }
+
+    // Wrap layer content with opacity if not 1
+    if (layerContent.length > 0) {
+      if (opacity < 1) {
+        content.push(`  <g opacity="${opacity}">`);
+        layerContent.forEach(c => content.push('  ' + c));
+        content.push(`  </g>`);
+      } else {
+        layerContent.forEach(c => content.push(c));
       }
     }
   }
 
-  tempCtx.globalAlpha = 1;
+  // Build final SVG
+  let svg = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+  svg += `<svg xmlns="http://www.w3.org/2000/svg" width="${svgWidth}" height="${svgHeight}" viewBox="0 0 ${svgWidth} ${svgHeight}">\n`;
 
-  // Convert canvas to data URL and embed in SVG
-  const imageDataUrl = tempCanvas.toDataURL('image/png');
-  const svgWidth = width * tileSize;
-  const svgHeight = height * tileSize;
+  if (defs.length > 0) {
+    svg += `  <defs>\n`;
+    svg += defs.join('\n') + '\n';
+    svg += `  </defs>\n`;
+  }
 
-  const svgContent = `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
-     width="${svgWidth}" height="${svgHeight}" viewBox="0 0 ${svgWidth} ${svgHeight}">
-  <image width="${svgWidth}" height="${svgHeight}" xlink:href="${imageDataUrl}"/>
-</svg>`;
+  svg += content.join('\n') + '\n';
+  svg += `</svg>`;
 
   // Download as SVG
-  const blob = new Blob([svgContent], { type: 'image/svg+xml' });
+  const blob = new Blob([svg], { type: 'image/svg+xml' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.download = 'custom-tile.svg';
