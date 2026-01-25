@@ -18,79 +18,76 @@ function openTileTester() {
     initTileTesterLayers();
   }
 
-  // Calculate grid size based on window and existing tiles
-  calculateGridSize();
-
   // Reset pan - will be adjusted below if needed to center on tiles
   TileTesterState.canvasPan = { x: 0, y: 0 };
+
+  // Prevent body scroll while modal is open (do this BEFORE showing modal)
+  document.body.style.overflow = 'hidden';
 
   // Show modal
   modal.classList.add('active');
 
-  // Prevent body scroll while modal is open
-  document.body.style.overflow = 'hidden';
+  // Force a synchronous layout reflow by reading offsetHeight
+  // This ensures all CSS positioning (including header-bar offset) is calculated
+  void modal.offsetHeight;
 
-  // Use double requestAnimationFrame to ensure CSS layout is fully complete
-  // before calculating canvas coordinates. The header bar offset requires
-  // the browser to complete its layout pass first.
-  requestAnimationFrame(function() {
-    requestAnimationFrame(function() {
-      // Setup components
-      setupTileTesterPalette();
-      setupTileTesterMainCanvas();
-      setupLayersPanel();
-      setupTileTesterEvents();
+  // Now calculate grid size with correct viewport dimensions
+  calculateGridSize();
 
-      // Set container background to match canvas background for seamless panning
-      const container = document.querySelector('.tester-canvas-container');
-      if (container) {
-        container.style.backgroundColor = TileTesterState.backgroundColor;
-      }
+  // Setup components immediately after reflow
+  setupTileTesterPalette();
+  setupTileTesterMainCanvas();
+  setupLayersPanel();
+  setupTileTesterEvents();
 
-      // Center view on existing tiles if any
-      centerViewOnTiles();
-      updateCanvasTransform();
+  // Set container background to match canvas background for seamless panning
+  const container = document.querySelector('.tester-canvas-container');
+  if (container) {
+    container.style.backgroundColor = TileTesterState.backgroundColor;
+  }
 
-      // Initialize custom tiles functionality
-      if (typeof initCustomTiles === 'function') {
-        initCustomTiles();
-      }
+  // Center view on existing tiles if any
+  centerViewOnTiles();
+  updateCanvasTransform();
 
-      // Render custom tiles in palette
-      if (typeof renderCustomTilesInPalette === 'function') {
-        renderCustomTilesInPalette();
-      }
+  // Initialize custom tiles functionality
+  if (typeof initCustomTiles === 'function') {
+    initCustomTiles();
+  }
 
-      // Reset palette window position
-      const paletteWindow = document.getElementById('tileTesterPaletteWindow');
-      if (paletteWindow) {
-        paletteWindow.style.left = '0px';
-      }
+  // Render custom tiles in palette
+  if (typeof renderCustomTilesInPalette === 'function') {
+    renderCustomTilesInPalette();
+  }
 
-      // Reset hide button state
-      const hideBtn = document.getElementById('tileTesterHideBtn');
-      if (hideBtn) {
-        hideBtn.textContent = 'Hide';
-      }
-      if (paletteWindow) {
-        paletteWindow.classList.remove('content-hidden');
-      }
+  // Reset palette window position
+  const paletteWindow = document.getElementById('tileTesterPaletteWindow');
+  if (paletteWindow) {
+    paletteWindow.style.left = '0px';
+  }
 
-      // Setup window resize handler
-      tileTesterResizeHandler = function() {
-        // Recalculate minimum grid size based on window, but don't shrink existing grid
-        const oldWidth = TileTesterState.gridWidth;
-        const oldHeight = TileTesterState.gridHeight;
-        calculateGridSize();
-        // Ensure we don't lose tiles by shrinking the grid
-        TileTesterState.gridWidth = Math.max(TileTesterState.gridWidth, oldWidth);
-        TileTesterState.gridHeight = Math.max(TileTesterState.gridHeight, oldHeight);
-        renderTileTesterMainCanvas();
-        updateCanvasTransform();
-      };
-      window.addEventListener('resize', tileTesterResizeHandler);
-    });
-  });
+  // Reset hide button state
+  const hideBtn = document.getElementById('tileTesterHideBtn');
+  if (hideBtn) {
+    hideBtn.textContent = 'Hide';
+  }
+  if (paletteWindow) {
+    paletteWindow.classList.remove('content-hidden');
+  }
+
+  // Setup window resize handler
+  tileTesterResizeHandler = function() {
+    // Recalculate minimum grid size based on window, but don't shrink existing grid
+    const oldWidth = TileTesterState.gridWidth;
+    const oldHeight = TileTesterState.gridHeight;
+    calculateGridSize();
+    // Ensure we don't lose tiles by shrinking the grid
+    TileTesterState.gridWidth = Math.max(TileTesterState.gridWidth, oldWidth);
+    TileTesterState.gridHeight = Math.max(TileTesterState.gridHeight, oldHeight);
+    renderTileTesterMainCanvas();
+    updateCanvasTransform();
+  };
+  window.addEventListener('resize', tileTesterResizeHandler);
 }
 
 // Close the tile tester modal
