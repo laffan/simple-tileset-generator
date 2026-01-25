@@ -56,42 +56,47 @@ function renderTileTesterMainCanvas() {
   updateGridOverlay();
 }
 
-// Draw tiles for a specific layer
+// Draw tiles for a specific layer (sparse format)
 function drawLayerTiles(layer) {
   const ctx = TileTesterState.mainCtx;
   const tileSize = TileTesterState.tileSize;
   const sourceCanvas = document.getElementById('canvas'); // Original tileset without grid lines
+  const origin = TileTesterState.gridOrigin;
 
   if (!ctx || !sourceCanvas) return;
+  if (!layer.tiles || !Array.isArray(layer.tiles)) return;
 
   // Set layer opacity
   ctx.globalAlpha = layer.opacity;
 
-  for (let y = 0; y < TileTesterState.gridHeight; y++) {
-    for (let x = 0; x < TileTesterState.gridWidth; x++) {
-      const tile = layer.tiles[y] && layer.tiles[y][x];
+  // Iterate through sparse tile array
+  for (const entry of layer.tiles) {
+    const tile = entry.tile;
+    const tileX = entry.x;
+    const tileY = entry.y;
 
-      if (tile) {
-        // Get canvas coordinates - handles both semantic refs and old-style {row, col}
-        const coords = getTileCanvasCoords(tile);
-        if (!coords) continue; // Skip if tile not found in current tileset
+    // Get canvas coordinates - handles both semantic refs and old-style {row, col}
+    const coords = getTileCanvasCoords(tile);
+    if (!coords) continue; // Skip if tile not found in current tileset
 
-        // Calculate source position from original tileset
-        const srcX = coords.col * tileSize;
-        const srcY = coords.row * tileSize;
+    // Calculate source position from original tileset
+    const srcX = coords.col * tileSize;
+    const srcY = coords.row * tileSize;
 
-        // Calculate destination position
-        const destX = x * tileSize;
-        const destY = y * tileSize;
+    // Convert tile coordinates to internal grid coordinates for rendering
+    const internalX = tileX + origin.x;
+    const internalY = tileY + origin.y;
 
-        // Draw tile from original tileset canvas (not palette which has grid lines)
-        ctx.drawImage(
-          sourceCanvas,
-          srcX, srcY, tileSize, tileSize,
-          destX, destY, tileSize, tileSize
-        );
-      }
-    }
+    // Calculate destination position
+    const destX = internalX * tileSize;
+    const destY = internalY * tileSize;
+
+    // Draw tile from original tileset canvas (not palette which has grid lines)
+    ctx.drawImage(
+      sourceCanvas,
+      srcX, srcY, tileSize, tileSize,
+      destX, destY, tileSize, tileSize
+    );
   }
 
   // Reset opacity
@@ -123,7 +128,7 @@ function updateGridOverlay() {
   overlay.style.backgroundPosition = '0 0';
 }
 
-// Place or toggle a tile at grid position on active layer
+// Place or toggle a tile at grid position on active layer (sparse format)
 function placeTileAt(gridX, gridY) {
   const layer = getActiveLayer();
   if (!layer) return;
@@ -134,32 +139,28 @@ function placeTileAt(gridX, gridY) {
     return;
   }
 
-  // Check bounds
-  if (gridX < 0 || gridX >= TileTesterState.gridWidth ||
-      gridY < 0 || gridY >= TileTesterState.gridHeight) {
-    return;
-  }
+  // Convert internal grid position to tile coordinates
+  const tileCoords = internalToTileCoords(gridX, gridY);
+  const tileX = tileCoords.x;
+  const tileY = tileCoords.y;
 
-  // Ensure row exists
-  if (!layer.tiles[gridY]) {
-    layer.tiles[gridY] = [];
-  }
-
-  const existingTile = layer.tiles[gridY][gridX];
+  const existingTile = getTileAtPosition(layer, tileX, tileY);
 
   // Toggle behavior: if tile exists, remove it
   if (existingTile) {
-    layer.tiles[gridY][gridX] = null;
+    removeTileAtPosition(layer, tileX, tileY);
   } else if (TileTesterState.selectedTile) {
     // Place new tile with semantic reference
     const tileRef = coordsToTileRef(TileTesterState.selectedTile.row, TileTesterState.selectedTile.col);
-    if (tileRef) {
-      layer.tiles[gridY][gridX] = tileRef;
-    } else {
-      layer.tiles[gridY][gridX] = {
-        row: TileTesterState.selectedTile.row,
-        col: TileTesterState.selectedTile.col
-      };
+    const newTile = tileRef || {
+      row: TileTesterState.selectedTile.row,
+      col: TileTesterState.selectedTile.col
+    };
+    setTileAtPosition(layer, tileX, tileY, newTile);
+
+    // Auto-expand grid if needed (ensure 5 squares margin)
+    if (ensureGridForPosition(tileX, tileY, 5)) {
+      updateCanvasTransform();
     }
   }
 
@@ -167,7 +168,7 @@ function placeTileAt(gridX, gridY) {
   renderTileTesterMainCanvas();
 }
 
-// Place multi-tile selection at grid position
+// Place multi-tile selection at grid position (sparse format)
 function placeMultiTilesAt(gridX, gridY) {
   const layer = getActiveLayer();
   if (!layer) return;
@@ -183,55 +184,50 @@ function placeMultiTilesAt(gridX, gridY) {
   const height = maxRow - minRow + 1;
   const width = maxCol - minCol + 1;
 
+  let gridExpanded = false;
+
   // Place all tiles in the selection region
   for (let dy = 0; dy < height; dy++) {
     for (let dx = 0; dx < width; dx++) {
-      const destX = gridX + dx;
-      const destY = gridY + dy;
+      const destInternalX = gridX + dx;
+      const destInternalY = gridY + dy;
 
-      // Check bounds
-      if (destX < 0 || destX >= TileTesterState.gridWidth ||
-          destY < 0 || destY >= TileTesterState.gridHeight) {
-        continue;
-      }
-
-      // Ensure row exists
-      if (!layer.tiles[destY]) {
-        layer.tiles[destY] = [];
-      }
+      // Convert to tile coordinates
+      const destCoords = internalToTileCoords(destInternalX, destInternalY);
+      const destTileX = destCoords.x;
+      const destTileY = destCoords.y;
 
       // Convert to semantic tile reference
       const srcRow = minRow + dy;
       const srcCol = minCol + dx;
       const tileRef = coordsToTileRef(srcRow, srcCol);
 
-      if (tileRef) {
-        layer.tiles[destY][destX] = tileRef;
-      } else {
-        // Fallback to old format
-        layer.tiles[destY][destX] = { row: srcRow, col: srcCol };
+      const newTile = tileRef || { row: srcRow, col: srcCol };
+      setTileAtPosition(layer, destTileX, destTileY, newTile);
+
+      // Auto-expand grid if needed
+      if (ensureGridForPosition(destTileX, destTileY, 5)) {
+        gridExpanded = true;
       }
     }
+  }
+
+  if (gridExpanded) {
+    updateCanvasTransform();
   }
 
   // Redraw canvas
   renderTileTesterMainCanvas();
 }
 
-// Erase tile at grid position on active layer
+// Erase tile at grid position on active layer (sparse format)
 function eraseTileAt(gridX, gridY) {
   const layer = getActiveLayer();
   if (!layer) return;
 
-  // Check bounds
-  if (gridX < 0 || gridX >= TileTesterState.gridWidth ||
-      gridY < 0 || gridY >= TileTesterState.gridHeight) {
-    return;
-  }
-
-  if (layer.tiles[gridY]) {
-    layer.tiles[gridY][gridX] = null;
-  }
+  // Convert internal grid position to tile coordinates
+  const tileCoords = internalToTileCoords(gridX, gridY);
+  removeTileAtPosition(layer, tileCoords.x, tileCoords.y);
 
   // Redraw canvas
   renderTileTesterMainCanvas();
@@ -286,15 +282,11 @@ function drawGhostPreview() {
       const destX = (hoverPos.gridX + ref.localX) * tileSize;
       const destY = (hoverPos.gridY + ref.localY) * tileSize;
 
-      // Check bounds
-      if (destX >= 0 && destX < TileTesterState.gridWidth * tileSize &&
-          destY >= 0 && destY < TileTesterState.gridHeight * tileSize) {
-        ctx.drawImage(
-          sourceCanvas,
-          srcX, srcY, tileSize, tileSize,
-          destX, destY, tileSize, tileSize
-        );
-      }
+      ctx.drawImage(
+        sourceCanvas,
+        srcX, srcY, tileSize, tileSize,
+        destX, destY, tileSize, tileSize
+      );
     });
   }
   // Handle multi-tile selection
@@ -315,18 +307,14 @@ function drawGhostPreview() {
         const destX = (hoverPos.gridX + dx) * tileSize;
         const destY = (hoverPos.gridY + dy) * tileSize;
 
-        // Check bounds
-        if (destX >= 0 && destX < TileTesterState.gridWidth * tileSize &&
-            destY >= 0 && destY < TileTesterState.gridHeight * tileSize) {
-          const srcX = srcCol * tileSize;
-          const srcY = srcRow * tileSize;
+        const srcX = srcCol * tileSize;
+        const srcY = srcRow * tileSize;
 
-          ctx.drawImage(
-            sourceCanvas,
-            srcX, srcY, tileSize, tileSize,
-            destX, destY, tileSize, tileSize
-          );
-        }
+        ctx.drawImage(
+          sourceCanvas,
+          srcX, srcY, tileSize, tileSize,
+          destX, destY, tileSize, tileSize
+        );
       }
     }
   }
@@ -353,45 +341,65 @@ function drawGhostPreview() {
 function downloadTileTesterCanvas() {
   const tileSize = TileTesterState.tileSize;
   const sourceCanvas = document.getElementById('canvas');
+  const origin = TileTesterState.gridOrigin;
+
+  // Get bounds of all tiles to determine export size
+  const bounds = getTileBounds();
+
+  // If no tiles, export the current visible grid
+  let exportWidth, exportHeight, offsetX, offsetY;
+  if (!bounds.hasTiles) {
+    exportWidth = TileTesterState.gridWidth * tileSize;
+    exportHeight = TileTesterState.gridHeight * tileSize;
+    offsetX = 0;
+    offsetY = 0;
+  } else {
+    // Calculate export dimensions based on tile bounds
+    const tileWidth = bounds.maxX - bounds.minX + 1;
+    const tileHeight = bounds.maxY - bounds.minY + 1;
+    exportWidth = tileWidth * tileSize;
+    exportHeight = tileHeight * tileSize;
+    offsetX = bounds.minX;
+    offsetY = bounds.minY;
+  }
 
   // Create a temporary canvas without grid lines
   const tempCanvas = document.createElement('canvas');
-  tempCanvas.width = TileTesterState.gridWidth * tileSize;
-  tempCanvas.height = TileTesterState.gridHeight * tileSize;
+  tempCanvas.width = exportWidth;
+  tempCanvas.height = exportHeight;
   const tempCtx = tempCanvas.getContext('2d');
 
   // Fill background
   tempCtx.fillStyle = TileTesterState.backgroundColor;
   tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
 
-  // Draw all layers
+  // Draw all layers (sparse format)
   if (sourceCanvas) {
     for (const layer of TileTesterState.layers) {
       if (!layer.visible) continue;
+      if (!layer.tiles || !Array.isArray(layer.tiles)) continue;
 
       tempCtx.globalAlpha = layer.opacity;
 
-      for (let y = 0; y < TileTesterState.gridHeight; y++) {
-        for (let x = 0; x < TileTesterState.gridWidth; x++) {
-          const tile = layer.tiles[y] && layer.tiles[y][x];
+      for (const entry of layer.tiles) {
+        const tile = entry.tile;
+        const tileX = entry.x;
+        const tileY = entry.y;
 
-          if (tile) {
-            // Get canvas coordinates - handles both semantic refs and old-style {row, col}
-            const coords = getTileCanvasCoords(tile);
-            if (!coords) continue;
+        // Get canvas coordinates - handles both semantic refs and old-style {row, col}
+        const coords = getTileCanvasCoords(tile);
+        if (!coords) continue;
 
-            const srcX = coords.col * tileSize;
-            const srcY = coords.row * tileSize;
-            const destX = x * tileSize;
-            const destY = y * tileSize;
+        const srcX = coords.col * tileSize;
+        const srcY = coords.row * tileSize;
+        const destX = (tileX - offsetX) * tileSize;
+        const destY = (tileY - offsetY) * tileSize;
 
-            tempCtx.drawImage(
-              sourceCanvas,
-              srcX, srcY, tileSize, tileSize,
-              destX, destY, tileSize, tileSize
-            );
-          }
-        }
+        tempCtx.drawImage(
+          sourceCanvas,
+          srcX, srcY, tileSize, tileSize,
+          destX, destY, tileSize, tileSize
+        );
       }
     }
   }

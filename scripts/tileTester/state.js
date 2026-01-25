@@ -11,8 +11,12 @@ var TileTesterState = {
   gridWidth: 16,
   gridHeight: 12,
 
+  // Origin offset - tracks where (0,0) in tile coordinates is within the internal grid
+  // Tiles are stored relative to this origin, allowing infinite expansion in all directions
+  gridOrigin: { x: 0, y: 0 },
+
   // Layers - array of layer objects
-  // Each layer: { id, name, tiles: [][], opacity: 1, visible: true }
+  // Each layer: { id, name, tiles: [] (sparse array of {tile, x, y}), opacity: 1, visible: true }
   layers: [],
   activeLayerId: null,
   nextLayerId: 1,
@@ -62,23 +66,15 @@ var TileTesterState = {
   hoverPosition: null  // {gridX, gridY} - current hover position for ghost preview
 };
 
-// Create a new layer
+// Create a new layer with sparse tile storage
 function createTileTesterLayer(name) {
   const layer = {
     id: TileTesterState.nextLayerId++,
     name: name || 'Layer ' + TileTesterState.nextLayerId,
-    tiles: [],
+    tiles: [],  // Sparse array: [{tile: tileRef, x: gridX, y: gridY}, ...]
     opacity: 1,
     visible: true
   };
-
-  // Initialize empty tiles grid for this layer
-  for (let y = 0; y < TileTesterState.gridHeight; y++) {
-    layer.tiles[y] = [];
-    for (let x = 0; x < TileTesterState.gridWidth; x++) {
-      layer.tiles[y][x] = null;
-    }
-  }
 
   return layer;
 }
@@ -87,6 +83,7 @@ function createTileTesterLayer(name) {
 function initTileTesterLayers() {
   TileTesterState.layers = [];
   TileTesterState.nextLayerId = 1;
+  TileTesterState.gridOrigin = { x: 0, y: 0 };
   const layer = createTileTesterLayer('Layer 1');
   TileTesterState.layers.push(layer);
   TileTesterState.activeLayerId = layer.id;
@@ -141,64 +138,248 @@ function reorderLayers(fromIndex, toIndex) {
   renderTileTesterMainCanvas();
 }
 
+// Get tile at position from sparse array
+function getTileAtPosition(layer, x, y) {
+  if (!layer || !layer.tiles) return null;
+  const entry = layer.tiles.find(t => t.x === x && t.y === y);
+  return entry ? entry.tile : null;
+}
+
+// Set tile at position in sparse array
+function setTileAtPosition(layer, x, y, tile) {
+  if (!layer) return;
+  if (!layer.tiles) layer.tiles = [];
+
+  // Remove existing tile at position
+  const existingIndex = layer.tiles.findIndex(t => t.x === x && t.y === y);
+  if (existingIndex !== -1) {
+    layer.tiles.splice(existingIndex, 1);
+  }
+
+  // Add new tile if not null
+  if (tile !== null) {
+    layer.tiles.push({ tile: tile, x: x, y: y });
+  }
+}
+
+// Remove tile at position from sparse array
+function removeTileAtPosition(layer, x, y) {
+  if (!layer || !layer.tiles) return;
+  const index = layer.tiles.findIndex(t => t.x === x && t.y === y);
+  if (index !== -1) {
+    layer.tiles.splice(index, 1);
+  }
+}
+
+// Get the bounding box of all tiles across all layers
+function getTileBounds() {
+  let minX = Infinity, minY = Infinity;
+  let maxX = -Infinity, maxY = -Infinity;
+  let hasTiles = false;
+
+  for (const layer of TileTesterState.layers) {
+    if (!layer.tiles) continue;
+    for (const entry of layer.tiles) {
+      hasTiles = true;
+      minX = Math.min(minX, entry.x);
+      minY = Math.min(minY, entry.y);
+      maxX = Math.max(maxX, entry.x);
+      maxY = Math.max(maxY, entry.y);
+    }
+  }
+
+  if (!hasTiles) {
+    return { minX: 0, minY: 0, maxX: 0, maxY: 0, hasTiles: false };
+  }
+
+  return { minX, minY, maxX, maxY, hasTiles: true };
+}
+
+// Ensure grid is large enough for position with margin
+// Returns true if grid was expanded
+function ensureGridForPosition(x, y, margin) {
+  margin = margin || 5;
+  const origin = TileTesterState.gridOrigin;
+  let expanded = false;
+
+  // Convert tile position to internal grid position
+  const internalX = x + origin.x;
+  const internalY = y + origin.y;
+
+  // Check if we need to expand in any direction
+  // We need margin squares available beyond the position
+
+  // Expand left (need to shift origin)
+  if (internalX < margin) {
+    const expandBy = margin - internalX;
+    TileTesterState.gridOrigin.x += expandBy;
+    TileTesterState.gridWidth += expandBy;
+    // Adjust pan to keep view stable
+    TileTesterState.canvasPan.x -= expandBy * TileTesterState.tileSize;
+    expanded = true;
+  }
+
+  // Expand right
+  if (internalX >= TileTesterState.gridWidth - margin) {
+    const expandBy = internalX - TileTesterState.gridWidth + margin + 1;
+    TileTesterState.gridWidth += expandBy;
+    expanded = true;
+  }
+
+  // Expand top (need to shift origin)
+  if (internalY < margin) {
+    const expandBy = margin - internalY;
+    TileTesterState.gridOrigin.y += expandBy;
+    TileTesterState.gridHeight += expandBy;
+    // Adjust pan to keep view stable
+    TileTesterState.canvasPan.y -= expandBy * TileTesterState.tileSize;
+    expanded = true;
+  }
+
+  // Expand bottom
+  if (internalY >= TileTesterState.gridHeight - margin) {
+    const expandBy = internalY - TileTesterState.gridHeight + margin + 1;
+    TileTesterState.gridHeight += expandBy;
+    expanded = true;
+  }
+
+  return expanded;
+}
+
+// Convert tile coordinates to internal grid coordinates
+function tileToInternalCoords(tileX, tileY) {
+  return {
+    x: tileX + TileTesterState.gridOrigin.x,
+    y: tileY + TileTesterState.gridOrigin.y
+  };
+}
+
+// Convert internal grid coordinates to tile coordinates
+function internalToTileCoords(internalX, internalY) {
+  return {
+    x: internalX - TileTesterState.gridOrigin.x,
+    y: internalY - TileTesterState.gridOrigin.y
+  };
+}
+
 // Clear all tiles on active layer
 function clearTileTesterGrid() {
   const layer = getActiveLayer();
   if (layer) {
-    for (let y = 0; y < TileTesterState.gridHeight; y++) {
-      layer.tiles[y] = [];
-      for (let x = 0; x < TileTesterState.gridWidth; x++) {
-        layer.tiles[y][x] = null;
-      }
-    }
+    layer.tiles = [];
   }
   if (TileTesterState.mainCanvas) {
     renderTileTesterMainCanvas();
   }
 }
 
-// Get tile tester data for session saving
+// Get tile tester data for session saving (sparse format v2)
 function getTileTesterData() {
+  // Convert layers to sparse format for saving
+  const sparseLayers = TileTesterState.layers.map(layer => ({
+    id: layer.id,
+    name: layer.name,
+    tiles: layer.tiles ? layer.tiles.map(entry => ({
+      tile: entry.tile,
+      x: entry.x,
+      y: entry.y
+    })) : [],
+    opacity: layer.opacity,
+    visible: layer.visible
+  }));
+
   return {
-    layers: JSON.parse(JSON.stringify(TileTesterState.layers)),
+    version: 2,  // Tile tester data format version
+    layers: sparseLayers,
     activeLayerId: TileTesterState.activeLayerId,
     nextLayerId: TileTesterState.nextLayerId,
-    gridWidth: TileTesterState.gridWidth,
-    gridHeight: TileTesterState.gridHeight,
+    gridOrigin: { ...TileTesterState.gridOrigin },
     backgroundColor: TileTesterState.backgroundColor,
     paletteFitMode: TileTesterState.paletteFitMode,
     customTiles: JSON.parse(JSON.stringify(TileTesterState.customTiles))
   };
 }
 
-// Load tile tester data from session
+// Convert old 2D array layer format to sparse format
+function convertLegacyLayerToSparse(layer) {
+  const sparseTiles = [];
+
+  if (layer.tiles && Array.isArray(layer.tiles)) {
+    // Check if it's already sparse format (array of {tile, x, y} objects)
+    if (layer.tiles.length > 0 && layer.tiles[0] &&
+        typeof layer.tiles[0].x === 'number' &&
+        typeof layer.tiles[0].y === 'number') {
+      // Already sparse format
+      return layer.tiles;
+    }
+
+    // Convert from 2D array format
+    for (let y = 0; y < layer.tiles.length; y++) {
+      const row = layer.tiles[y];
+      if (!row) continue;
+      for (let x = 0; x < row.length; x++) {
+        const tile = row[x];
+        if (tile !== null && tile !== undefined) {
+          sparseTiles.push({ tile: tile, x: x, y: y });
+        }
+      }
+    }
+  }
+
+  return sparseTiles;
+}
+
+// Load tile tester data from session (handles both old and new formats)
 function loadTileTesterData(data) {
   if (!data) return;
 
-  if (data.gridWidth !== undefined) {
-    TileTesterState.gridWidth = data.gridWidth;
-  }
-  if (data.gridHeight !== undefined) {
-    TileTesterState.gridHeight = data.gridHeight;
-  }
+  // Handle background color
   if (data.backgroundColor !== undefined) {
     TileTesterState.backgroundColor = data.backgroundColor;
-    // Update color picker if it exists
     const bgColorPicker = document.getElementById('tileTesterBgColorPicker');
     if (bgColorPicker) {
       bgColorPicker.value = data.backgroundColor;
     }
-    // Update clear background visibility
     if (typeof updateClearBackgroundVisibility === 'function') {
       updateClearBackgroundVisibility();
     }
   }
+
   if (data.paletteFitMode !== undefined) {
     TileTesterState.paletteFitMode = data.paletteFitMode;
   }
-  if (data.layers !== undefined) {
-    TileTesterState.layers = JSON.parse(JSON.stringify(data.layers));
+
+  // Load grid origin (v2 format) or reset to 0,0 (v1 format)
+  if (data.gridOrigin !== undefined) {
+    TileTesterState.gridOrigin = { ...data.gridOrigin };
+  } else {
+    TileTesterState.gridOrigin = { x: 0, y: 0 };
   }
+
+  // Load layers and convert from legacy format if needed
+  if (data.layers !== undefined) {
+    const loadedLayers = JSON.parse(JSON.stringify(data.layers));
+
+    // Convert each layer's tiles to sparse format if needed
+    TileTesterState.layers = loadedLayers.map(layer => ({
+      id: layer.id,
+      name: layer.name,
+      tiles: convertLegacyLayerToSparse(layer),
+      opacity: layer.opacity !== undefined ? layer.opacity : 1,
+      visible: layer.visible !== undefined ? layer.visible : true
+    }));
+
+    // For legacy format, calculate grid size from tile positions
+    if (data.version === undefined || data.version < 2) {
+      const bounds = getTileBounds();
+      if (bounds.hasTiles) {
+        // Set grid to encompass all tiles with margin
+        TileTesterState.gridWidth = Math.max(16, bounds.maxX + 6);
+        TileTesterState.gridHeight = Math.max(12, bounds.maxY + 6);
+      }
+    }
+  }
+
   if (data.activeLayerId !== undefined) {
     TileTesterState.activeLayerId = data.activeLayerId;
   }

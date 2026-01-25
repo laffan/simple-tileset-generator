@@ -89,7 +89,7 @@ function createLayerElement(layer, index) {
   return div;
 }
 
-// Update a specific layer's thumbnail
+// Update a specific layer's thumbnail (sparse format)
 function updateLayerThumbnail(layerId) {
   const layer = TileTesterState.layers.find(l => l.id === layerId);
   if (!layer) return;
@@ -100,47 +100,61 @@ function updateLayerThumbnail(layerId) {
   const ctx = thumbCanvas.getContext('2d');
   const sourceCanvas = document.getElementById('canvas');
   const tileSize = TileTesterState.tileSize;
+  const origin = TileTesterState.gridOrigin;
 
   // Clear thumbnail
   ctx.fillStyle = '#e0e0e0';
   ctx.fillRect(0, 0, LAYER_THUMB_WIDTH, LAYER_THUMB_HEIGHT);
 
   if (!sourceCanvas) return;
+  if (!layer.tiles || !Array.isArray(layer.tiles) || layer.tiles.length === 0) return;
+
+  // Calculate bounds of tiles in this layer
+  let minX = Infinity, minY = Infinity;
+  let maxX = -Infinity, maxY = -Infinity;
+
+  for (const entry of layer.tiles) {
+    minX = Math.min(minX, entry.x);
+    minY = Math.min(minY, entry.y);
+    maxX = Math.max(maxX, entry.x);
+    maxY = Math.max(maxY, entry.y);
+  }
 
   // Calculate scale to fit layer content in thumbnail
-  const layerPixelWidth = TileTesterState.gridWidth * tileSize;
-  const layerPixelHeight = TileTesterState.gridHeight * tileSize;
+  const tileWidth = maxX - minX + 1;
+  const tileHeight = maxY - minY + 1;
+  const layerPixelWidth = Math.max(tileWidth, 1) * tileSize;
+  const layerPixelHeight = Math.max(tileHeight, 1) * tileSize;
   const scale = Math.min(
     LAYER_THUMB_WIDTH / layerPixelWidth,
-    LAYER_THUMB_HEIGHT / layerPixelHeight
+    LAYER_THUMB_HEIGHT / layerPixelHeight,
+    1  // Don't scale up, only down
   );
 
   const thumbTileSize = tileSize * scale;
-  const offsetX = (LAYER_THUMB_WIDTH - TileTesterState.gridWidth * thumbTileSize) / 2;
-  const offsetY = (LAYER_THUMB_HEIGHT - TileTesterState.gridHeight * thumbTileSize) / 2;
+  const offsetX = (LAYER_THUMB_WIDTH - tileWidth * thumbTileSize) / 2;
+  const offsetY = (LAYER_THUMB_HEIGHT - tileHeight * thumbTileSize) / 2;
 
-  // Draw tiles for this layer only
-  for (let y = 0; y < TileTesterState.gridHeight; y++) {
-    for (let x = 0; x < TileTesterState.gridWidth; x++) {
-      const tile = layer.tiles[y] && layer.tiles[y][x];
+  // Draw tiles for this layer only (sparse format)
+  for (const entry of layer.tiles) {
+    const tile = entry.tile;
+    const tileX = entry.x;
+    const tileY = entry.y;
 
-      if (tile) {
-        // Get canvas coordinates - handles both semantic refs and old-style {row, col}
-        const coords = getTileCanvasCoords(tile);
-        if (!coords) continue;
+    // Get canvas coordinates - handles both semantic refs and old-style {row, col}
+    const coords = getTileCanvasCoords(tile);
+    if (!coords) continue;
 
-        const srcX = coords.col * tileSize;
-        const srcY = coords.row * tileSize;
-        const destX = offsetX + x * thumbTileSize;
-        const destY = offsetY + y * thumbTileSize;
+    const srcX = coords.col * tileSize;
+    const srcY = coords.row * tileSize;
+    const destX = offsetX + (tileX - minX) * thumbTileSize;
+    const destY = offsetY + (tileY - minY) * thumbTileSize;
 
-        ctx.drawImage(
-          sourceCanvas,
-          srcX, srcY, tileSize, tileSize,
-          destX, destY, thumbTileSize, thumbTileSize
-        );
-      }
-    }
+    ctx.drawImage(
+      sourceCanvas,
+      srcX, srcY, tileSize, tileSize,
+      destX, destY, thumbTileSize, thumbTileSize
+    );
   }
 }
 

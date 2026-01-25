@@ -5,14 +5,14 @@ function generateCustomTileId() {
   return 'custom_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 }
 
-// Add a custom tile from current canvas selection
+// Add a custom tile from current canvas selection (sparse format)
 function addCustomTileFromSelection() {
   const state = TileTesterState;
   if (!state.canvasSelection) return;
 
   const sel = state.canvasSelection;
 
-  // Calculate grid bounds
+  // Calculate grid bounds (these are internal grid coordinates)
   const minGridX = Math.min(sel.startCol, sel.endCol);
   const maxGridX = Math.max(sel.startCol, sel.endCol);
   const minGridY = Math.min(sel.startRow, sel.endRow);
@@ -27,20 +27,18 @@ function addCustomTileFromSelection() {
 
   for (let localY = 0; localY < height; localY++) {
     for (let localX = 0; localX < width; localX++) {
-      const gridX = minGridX + localX;
-      const gridY = minGridY + localY;
+      const internalX = minGridX + localX;
+      const internalY = minGridY + localY;
 
-      // Check bounds
-      if (gridX < 0 || gridX >= state.gridWidth || gridY < 0 || gridY >= state.gridHeight) {
-        continue;
-      }
+      // Convert to tile coordinates for sparse lookup
+      const tileCoords = internalToTileCoords(internalX, internalY);
 
       // Collect tiles from ALL visible layers at this position (bottom to top)
       for (let i = 0; i < state.layers.length; i++) {
         const layer = state.layers[i];
         if (!layer.visible) continue;
 
-        const tile = layer.tiles[gridY] && layer.tiles[gridY][gridX];
+        const tile = getTileAtPosition(layer, tileCoords.x, tileCoords.y);
         if (tile) {
           // Convert to semantic reference if it's not already
           let tileRef;
@@ -461,7 +459,7 @@ function updateCustomTilePaletteSelection(selectedId) {
   });
 }
 
-// Place custom tile at grid position
+// Place custom tile at grid position (sparse format)
 function placeCustomTileAt(gridX, gridY) {
   const customTile = TileTesterState.selectedCustomTile;
   if (!customTile) return;
@@ -472,26 +470,23 @@ function placeCustomTileAt(gridX, gridY) {
   // Sort refs by layer index to place in correct order (though all go to current layer)
   const sortedRefs = [...customTile.tileRefs].sort((a, b) => (a.layerIndex || 0) - (b.layerIndex || 0));
 
+  let gridExpanded = false;
+
   // Place all tiles from the custom tile
   sortedRefs.forEach(ref => {
-    const destX = gridX + ref.localX;
-    const destY = gridY + ref.localY;
+    const destInternalX = gridX + ref.localX;
+    const destInternalY = gridY + ref.localY;
 
-    // Check bounds
-    if (destX < 0 || destX >= TileTesterState.gridWidth ||
-        destY < 0 || destY >= TileTesterState.gridHeight) {
-      return;
-    }
-
-    // Ensure row exists
-    if (!layer.tiles[destY]) {
-      layer.tiles[destY] = [];
-    }
+    // Convert to tile coordinates
+    const destCoords = internalToTileCoords(destInternalX, destInternalY);
+    const destTileX = destCoords.x;
+    const destTileY = destCoords.y;
 
     // Place tile - preserve semantic reference if present
+    let newTile;
     if (ref.type && ref.name) {
       // Semantic reference - copy it (without localX/localY/layerIndex)
-      layer.tiles[destY][destX] = {
+      newTile = {
         type: ref.type,
         name: ref.name,
         colorIndex: ref.colorIndex,
@@ -501,13 +496,22 @@ function placeCustomTileAt(gridX, gridY) {
     } else if (ref.row !== undefined && ref.col !== undefined) {
       // Old-style {row, col} - convert to semantic ref
       const tileRef = coordsToTileRef(ref.row, ref.col);
-      if (tileRef) {
-        layer.tiles[destY][destX] = tileRef;
-      } else {
-        layer.tiles[destY][destX] = { row: ref.row, col: ref.col };
+      newTile = tileRef || { row: ref.row, col: ref.col };
+    }
+
+    if (newTile) {
+      setTileAtPosition(layer, destTileX, destTileY, newTile);
+
+      // Auto-expand grid if needed (ensure 5 squares margin)
+      if (ensureGridForPosition(destTileX, destTileY, 5)) {
+        gridExpanded = true;
       }
     }
   });
+
+  if (gridExpanded) {
+    updateCanvasTransform();
+  }
 
   renderTileTesterMainCanvas();
   updateLayerThumbnail(layer.id);

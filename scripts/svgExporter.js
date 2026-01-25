@@ -508,15 +508,30 @@ function generateTilesetSVG() {
   return svg;
 }
 
-// Generate tilemap SVG from tile tester
+// Generate tilemap SVG from tile tester (sparse format)
 function generateTilemapSVG() {
   const tileSize = TileTesterState.tileSize;
-  const gridWidth = TileTesterState.gridWidth;
-  const gridHeight = TileTesterState.gridHeight;
   const backgroundColor = TileTesterState.backgroundColor;
 
-  const svgWidth = gridWidth * tileSize;
-  const svgHeight = gridHeight * tileSize;
+  // Get bounds of all tiles to determine export size
+  const bounds = getTileBounds();
+
+  // If no tiles, export the current visible grid
+  let svgWidth, svgHeight, offsetX, offsetY;
+  if (!bounds.hasTiles) {
+    svgWidth = TileTesterState.gridWidth * tileSize;
+    svgHeight = TileTesterState.gridHeight * tileSize;
+    offsetX = 0;
+    offsetY = 0;
+  } else {
+    // Calculate export dimensions based on tile bounds
+    const tileWidth = bounds.maxX - bounds.minX + 1;
+    const tileHeight = bounds.maxY - bounds.minY + 1;
+    svgWidth = tileWidth * tileSize;
+    svgHeight = tileHeight * tileSize;
+    offsetX = bounds.minX;
+    offsetY = bounds.minY;
+  }
 
   const defs = [];
   const content = [];
@@ -524,33 +539,37 @@ function generateTilemapSVG() {
   // Add background
   content.push(`  <rect x="0" y="0" width="${svgWidth}" height="${svgHeight}" fill="${backgroundColor}" />`);
 
-  // Process each visible layer
+  // Process each visible layer (sparse format)
   for (const layer of TileTesterState.layers) {
     if (!layer.visible) continue;
+    if (!layer.tiles || !Array.isArray(layer.tiles)) continue;
 
     const opacity = layer.opacity;
     const layerContent = [];
 
-    for (let y = 0; y < gridHeight; y++) {
-      for (let x = 0; x < gridWidth; x++) {
-        const tile = layer.tiles[y] && layer.tiles[y][x];
-        if (!tile) continue;
+    for (const entry of layer.tiles) {
+      const tile = entry.tile;
+      const tileX = entry.x;
+      const tileY = entry.y;
 
-        // Get the tile's canvas coordinates
-        const coords = getTileCanvasCoords(tile);
-        if (!coords) continue;
+      // Get the tile's canvas coordinates
+      const coords = getTileCanvasCoords(tile);
+      if (!coords) continue;
 
-        // Determine what type of tile this is and generate appropriate SVG
-        const tileElements = generateTileSVGFromCoords(coords, tileSize, x * tileSize, y * tileSize);
+      // Calculate position relative to export bounds
+      const destX = (tileX - offsetX) * tileSize;
+      const destY = (tileY - offsetY) * tileSize;
 
-        tileElements.forEach(el => {
-          if (el.type === 'mask' || el.type === 'clipPath') {
-            defs.push(el.content);
-          } else {
-            layerContent.push(el.content);
-          }
-        });
-      }
+      // Determine what type of tile this is and generate appropriate SVG
+      const tileElements = generateTileSVGFromCoords(coords, tileSize, destX, destY);
+
+      tileElements.forEach(el => {
+        if (el.type === 'mask' || el.type === 'clipPath') {
+          defs.push(el.content);
+        } else {
+          layerContent.push(el.content);
+        }
+      });
     }
 
     // Wrap layer content with opacity if not 1

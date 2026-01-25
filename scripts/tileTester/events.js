@@ -40,7 +40,7 @@ function setupMainCanvasEvents() {
   const mainCanvas = document.getElementById('tileTesterMainCanvas');
   if (!mainCanvas) return;
 
-  // Mouse down - start painting
+  // Mouse down - start painting (sparse format)
   tileTesterEventHandlers.mainCanvasMouseDown = function(e) {
     if (e.button !== 0) return;
 
@@ -52,7 +52,9 @@ function setupMainCanvasEvents() {
     const pos = getGridPositionFromCanvasClick(e);
     if (pos) {
       const layer = getActiveLayer();
-      const existingTile = layer && layer.tiles[pos.gridY] && layer.tiles[pos.gridY][pos.gridX];
+      // Convert internal grid position to tile coordinates for sparse lookup
+      const tileCoords = internalToTileCoords(pos.gridX, pos.gridY);
+      const existingTile = layer && getTileAtPosition(layer, tileCoords.x, tileCoords.y);
 
       if (e.shiftKey) {
         tileTesterEraseMode = true;
@@ -143,7 +145,7 @@ function setupMainCanvasEvents() {
   mainCanvas.addEventListener('contextmenu', tileTesterEventHandlers.mainCanvasContextMenu);
 }
 
-// Place tile without toggle behavior (for drag painting)
+// Place tile without toggle behavior (for drag painting) - sparse format
 function placeTileAtWithoutToggle(gridX, gridY) {
   const layer = getActiveLayer();
   if (!layer) return;
@@ -163,25 +165,22 @@ function placeTileAtWithoutToggle(gridX, gridY) {
 
   if (!TileTesterState.selectedTile) return;
 
-  if (gridX < 0 || gridX >= TileTesterState.gridWidth ||
-      gridY < 0 || gridY >= TileTesterState.gridHeight) {
-    return;
-  }
-
-  if (!layer.tiles[gridY]) {
-    layer.tiles[gridY] = [];
-  }
+  // Convert internal grid position to tile coordinates
+  const tileCoords = internalToTileCoords(gridX, gridY);
+  const tileX = tileCoords.x;
+  const tileY = tileCoords.y;
 
   // Convert to semantic tile reference for persistence across tileset changes
   const tileRef = coordsToTileRef(TileTesterState.selectedTile.row, TileTesterState.selectedTile.col);
-  if (tileRef) {
-    layer.tiles[gridY][gridX] = tileRef;
-  } else {
-    // Fallback to old format if conversion fails
-    layer.tiles[gridY][gridX] = {
-      row: TileTesterState.selectedTile.row,
-      col: TileTesterState.selectedTile.col
-    };
+  const newTile = tileRef || {
+    row: TileTesterState.selectedTile.row,
+    col: TileTesterState.selectedTile.col
+  };
+  setTileAtPosition(layer, tileX, tileY, newTile);
+
+  // Auto-expand grid if needed (ensure 5 squares margin)
+  if (ensureGridForPosition(tileX, tileY, 5)) {
+    updateCanvasTransform();
   }
 
   renderTileTesterMainCanvas();
@@ -404,7 +403,7 @@ function updateCanvasTransform() {
 
   if (!container || !canvas) return;
 
-  const zoom = TileTesterState.canvasZoom;
+  const zoom = TileTesterState.canvasZoom || 1;
   const pan = TileTesterState.canvasPan;
 
   // Use CSS width/height for pixel-perfect scaling (no anti-aliasing)
@@ -425,20 +424,8 @@ function updateCanvasTransform() {
   // Update grid overlay size
   updateGridOverlay();
 
-  // Update container overflow based on zoom
-  if (zoom > 1) {
-    container.style.overflow = 'hidden';
-  } else {
-    container.style.overflow = 'visible';
-    // Reset pan when at 1x
-    TileTesterState.canvasPan = { x: 0, y: 0 };
-    canvas.style.marginLeft = '0';
-    canvas.style.marginTop = '0';
-    if (overlay) {
-      overlay.style.marginLeft = '0';
-      overlay.style.marginTop = '0';
-    }
-  }
+  // Container always uses hidden overflow for infinite canvas panning
+  container.style.overflow = 'hidden';
 }
 
 // Setup space key panning
@@ -455,7 +442,6 @@ function setupSpacePanning() {
     if (e.code === 'Space' && !TileTesterState.isSpacePanning) {
       const modal = document.getElementById('tileTesterModal');
       if (!modal || !modal.classList.contains('active')) return;
-      if (TileTesterState.canvasZoom <= 1) return;
 
       e.preventDefault();
       TileTesterState.isSpacePanning = true;
@@ -477,7 +463,6 @@ function setupSpacePanning() {
 
   mainArea.addEventListener('mousedown', function(e) {
     if (!TileTesterState.isSpacePanning) return;
-    if (TileTesterState.canvasZoom <= 1) return;
 
     isPanning = true;
     panStart = { x: e.clientX, y: e.clientY };
@@ -490,8 +475,9 @@ function setupSpacePanning() {
   document.addEventListener('mousemove', function(e) {
     if (!isPanning || !TileTesterState.isSpacePanning) return;
 
-    const dx = (e.clientX - panStart.x) / TileTesterState.canvasZoom;
-    const dy = (e.clientY - panStart.y) / TileTesterState.canvasZoom;
+    const zoom = TileTesterState.canvasZoom || 1;
+    const dx = (e.clientX - panStart.x) / zoom;
+    const dy = (e.clientY - panStart.y) / zoom;
 
     TileTesterState.canvasPan = {
       x: panStartOffset.x + dx,

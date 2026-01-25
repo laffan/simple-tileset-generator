@@ -13,15 +13,12 @@ function openTileTester() {
   const tileSize = parseInt(document.getElementById('sizeInput').value, 10) || 64;
   TileTesterState.tileSize = tileSize;
 
-  // Calculate grid size based on window
+  // Calculate grid size based on window (for initial view)
   calculateGridSize();
 
   // Initialize layers if empty
   if (!TileTesterState.layers || TileTesterState.layers.length === 0) {
     initTileTesterLayers();
-  } else {
-    // Ensure existing layers have proper grid size
-    ensureLayerGridSize();
   }
 
   // Show modal
@@ -64,29 +61,17 @@ function openTileTester() {
 
   // Setup window resize handler
   tileTesterResizeHandler = function() {
+    // Recalculate minimum grid size based on window, but don't shrink existing grid
+    const oldWidth = TileTesterState.gridWidth;
+    const oldHeight = TileTesterState.gridHeight;
     calculateGridSize();
-    ensureLayerGridSize();
+    // Ensure we don't lose tiles by shrinking the grid
+    TileTesterState.gridWidth = Math.max(TileTesterState.gridWidth, oldWidth);
+    TileTesterState.gridHeight = Math.max(TileTesterState.gridHeight, oldHeight);
     renderTileTesterMainCanvas();
+    updateCanvasTransform();
   };
   window.addEventListener('resize', tileTesterResizeHandler);
-}
-
-// Ensure all layers have the correct grid size
-function ensureLayerGridSize() {
-  for (const layer of TileTesterState.layers) {
-    // Expand grid if needed
-    while (layer.tiles.length < TileTesterState.gridHeight) {
-      layer.tiles.push([]);
-    }
-    for (let y = 0; y < TileTesterState.gridHeight; y++) {
-      if (!layer.tiles[y]) {
-        layer.tiles[y] = [];
-      }
-      while (layer.tiles[y].length < TileTesterState.gridWidth) {
-        layer.tiles[y].push(null);
-      }
-    }
-  }
 }
 
 // Close the tile tester modal
