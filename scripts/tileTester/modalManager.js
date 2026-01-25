@@ -30,61 +30,65 @@ function openTileTester() {
   // Prevent body scroll while modal is open
   document.body.style.overflow = 'hidden';
 
-  // Setup components
-  setupTileTesterPalette();
-  setupTileTesterMainCanvas();
-  setupLayersPanel();
-  setupTileTesterEvents();
+  // Use requestAnimationFrame to ensure layout is complete before canvas setup
+  // This fixes coordinate calculation issues with the header bar offset
+  requestAnimationFrame(function() {
+    // Setup components
+    setupTileTesterPalette();
+    setupTileTesterMainCanvas();
+    setupLayersPanel();
+    setupTileTesterEvents();
 
-  // Set container background to match canvas background for seamless panning
-  const container = document.querySelector('.tester-canvas-container');
-  if (container) {
-    container.style.backgroundColor = TileTesterState.backgroundColor;
-  }
+    // Set container background to match canvas background for seamless panning
+    const container = document.querySelector('.tester-canvas-container');
+    if (container) {
+      container.style.backgroundColor = TileTesterState.backgroundColor;
+    }
 
-  // Center view on existing tiles if any
-  centerViewOnTiles();
-  updateCanvasTransform();
-
-  // Initialize custom tiles functionality
-  if (typeof initCustomTiles === 'function') {
-    initCustomTiles();
-  }
-
-  // Render custom tiles in palette
-  if (typeof renderCustomTilesInPalette === 'function') {
-    renderCustomTilesInPalette();
-  }
-
-  // Reset palette window position
-  const paletteWindow = document.getElementById('tileTesterPaletteWindow');
-  if (paletteWindow) {
-    paletteWindow.style.left = '0px';
-    paletteWindow.style.top = '0px';
-  }
-
-  // Reset hide button state
-  const hideBtn = document.getElementById('tileTesterHideBtn');
-  if (hideBtn) {
-    hideBtn.textContent = 'Hide';
-  }
-  if (paletteWindow) {
-    paletteWindow.classList.remove('content-hidden');
-  }
-
-  // Setup window resize handler
-  tileTesterResizeHandler = function() {
-    // Recalculate minimum grid size based on window, but don't shrink existing grid
-    const oldWidth = TileTesterState.gridWidth;
-    const oldHeight = TileTesterState.gridHeight;
-    calculateGridSize();
-    // Ensure we don't lose tiles by shrinking the grid
-    TileTesterState.gridWidth = Math.max(TileTesterState.gridWidth, oldWidth);
-    TileTesterState.gridHeight = Math.max(TileTesterState.gridHeight, oldHeight);
-    renderTileTesterMainCanvas();
+    // Center view on existing tiles if any
+    centerViewOnTiles();
     updateCanvasTransform();
-  };
-  window.addEventListener('resize', tileTesterResizeHandler);
+
+    // Initialize custom tiles functionality
+    if (typeof initCustomTiles === 'function') {
+      initCustomTiles();
+    }
+
+    // Render custom tiles in palette
+    if (typeof renderCustomTilesInPalette === 'function') {
+      renderCustomTilesInPalette();
+    }
+
+    // Reset palette window position
+    const paletteWindow = document.getElementById('tileTesterPaletteWindow');
+    if (paletteWindow) {
+      paletteWindow.style.left = '0px';
+      paletteWindow.style.top = '0px';
+    }
+
+    // Reset hide button state
+    const hideBtn = document.getElementById('tileTesterHideBtn');
+    if (hideBtn) {
+      hideBtn.textContent = 'Hide';
+    }
+    if (paletteWindow) {
+      paletteWindow.classList.remove('content-hidden');
+    }
+
+    // Setup window resize handler
+    tileTesterResizeHandler = function() {
+      // Recalculate minimum grid size based on window, but don't shrink existing grid
+      const oldWidth = TileTesterState.gridWidth;
+      const oldHeight = TileTesterState.gridHeight;
+      calculateGridSize();
+      // Ensure we don't lose tiles by shrinking the grid
+      TileTesterState.gridWidth = Math.max(TileTesterState.gridWidth, oldWidth);
+      TileTesterState.gridHeight = Math.max(TileTesterState.gridHeight, oldHeight);
+      renderTileTesterMainCanvas();
+      updateCanvasTransform();
+    };
+    window.addEventListener('resize', tileTesterResizeHandler);
+  });
 }
 
 // Close the tile tester modal
