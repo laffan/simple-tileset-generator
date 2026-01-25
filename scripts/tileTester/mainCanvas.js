@@ -369,9 +369,13 @@ function downloadTileTesterCanvas() {
   tempCanvas.height = exportHeight;
   const tempCtx = tempCanvas.getContext('2d');
 
-  // Fill background
-  tempCtx.fillStyle = TileTesterState.backgroundColor;
-  tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+  // Fill background only if a custom color has been set (not the default)
+  const defaultBg = '#d0d0d0';
+  if (TileTesterState.backgroundColor !== defaultBg) {
+    tempCtx.fillStyle = TileTesterState.backgroundColor;
+    tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+  }
+  // If using default background, leave canvas transparent for PNG export
 
   // Draw all layers (sparse format)
   if (sourceCanvas) {

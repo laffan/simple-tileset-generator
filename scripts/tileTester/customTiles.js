@@ -270,7 +270,7 @@ function renderCanvasSelection() {
   }
 }
 
-// Show the "Add to custom tile" button UI
+// Show the selection popup menu UI
 function showSelectionUI() {
   const sel = TileTesterState.canvasSelection;
   if (!sel) return;
@@ -286,7 +286,7 @@ function showSelectionUI() {
   const minCol = Math.min(sel.startCol, sel.endCol);
   const maxCol = Math.max(sel.startCol, sel.endCol);
 
-  // Calculate center position for the button
+  // Calculate center position for the menu
   const selectionCenterX = ((minCol + maxCol + 1) / 2) * tileSize * zoom;
   const selectionTop = minRow * tileSize * zoom;
 
@@ -294,32 +294,199 @@ function showSelectionUI() {
   const canvas = document.getElementById('tileTesterMainCanvas');
   const canvasRect = canvas.getBoundingClientRect();
 
-  // Create UI container
+  // Create UI container (now a menu)
   const ui = document.createElement('div');
   ui.id = 'customTileSelectionUI';
-  ui.className = 'custom-tile-selection-ui';
+  ui.className = 'custom-tile-selection-ui custom-tile-selection-menu';
 
   // Position above the selection
   ui.style.position = 'fixed';
   ui.style.left = (canvasRect.left + selectionCenterX) + 'px';
-  ui.style.top = (canvasRect.top + selectionTop - 45) + 'px';
-  ui.style.transform = 'translateX(-50%)';
+  ui.style.top = (canvasRect.top + selectionTop - 10) + 'px';
+  ui.style.transform = 'translate(-50%, -100%)';
   ui.style.zIndex = '1000';
 
-  // Create button
-  const btn = document.createElement('button');
-  btn.className = 'custom-tile-add-btn';
-  btn.textContent = 'Add to Custom Tiles';
-  btn.onclick = function(e) {
-    e.stopPropagation();
-    addCustomTileFromSelection();
-  };
+  // Menu items
+  const menuItems = [
+    { label: 'Add to Custom Tiles', action: addCustomTileFromSelection },
+    { label: 'Save Selection (PNG)', action: saveSelectionAsPNG },
+    { label: 'Save Selection (SVG)', action: saveSelectionAsSVG }
+  ];
 
-  ui.appendChild(btn);
+  menuItems.forEach((item, index) => {
+    const menuItem = document.createElement('button');
+    menuItem.className = 'custom-tile-menu-item';
+    menuItem.textContent = item.label;
+    menuItem.onclick = function(e) {
+      e.stopPropagation();
+      item.action();
+    };
+    ui.appendChild(menuItem);
+  });
+
   document.body.appendChild(ui);
 
   // Trigger a re-render to show the finalized selection
   renderTileTesterMainCanvas();
+}
+
+// Save selection as PNG
+function saveSelectionAsPNG() {
+  const sel = TileTesterState.canvasSelection;
+  if (!sel) return;
+
+  const tileSize = TileTesterState.tileSize;
+  const sourceCanvas = document.getElementById('canvas');
+  if (!sourceCanvas) return;
+
+  // Calculate grid bounds (these are internal grid coordinates)
+  const minGridX = Math.min(sel.startCol, sel.endCol);
+  const maxGridX = Math.max(sel.startCol, sel.endCol);
+  const minGridY = Math.min(sel.startRow, sel.endRow);
+  const maxGridY = Math.max(sel.startRow, sel.endRow);
+
+  const width = maxGridX - minGridX + 1;
+  const height = maxGridY - minGridY + 1;
+
+  // Create temporary canvas for export
+  const tempCanvas = document.createElement('canvas');
+  tempCanvas.width = width * tileSize;
+  tempCanvas.height = height * tileSize;
+  const tempCtx = tempCanvas.getContext('2d');
+
+  // Draw tiles from all visible layers (bottom to top)
+  for (let localY = 0; localY < height; localY++) {
+    for (let localX = 0; localX < width; localX++) {
+      const internalX = minGridX + localX;
+      const internalY = minGridY + localY;
+
+      // Convert to tile coordinates for sparse lookup
+      const tileCoords = internalToTileCoords(internalX, internalY);
+
+      // Draw tiles from all visible layers at this position
+      for (const layer of TileTesterState.layers) {
+        if (!layer.visible) continue;
+
+        const tile = getTileAtPosition(layer, tileCoords.x, tileCoords.y);
+        if (tile) {
+          const coords = getTileCanvasCoords(tile);
+          if (!coords) continue;
+
+          const srcX = coords.col * tileSize;
+          const srcY = coords.row * tileSize;
+          const destX = localX * tileSize;
+          const destY = localY * tileSize;
+
+          tempCtx.globalAlpha = layer.opacity;
+          tempCtx.drawImage(
+            sourceCanvas,
+            srcX, srcY, tileSize, tileSize,
+            destX, destY, tileSize, tileSize
+          );
+        }
+      }
+    }
+  }
+
+  tempCtx.globalAlpha = 1;
+
+  // Download
+  const image = tempCanvas.toDataURL('image/png');
+  const link = document.createElement('a');
+  link.download = 'custom-tile.png';
+  link.href = image;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  // Clear selection after save
+  clearCanvasSelection();
+}
+
+// Save selection as SVG
+function saveSelectionAsSVG() {
+  const sel = TileTesterState.canvasSelection;
+  if (!sel) return;
+
+  const tileSize = TileTesterState.tileSize;
+  const sourceCanvas = document.getElementById('canvas');
+  if (!sourceCanvas) return;
+
+  // Calculate grid bounds (these are internal grid coordinates)
+  const minGridX = Math.min(sel.startCol, sel.endCol);
+  const maxGridX = Math.max(sel.startCol, sel.endCol);
+  const minGridY = Math.min(sel.startRow, sel.endRow);
+  const maxGridY = Math.max(sel.startRow, sel.endRow);
+
+  const width = maxGridX - minGridX + 1;
+  const height = maxGridY - minGridY + 1;
+
+  // Create temporary canvas to render the selection
+  const tempCanvas = document.createElement('canvas');
+  tempCanvas.width = width * tileSize;
+  tempCanvas.height = height * tileSize;
+  const tempCtx = tempCanvas.getContext('2d');
+
+  // Draw tiles from all visible layers (bottom to top)
+  for (let localY = 0; localY < height; localY++) {
+    for (let localX = 0; localX < width; localX++) {
+      const internalX = minGridX + localX;
+      const internalY = minGridY + localY;
+
+      // Convert to tile coordinates for sparse lookup
+      const tileCoords = internalToTileCoords(internalX, internalY);
+
+      // Draw tiles from all visible layers at this position
+      for (const layer of TileTesterState.layers) {
+        if (!layer.visible) continue;
+
+        const tile = getTileAtPosition(layer, tileCoords.x, tileCoords.y);
+        if (tile) {
+          const coords = getTileCanvasCoords(tile);
+          if (!coords) continue;
+
+          const srcX = coords.col * tileSize;
+          const srcY = coords.row * tileSize;
+          const destX = localX * tileSize;
+          const destY = localY * tileSize;
+
+          tempCtx.globalAlpha = layer.opacity;
+          tempCtx.drawImage(
+            sourceCanvas,
+            srcX, srcY, tileSize, tileSize,
+            destX, destY, tileSize, tileSize
+          );
+        }
+      }
+    }
+  }
+
+  tempCtx.globalAlpha = 1;
+
+  // Convert canvas to data URL and embed in SVG
+  const imageDataUrl = tempCanvas.toDataURL('image/png');
+  const svgWidth = width * tileSize;
+  const svgHeight = height * tileSize;
+
+  const svgContent = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+     width="${svgWidth}" height="${svgHeight}" viewBox="0 0 ${svgWidth} ${svgHeight}">
+  <image width="${svgWidth}" height="${svgHeight}" xlink:href="${imageDataUrl}"/>
+</svg>`;
+
+  // Download as SVG
+  const blob = new Blob([svgContent], { type: 'image/svg+xml' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.download = 'custom-tile.svg';
+  link.href = url;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+
+  // Clear selection after save
+  clearCanvasSelection();
 }
 
 // Hide the selection UI
