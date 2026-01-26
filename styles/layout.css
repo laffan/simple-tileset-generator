@@ -88,10 +88,10 @@ header h1 {
 
 footer {
   position: fixed;
-  bottom: 0;
+  top: 0;
   left: 0;
-  background-color: #eeeeee;
-  height: 50px;
+  background-color: black;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: space-between;

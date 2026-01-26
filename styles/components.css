@@ -1414,7 +1414,7 @@
   margin: 0;
   font-size: 18px;
   font-weight: 600;
-  color: #333;
+  color: white;
 }
 
 /* =============================================
@@ -1495,10 +1495,11 @@
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
   z-index: 50;
   width: 320px;
-  height: 100%;
+  height: calc(100% - 40px);
   display: flex;
   flex-direction: column;
   transition: transform 0.3s ease;
+  margin-top: 40px;
 }
 
 .tester-palette-window.collapsed {
@@ -1626,10 +1627,10 @@
 /* Main canvas area - fills the window */
 .tester-main-area {
   position: absolute;
-  top: 0;
+  top: 40px;
   left: 320px;
   width: calc(100% - 320px);
-  height: 100%;
+  height: calc(100% - 40px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2653,19 +2654,19 @@
 }
 
 .session-link {
-  color: #007bff;
+  color: white;
   text-decoration: none;
   cursor: pointer;
   transition: color 0.15s ease;
 }
 
 .session-link:hover {
-  color: #0056b3;
+  color: #ccc;
   text-decoration: underline;
 }
 
 .link-separator {
-  color: #999;
+  color: #666;
 }
 
 /* Download Links Styles */
@@ -2677,24 +2678,24 @@
 }
 
 .download-label {
-  color: #666;
+  color: #999;
   font-weight: 500;
 }
 
 .download-link {
-  color: #007bff;
+  color: white;
   text-decoration: none;
   cursor: pointer;
   transition: color 0.15s ease;
 }
 
 .download-link:hover {
-  color: #0056b3;
+  color: #ccc;
   text-decoration: underline;
 }
 
 .download-separator {
-  color: #999;
+  color: #666;
 }
 
 /* Tile tester bottom bar */
