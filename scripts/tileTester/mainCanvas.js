@@ -149,7 +149,7 @@ function placeTileAt(gridX, gridY) {
   } else if (TileTesterState.selectedTile) {
     // FIRST: expand grid if needed (may shift origin)
     // This must happen BEFORE converting to tile coordinates
-    ensureGridForInternalPosition(gridX, gridY, 5);
+    ensureGridForInternalPosition(gridX, gridY, 1);
 
     // NOW convert to tile coordinates using updated origin
     const tileCoords = internalToTileCoords(gridX, gridY);
@@ -188,8 +188,8 @@ function placeMultiTilesAt(gridX, gridY) {
 
   // FIRST: expand grid to fit entire multi-tile region (may shift origin)
   // Check all four corners to ensure full coverage
-  ensureGridForInternalPosition(gridX, gridY, 5);
-  ensureGridForInternalPosition(gridX + width - 1, gridY + height - 1, 5);
+  ensureGridForInternalPosition(gridX, gridY, 1);
+  ensureGridForInternalPosition(gridX + width - 1, gridY + height - 1, 1);
 
   // NOW place all tiles using the updated origin
   for (let dy = 0; dy < height; dy++) {

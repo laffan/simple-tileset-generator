@@ -168,7 +168,7 @@ function placeTileAtWithoutToggle(gridX, gridY) {
   // FIRST: expand grid if needed (may shift origin)
   // This must happen BEFORE converting to tile coordinates so the tile
   // renders at the clicked position without any canvas jumping
-  ensureGridForInternalPosition(gridX, gridY, 5);
+  ensureGridForInternalPosition(gridX, gridY, 1);
 
   // NOW convert internal grid position to tile coordinates (using updated origin)
   const tileCoords = internalToTileCoords(gridX, gridY);

@@ -664,8 +664,8 @@ function placeCustomTileAt(gridX, gridY) {
     maxLocalY = Math.max(maxLocalY, ref.localY);
   });
   // Expand for all corners
-  ensureGridForInternalPosition(gridX + minLocalX, gridY + minLocalY, 5);
-  ensureGridForInternalPosition(gridX + maxLocalX, gridY + maxLocalY, 5);
+  ensureGridForInternalPosition(gridX + minLocalX, gridY + minLocalY, 1);
+  ensureGridForInternalPosition(gridX + maxLocalX, gridY + maxLocalY, 1);
 
   // NOW place all tiles using the updated origin
   sortedRefs.forEach(ref => {
