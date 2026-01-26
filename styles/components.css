@@ -438,6 +438,7 @@
   display: block;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
+  border: none;
 }
 
 /* Selected colors section */
@@ -1667,6 +1668,7 @@
   display: block;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
+  border: none;
 }
 
 #tileTesterMainCanvas.painting-mode {
