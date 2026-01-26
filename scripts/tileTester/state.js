@@ -223,10 +223,12 @@ function shiftAllTileCoordinates(deltaX, deltaY) {
 // and expands the grid BEFORE tile coordinate conversion, so tiles render where clicked
 // Returns true if grid was expanded
 function ensureGridForInternalPosition(internalX, internalY, margin) {
-  margin = margin || 5;
+  margin = margin || 1;  // Reduced from 5 to 1 for minimal expansion
   let expanded = false;
-  let originDeltaX = 0;
-  let originDeltaY = 0;
+
+  // Store original values to measure actual shift after expansion
+  const originalOriginX = TileTesterState.gridOrigin.x;
+  const originalOriginY = TileTesterState.gridOrigin.y;
 
   // Check if we need to expand in any direction
   // We need margin squares available beyond the position
@@ -236,7 +238,6 @@ function ensureGridForInternalPosition(internalX, internalY, margin) {
     const expandBy = margin - internalX;
     TileTesterState.gridOrigin.x += expandBy;
     TileTesterState.gridWidth += expandBy;
-    originDeltaX += expandBy;
     expanded = true;
   }
 
@@ -252,7 +253,6 @@ function ensureGridForInternalPosition(internalX, internalY, margin) {
     const expandBy = margin - internalY;
     TileTesterState.gridOrigin.y += expandBy;
     TileTesterState.gridHeight += expandBy;
-    originDeltaY += expandBy;
     expanded = true;
   }
 
@@ -263,9 +263,21 @@ function ensureGridForInternalPosition(internalX, internalY, margin) {
     expanded = true;
   }
 
+  // Measure actual origin shift after expansion
+  const measuredShiftX = TileTesterState.gridOrigin.x - originalOriginX;
+  const measuredShiftY = TileTesterState.gridOrigin.y - originalOriginY;
+
   // Shift existing tile coordinates to compensate for origin change
-  // This keeps existing tiles at their visual positions
-  shiftAllTileCoordinates(originDeltaX, originDeltaY);
+  shiftAllTileCoordinates(measuredShiftX, measuredShiftY);
+
+  // Adjust pan to keep the view stable after left/top expansion
+  // When origin shifts, new canvas pixels are added at position 0,
+  // so we shift the view by the same amount to keep content in place
+  if (measuredShiftX !== 0 || measuredShiftY !== 0) {
+    const tileSize = TileTesterState.tileSize;
+    TileTesterState.canvasPan.x -= measuredShiftX * tileSize;
+    TileTesterState.canvasPan.y -= measuredShiftY * tileSize;
+  }
 
   return expanded;
 }
