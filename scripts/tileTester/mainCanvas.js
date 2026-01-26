@@ -147,6 +147,7 @@ function placeTileAt(gridX, gridY) {
   const existingTile = getTileAtPosition(layer, tileX, tileY);
 
   // Toggle behavior: if tile exists, remove it
+  let gridExpanded = false;
   if (existingTile) {
     removeTileAtPosition(layer, tileX, tileY);
   } else if (TileTesterState.selectedTile) {
@@ -159,13 +160,14 @@ function placeTileAt(gridX, gridY) {
     setTileAtPosition(layer, tileX, tileY, newTile);
 
     // Auto-expand grid if needed (ensure 5 squares margin)
-    if (ensureGridForPosition(tileX, tileY, 5)) {
-      updateCanvasTransform();
-    }
+    gridExpanded = ensureGridForPosition(tileX, tileY, 5);
   }
 
-  // Redraw canvas
+  // Redraw canvas first, then update transform so CSS dimensions match internal dimensions
   renderTileTesterMainCanvas();
+  if (gridExpanded) {
+    updateCanvasTransform();
+  }
 }
 
 // Place multi-tile selection at grid position (sparse format)
@@ -212,12 +214,11 @@ function placeMultiTilesAt(gridX, gridY) {
     }
   }
 
+  // Redraw canvas first, then update transform so CSS dimensions match internal dimensions
+  renderTileTesterMainCanvas();
   if (gridExpanded) {
     updateCanvasTransform();
   }
-
-  // Redraw canvas
-  renderTileTesterMainCanvas();
 }
 
 // Erase tile at grid position on active layer (sparse format)

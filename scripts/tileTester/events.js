@@ -179,11 +179,13 @@ function placeTileAtWithoutToggle(gridX, gridY) {
   setTileAtPosition(layer, tileX, tileY, newTile);
 
   // Auto-expand grid if needed (ensure 5 squares margin)
-  if (ensureGridForPosition(tileX, tileY, 5)) {
+  const gridExpanded = ensureGridForPosition(tileX, tileY, 5);
+
+  // Render first, then update transform so CSS dimensions match internal dimensions
+  renderTileTesterMainCanvas();
+  if (gridExpanded) {
     updateCanvasTransform();
   }
-
-  renderTileTesterMainCanvas();
   updateLayerThumbnail(layer.id);
 }
 
