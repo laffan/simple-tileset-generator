@@ -471,10 +471,12 @@ function calculateGridSize() {
     if (minInternalX < margin) {
       const expandBy = margin - minInternalX;
       TileTesterState.gridOrigin.x += expandBy;
+      TileTesterState.canvasPan.x -= expandBy * tileSize;
     }
     if (minInternalY < margin) {
       const expandBy = margin - minInternalY;
       TileTesterState.gridOrigin.y += expandBy;
+      TileTesterState.canvasPan.y -= expandBy * tileSize;
     }
 
     // Recalculate after origin adjustment
