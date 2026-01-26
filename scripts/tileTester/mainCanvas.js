@@ -139,18 +139,23 @@ function placeTileAt(gridX, gridY) {
     return;
   }
 
-  // Convert internal grid position to tile coordinates
-  const tileCoords = internalToTileCoords(gridX, gridY);
-  const tileX = tileCoords.x;
-  const tileY = tileCoords.y;
-
-  const existingTile = getTileAtPosition(layer, tileX, tileY);
+  // Check if tile exists at current position (using current origin)
+  const currentTileCoords = internalToTileCoords(gridX, gridY);
+  const existingTile = getTileAtPosition(layer, currentTileCoords.x, currentTileCoords.y);
 
   // Toggle behavior: if tile exists, remove it
-  let gridExpanded = false;
   if (existingTile) {
-    removeTileAtPosition(layer, tileX, tileY);
+    removeTileAtPosition(layer, currentTileCoords.x, currentTileCoords.y);
   } else if (TileTesterState.selectedTile) {
+    // FIRST: expand grid if needed (may shift origin)
+    // This must happen BEFORE converting to tile coordinates
+    ensureGridForInternalPosition(gridX, gridY, 5);
+
+    // NOW convert to tile coordinates using updated origin
+    const tileCoords = internalToTileCoords(gridX, gridY);
+    const tileX = tileCoords.x;
+    const tileY = tileCoords.y;
+
     // Place new tile with semantic reference
     const tileRef = coordsToTileRef(TileTesterState.selectedTile.row, TileTesterState.selectedTile.col);
     const newTile = tileRef || {
@@ -158,12 +163,9 @@ function placeTileAt(gridX, gridY) {
       col: TileTesterState.selectedTile.col
     };
     setTileAtPosition(layer, tileX, tileY, newTile);
-
-    // Auto-expand grid if needed (ensure 5 squares margin)
-    gridExpanded = ensureGridForPosition(tileX, tileY, 5);
   }
 
-  // Redraw canvas first, then always update transform to ensure CSS dimensions stay in sync
+  // Redraw canvas and update transform
   renderTileTesterMainCanvas();
   updateCanvasTransform();
 }
@@ -184,15 +186,18 @@ function placeMultiTilesAt(gridX, gridY) {
   const height = maxRow - minRow + 1;
   const width = maxCol - minCol + 1;
 
-  let gridExpanded = false;
+  // FIRST: expand grid to fit entire multi-tile region (may shift origin)
+  // Check all four corners to ensure full coverage
+  ensureGridForInternalPosition(gridX, gridY, 5);
+  ensureGridForInternalPosition(gridX + width - 1, gridY + height - 1, 5);
 
-  // Place all tiles in the selection region
+  // NOW place all tiles using the updated origin
   for (let dy = 0; dy < height; dy++) {
     for (let dx = 0; dx < width; dx++) {
       const destInternalX = gridX + dx;
       const destInternalY = gridY + dy;
 
-      // Convert to tile coordinates
+      // Convert to tile coordinates using updated origin
       const destCoords = internalToTileCoords(destInternalX, destInternalY);
       const destTileX = destCoords.x;
       const destTileY = destCoords.y;
@@ -204,11 +209,6 @@ function placeMultiTilesAt(gridX, gridY) {
 
       const newTile = tileRef || { row: srcRow, col: srcCol };
       setTileAtPosition(layer, destTileX, destTileY, newTile);
-
-      // Auto-expand grid if needed
-      if (ensureGridForPosition(destTileX, destTileY, 5)) {
-        gridExpanded = true;
-      }
     }
   }
 

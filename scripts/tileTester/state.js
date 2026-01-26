@@ -195,16 +195,13 @@ function getTileBounds() {
   return { minX, minY, maxX, maxY, hasTiles: true };
 }
 
-// Ensure grid is large enough for position with margin
+// Ensure grid is large enough for internal grid position with margin
+// This version takes internal grid coordinates (from click position) directly
+// and expands the grid BEFORE tile coordinate conversion, so tiles render where clicked
 // Returns true if grid was expanded
-function ensureGridForPosition(x, y, margin) {
+function ensureGridForInternalPosition(internalX, internalY, margin) {
   margin = margin || 5;
-  const origin = TileTesterState.gridOrigin;
   let expanded = false;
-
-  // Convert tile position to internal grid position
-  const internalX = x + origin.x;
-  const internalY = y + origin.y;
 
   // Check if we need to expand in any direction
   // We need margin squares available beyond the position
@@ -214,8 +211,6 @@ function ensureGridForPosition(x, y, margin) {
     const expandBy = margin - internalX;
     TileTesterState.gridOrigin.x += expandBy;
     TileTesterState.gridWidth += expandBy;
-    // Adjust pan to keep view stable
-    TileTesterState.canvasPan.x -= expandBy * TileTesterState.tileSize;
     expanded = true;
   }
 
@@ -231,8 +226,6 @@ function ensureGridForPosition(x, y, margin) {
     const expandBy = margin - internalY;
     TileTesterState.gridOrigin.y += expandBy;
     TileTesterState.gridHeight += expandBy;
-    // Adjust pan to keep view stable
-    TileTesterState.canvasPan.y -= expandBy * TileTesterState.tileSize;
     expanded = true;
   }
 
@@ -244,6 +237,15 @@ function ensureGridForPosition(x, y, margin) {
   }
 
   return expanded;
+}
+
+// Legacy wrapper - takes tile coordinates
+// Returns true if grid was expanded
+function ensureGridForPosition(x, y, margin) {
+  const origin = TileTesterState.gridOrigin;
+  const internalX = x + origin.x;
+  const internalY = y + origin.y;
+  return ensureGridForInternalPosition(internalX, internalY, margin);
 }
 
 // Convert tile coordinates to internal grid coordinates

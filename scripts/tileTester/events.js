@@ -165,7 +165,12 @@ function placeTileAtWithoutToggle(gridX, gridY) {
 
   if (!TileTesterState.selectedTile) return;
 
-  // Convert internal grid position to tile coordinates
+  // FIRST: expand grid if needed (may shift origin)
+  // This must happen BEFORE converting to tile coordinates so the tile
+  // renders at the clicked position without any canvas jumping
+  ensureGridForInternalPosition(gridX, gridY, 5);
+
+  // NOW convert internal grid position to tile coordinates (using updated origin)
   const tileCoords = internalToTileCoords(gridX, gridY);
   const tileX = tileCoords.x;
   const tileY = tileCoords.y;
@@ -178,10 +183,7 @@ function placeTileAtWithoutToggle(gridX, gridY) {
   };
   setTileAtPosition(layer, tileX, tileY, newTile);
 
-  // Auto-expand grid if needed (ensure 5 squares margin)
-  ensureGridForPosition(tileX, tileY, 5);
-
-  // Render first, then always update transform to ensure CSS dimensions stay in sync
+  // Render and update transform
   renderTileTesterMainCanvas();
   updateCanvasTransform();
   updateLayerThumbnail(layer.id);

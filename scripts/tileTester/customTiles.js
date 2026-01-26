@@ -654,14 +654,25 @@ function placeCustomTileAt(gridX, gridY) {
   // Sort refs by layer index to place in correct order (though all go to current layer)
   const sortedRefs = [...customTile.tileRefs].sort((a, b) => (a.layerIndex || 0) - (b.layerIndex || 0));
 
-  let gridExpanded = false;
+  // FIRST: expand grid to fit all tiles (may shift origin)
+  // Find bounds of custom tile
+  let minLocalX = 0, maxLocalX = 0, minLocalY = 0, maxLocalY = 0;
+  sortedRefs.forEach(ref => {
+    minLocalX = Math.min(minLocalX, ref.localX);
+    maxLocalX = Math.max(maxLocalX, ref.localX);
+    minLocalY = Math.min(minLocalY, ref.localY);
+    maxLocalY = Math.max(maxLocalY, ref.localY);
+  });
+  // Expand for all corners
+  ensureGridForInternalPosition(gridX + minLocalX, gridY + minLocalY, 5);
+  ensureGridForInternalPosition(gridX + maxLocalX, gridY + maxLocalY, 5);
 
-  // Place all tiles from the custom tile
+  // NOW place all tiles using the updated origin
   sortedRefs.forEach(ref => {
     const destInternalX = gridX + ref.localX;
     const destInternalY = gridY + ref.localY;
 
-    // Convert to tile coordinates
+    // Convert to tile coordinates using updated origin
     const destCoords = internalToTileCoords(destInternalX, destInternalY);
     const destTileX = destCoords.x;
     const destTileY = destCoords.y;
@@ -685,15 +696,10 @@ function placeCustomTileAt(gridX, gridY) {
 
     if (newTile) {
       setTileAtPosition(layer, destTileX, destTileY, newTile);
-
-      // Auto-expand grid if needed (ensure 5 squares margin)
-      if (ensureGridForPosition(destTileX, destTileY, 5)) {
-        gridExpanded = true;
-      }
     }
   });
 
-  // Render first, then always update transform to ensure CSS dimensions stay in sync
+  // Render and update transform
   renderTileTesterMainCanvas();
   updateCanvasTransform();
   updateLayerThumbnail(layer.id);
