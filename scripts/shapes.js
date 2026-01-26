@@ -121,10 +121,18 @@ function drawShape(x, y, size, ctx, shape) {
   ctx.webkitImageSmoothingEnabled = true;
   ctx.msImageSmoothingEnabled = true;
 
+  // Clip to tile bounds so shapes extending outside are cropped cleanly
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(x, y, size, size);
+  ctx.clip();
+
   // Look up the renderer in the registry and call it
   if (shapeRenderers[shape]) {
     shapeRenderers[shape](x, y, size, ctx);
   }
+
+  ctx.restore();
 }
 
 // Function to select all shape checkboxes

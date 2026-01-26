@@ -327,10 +327,9 @@ function combinationPathToNormalizedData(path) {
 
 // Get shape data from editor (converts to normalized format for saving)
 // Preserves control points for bezier curves
+// Note: We preserve coordinates even if outside bounds. Clipping is handled at render time.
 function getCombinationShapeData() {
   if (!EditorState.paths || EditorState.paths.length === 0) return null;
-
-  const shouldCrop = isCropEnabled();
 
   // Helper to convert vertex to save format (preserving control points)
   function vertexToSaveFormat(v) {
@@ -360,31 +359,21 @@ function getCombinationShapeData() {
     if (pathHasCurves(pathData)) {
       // Return vertices with control points preserved
       let vertices = pathData.vertices.map(vertexToSaveFormat);
-      // Note: cropping bezier curves is complex, skip for now
       return vertices;
     } else {
       // Simple array format for non-curved shapes
       let points = pathData.vertices.map(v => [v.x - 0.5, v.y - 0.5]);
-      if (shouldCrop) {
-        points = clipPathDataToBounds(points);
-      }
       return points;
     }
   } else {
     // Multi-path
-    let hasCurves = false;
     let paths = EditorState.paths.map(path => {
       const pd = combinationPathToNormalizedData(path);
       if (pathHasCurves(pd)) {
-        hasCurves = true;
         return pd.vertices.map(vertexToSaveFormat);
       }
       return pd.vertices.map(v => [v.x - 0.5, v.y - 0.5]);
     });
-
-    if (shouldCrop && !hasCurves) {
-      paths = paths.map(p => clipPathDataToBounds(p));
-    }
 
     const result = { paths };
     if (EditorState.fillRule) {

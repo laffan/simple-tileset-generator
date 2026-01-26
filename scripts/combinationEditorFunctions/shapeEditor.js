@@ -143,22 +143,16 @@ function getCombShapeData() {
   const state = CombinationEditorState;
   if (!state.paths || state.paths.length === 0) return null;
 
-  // Check if cropping is enabled
-  const shouldCrop = isCombCropEnabled();
+  // Note: We preserve coordinates even if outside bounds.
+  // Clipping is handled at render time to keep shapes editable.
 
   if (state.paths.length === 1) {
     // Single path shape
     let pathData = combPathToNormalizedData(state.paths[0]);
-    if (shouldCrop) {
-      pathData = clipPathDataToBounds(pathData);
-    }
     return pathData;
   } else {
     // Multi-path shape
     let paths = state.paths.map(path => combPathToNormalizedData(path));
-    if (shouldCrop) {
-      paths = paths.map(p => clipPathDataToBounds(p));
-    }
     const result = { paths };
 
     if (state.fillRule) {

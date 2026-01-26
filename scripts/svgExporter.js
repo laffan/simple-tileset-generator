@@ -122,6 +122,13 @@ function generateShapeSVGElements(shapeName, tileSize, offsetX, offsetY, color) 
   const elements = [];
   const holeIndices = pathData.holePathIndices || [];
 
+  // Create a clip path for the tile bounds to handle shapes extending outside
+  const tileClipId = `tile-${shapeName}-${offsetX}-${offsetY}`.replace(/[^a-zA-Z0-9-]/g, '_');
+  elements.push({
+    type: 'clipPath',
+    content: `    <clipPath id="${tileClipId}">\n      <rect x="${offsetX}" y="${offsetY}" width="${tileSize}" height="${tileSize}" />\n    </clipPath>`
+  });
+
   // If there are holes, we need to use a mask
   if (holeIndices.length > 0) {
     const maskId = `mask-${shapeName}-${offsetX}-${offsetY}`.replace(/[^a-zA-Z0-9-]/g, '_');
@@ -139,21 +146,21 @@ function generateShapeSVGElements(shapeName, tileSize, offsetX, offsetY, color) 
     maskContent += `    </mask>`;
     elements.push({ type: 'mask', content: maskContent, maskId });
 
-    // Draw non-hole paths with mask applied
+    // Draw non-hole paths with mask and tile clip applied
     svgPaths.forEach((pathInfo) => {
       if (!pathInfo.isHole) {
         elements.push({
           type: 'path',
-          content: `    <path d="${pathInfo.d}" fill="${color}" mask="url(#${maskId})" />`
+          content: `    <path d="${pathInfo.d}" fill="${color}" mask="url(#${maskId})" clip-path="url(#${tileClipId})" />`
         });
       }
     });
   } else {
-    // No holes - simple paths
+    // No holes - simple paths with tile clip
     svgPaths.forEach((pathInfo) => {
       elements.push({
         type: 'path',
-        content: `    <path d="${pathInfo.d}" fill="${color}" />`
+        content: `    <path d="${pathInfo.d}" fill="${color}" clip-path="url(#${tileClipId})" />`
       });
     });
   }
