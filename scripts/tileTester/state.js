@@ -272,8 +272,8 @@ function ensureGridForInternalPosition(internalX, internalY, margin) {
   // because new canvas rows/cols are added at coordinates 0,0 (top-left)
   if (originDeltaX > 0 || originDeltaY > 0) {
     const tileSize = TileTesterState.tileSize;
-    TileTesterState.canvasPan.x -= originDeltaX * tileSize;
-    TileTesterState.canvasPan.y -= originDeltaY * tileSize;
+    TileTesterState.canvasPan.x += originDeltaX * tileSize;
+    TileTesterState.canvasPan.y += originDeltaY * tileSize;
   }
 
   return expanded;
