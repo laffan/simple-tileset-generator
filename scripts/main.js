@@ -183,7 +183,9 @@ window.onload = function () {
   initializeCombinationOrder();
   createCombinationSelectionHTML();
 
-  const defaultColors = document.getElementById('colorInput').value.split(',');
+  const defaultColors = document.getElementById('colorInput').value.split(',')
+    .map(color => color.trim())
+    .filter(color => color);
   const defaultSize = parseInt(document.getElementById('sizeInput').value, 10);
 
   // Draw initial shapes and generate initial palette
