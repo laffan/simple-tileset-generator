@@ -267,6 +267,15 @@ function ensureGridForInternalPosition(internalX, internalY, margin) {
   // This keeps existing tiles at their visual positions
   shiftAllTileCoordinates(originDeltaX, originDeltaY);
 
+  // Adjust pan to compensate for expansion at top/left edges
+  // This prevents the visual "jump" when the canvas grows at the top or left
+  // because new canvas rows/cols are added at coordinates 0,0 (top-left)
+  if (originDeltaX > 0 || originDeltaY > 0) {
+    const tileSize = TileTesterState.tileSize;
+    TileTesterState.canvasPan.x -= originDeltaX * tileSize;
+    TileTesterState.canvasPan.y -= originDeltaY * tileSize;
+  }
+
   return expanded;
 }
 
