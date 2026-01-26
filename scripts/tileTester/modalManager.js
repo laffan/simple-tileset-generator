@@ -21,8 +21,9 @@ function openTileTester() {
   // Calculate grid size based on window and existing tiles
   calculateGridSize();
 
-  // Reset pan - will be adjusted below if needed to center on tiles
-  TileTesterState.canvasPan = { x: 0, y: 0 };
+  // Preserve existing pan position if set (from session load or previous panning)
+  // Only center on tiles if pan is at default {0, 0}
+  const shouldCenterOnTiles = TileTesterState.canvasPan.x === 0 && TileTesterState.canvasPan.y === 0;
 
   // Show modal
   modal.classList.add('active');
@@ -42,8 +43,10 @@ function openTileTester() {
     container.style.backgroundColor = TileTesterState.backgroundColor;
   }
 
-  // Center view on existing tiles if any
-  centerViewOnTiles();
+  // Center view on existing tiles if pan hasn't been set
+  if (shouldCenterOnTiles) {
+    centerViewOnTiles();
+  }
   updateCanvasTransform();
 
   // Initialize custom tiles functionality
