@@ -314,18 +314,28 @@ function internalToTileCoords(internalX, internalY) {
 // Calculate the center of the visible viewport in grid coordinates
 // This is tile-size independent, so it can be used to restore view position
 function calculateViewCenterGrid() {
+  const canvas = TileTesterState.mainCanvas;
   const tileSize = TileTesterState.tileSize;
-  const zoom = TileTesterState.canvasZoom || 1;
-  const pan = TileTesterState.canvasPan;
   const origin = TileTesterState.gridOrigin;
 
-  // Get viewport center in screen coordinates
-  const viewportCenterX = window.innerWidth / 2;
-  const viewportCenterY = window.innerHeight / 2;
+  if (!canvas) return null;
 
-  // Convert to canvas pixel coordinates (accounting for zoom and pan)
-  const canvasX = viewportCenterX / zoom - pan.x;
-  const canvasY = viewportCenterY / zoom - pan.y;
+  // Use getBoundingClientRect to get actual canvas position (including CSS transform)
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+
+  // Get the center of the container (visible area)
+  const container = document.querySelector('.tester-canvas-container');
+  const containerRect = container ? container.getBoundingClientRect() : { left: 0, top: 0, width: window.innerWidth, height: window.innerHeight };
+
+  // Calculate the screen center of the visible area
+  const viewportCenterX = containerRect.left + containerRect.width / 2;
+  const viewportCenterY = containerRect.top + containerRect.height / 2;
+
+  // Convert screen position to canvas pixel position (same math as getGridPositionFromCanvasClick)
+  const canvasX = (viewportCenterX - rect.left) * scaleX;
+  const canvasY = (viewportCenterY - rect.top) * scaleY;
 
   // Convert to internal grid coordinates
   const internalGridX = canvasX / tileSize;
@@ -352,14 +362,17 @@ function calculatePanForGridCenter(gridX, gridY) {
   const canvasX = internalGridX * tileSize;
   const canvasY = internalGridY * tileSize;
 
-  // Get viewport center
-  const viewportCenterX = window.innerWidth / 2;
-  const viewportCenterY = window.innerHeight / 2;
+  // Get the container dimensions (visible area)
+  const container = document.querySelector('.tester-canvas-container');
+  const containerWidth = container ? container.clientWidth : window.innerWidth;
+  const containerHeight = container ? container.clientHeight : window.innerHeight;
 
-  // Calculate pan to center this position in the viewport
+  // Calculate pan to center this canvas position in the container
+  // Pan formula: containerCenter = canvasPos * zoom + pan * zoom
+  // So: pan = containerCenter / zoom - canvasPos
   return {
-    x: viewportCenterX / zoom - canvasX,
-    y: viewportCenterY / zoom - canvasY
+    x: (containerWidth / 2) / zoom - canvasX,
+    y: (containerHeight / 2) / zoom - canvasY
   };
 }
 
