@@ -163,11 +163,9 @@ function placeTileAt(gridX, gridY) {
     gridExpanded = ensureGridForPosition(tileX, tileY, 5);
   }
 
-  // Redraw canvas first, then update transform so CSS dimensions match internal dimensions
+  // Redraw canvas first, then always update transform to ensure CSS dimensions stay in sync
   renderTileTesterMainCanvas();
-  if (gridExpanded) {
-    updateCanvasTransform();
-  }
+  updateCanvasTransform();
 }
 
 // Place multi-tile selection at grid position (sparse format)
@@ -214,11 +212,9 @@ function placeMultiTilesAt(gridX, gridY) {
     }
   }
 
-  // Redraw canvas first, then update transform so CSS dimensions match internal dimensions
+  // Redraw canvas first, then always update transform to ensure CSS dimensions stay in sync
   renderTileTesterMainCanvas();
-  if (gridExpanded) {
-    updateCanvasTransform();
-  }
+  updateCanvasTransform();
 }
 
 // Erase tile at grid position on active layer (sparse format)

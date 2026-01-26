@@ -693,11 +693,9 @@ function placeCustomTileAt(gridX, gridY) {
     }
   });
 
-  // Render first, then update transform so CSS dimensions match internal dimensions
+  // Render first, then always update transform to ensure CSS dimensions stay in sync
   renderTileTesterMainCanvas();
-  if (gridExpanded) {
-    updateCanvasTransform();
-  }
+  updateCanvasTransform();
   updateLayerThumbnail(layer.id);
 }
 
