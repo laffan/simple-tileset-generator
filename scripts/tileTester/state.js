@@ -316,26 +316,23 @@ function internalToTileCoords(internalX, internalY) {
 function calculateViewCenterGrid() {
   const canvas = TileTesterState.mainCanvas;
   const tileSize = TileTesterState.tileSize;
+  const zoom = TileTesterState.canvasZoom || 1;
+  const pan = TileTesterState.canvasPan;
   const origin = TileTesterState.gridOrigin;
 
   if (!canvas) return null;
 
-  // Use getBoundingClientRect to get actual canvas position (including CSS transform)
-  const rect = canvas.getBoundingClientRect();
-  const scaleX = canvas.width / rect.width;
-  const scaleY = canvas.height / rect.height;
-
-  // Get the center of the container (visible area)
+  // Get the container dimensions (visible area)
   const container = document.querySelector('.tester-canvas-container');
-  const containerRect = container ? container.getBoundingClientRect() : { left: 0, top: 0, width: window.innerWidth, height: window.innerHeight };
+  const containerWidth = container ? container.clientWidth : window.innerWidth;
+  const containerHeight = container ? container.clientHeight : window.innerHeight;
 
-  // Calculate the screen center of the visible area
-  const viewportCenterX = containerRect.left + containerRect.width / 2;
-  const viewportCenterY = containerRect.top + containerRect.height / 2;
-
-  // Convert screen position to canvas pixel position (same math as getGridPositionFromCanvasClick)
-  const canvasX = (viewportCenterX - rect.left) * scaleX;
-  const canvasY = (viewportCenterY - rect.top) * scaleY;
+  // Calculate which canvas position is at the container center
+  // From the transform: screenPos = canvasPos * zoom + pan * zoom
+  // At container center: containerWidth/2 = canvasX * zoom + pan.x * zoom
+  // So: canvasX = containerWidth/2/zoom - pan.x
+  const canvasX = (containerWidth / 2) / zoom - pan.x;
+  const canvasY = (containerHeight / 2) / zoom - pan.y;
 
   // Convert to internal grid coordinates
   const internalGridX = canvasX / tileSize;
@@ -354,7 +351,7 @@ function calculatePanForGridCenter(gridX, gridY) {
   const zoom = TileTesterState.canvasZoom || 1;
   const origin = TileTesterState.gridOrigin;
 
-  // Convert grid coordinates to internal grid coordinates
+  // Convert tile coordinates to internal grid coordinates
   const internalGridX = gridX + origin.x;
   const internalGridY = gridY + origin.y;
 
@@ -368,8 +365,9 @@ function calculatePanForGridCenter(gridX, gridY) {
   const containerHeight = container ? container.clientHeight : window.innerHeight;
 
   // Calculate pan to center this canvas position in the container
-  // Pan formula: containerCenter = canvasPos * zoom + pan * zoom
-  // So: pan = containerCenter / zoom - canvasPos
+  // From the transform: screenPos = canvasPos * zoom + pan * zoom
+  // At container center: containerWidth/2 = canvasX * zoom + pan.x * zoom
+  // So: pan.x = containerWidth/2/zoom - canvasX
   return {
     x: (containerWidth / 2) / zoom - canvasX,
     y: (containerHeight / 2) / zoom - canvasY
