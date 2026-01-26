@@ -195,6 +195,29 @@ function getTileBounds() {
   return { minX, minY, maxX, maxY, hasTiles: true };
 }
 
+// Shift all existing tile coordinates to compensate for origin change
+// This keeps tiles at their visual positions when the grid expands
+function shiftAllTileCoordinates(deltaX, deltaY) {
+  if (deltaX === 0 && deltaY === 0) return;
+
+  for (const layer of TileTesterState.layers) {
+    if (!layer.tiles) continue;
+    for (const entry of layer.tiles) {
+      entry.x -= deltaX;
+      entry.y -= deltaY;
+    }
+  }
+
+  // Also shift custom tile references if they exist
+  if (TileTesterState.customTiles) {
+    for (const customTile of TileTesterState.customTiles) {
+      if (customTile.tileRefs) {
+        // Custom tiles store relative positions, no need to shift
+      }
+    }
+  }
+}
+
 // Ensure grid is large enough for internal grid position with margin
 // This version takes internal grid coordinates (from click position) directly
 // and expands the grid BEFORE tile coordinate conversion, so tiles render where clicked
@@ -202,6 +225,8 @@ function getTileBounds() {
 function ensureGridForInternalPosition(internalX, internalY, margin) {
   margin = margin || 5;
   let expanded = false;
+  let originDeltaX = 0;
+  let originDeltaY = 0;
 
   // Check if we need to expand in any direction
   // We need margin squares available beyond the position
@@ -211,6 +236,7 @@ function ensureGridForInternalPosition(internalX, internalY, margin) {
     const expandBy = margin - internalX;
     TileTesterState.gridOrigin.x += expandBy;
     TileTesterState.gridWidth += expandBy;
+    originDeltaX += expandBy;
     expanded = true;
   }
 
@@ -226,6 +252,7 @@ function ensureGridForInternalPosition(internalX, internalY, margin) {
     const expandBy = margin - internalY;
     TileTesterState.gridOrigin.y += expandBy;
     TileTesterState.gridHeight += expandBy;
+    originDeltaY += expandBy;
     expanded = true;
   }
 
@@ -235,6 +262,10 @@ function ensureGridForInternalPosition(internalX, internalY, margin) {
     TileTesterState.gridHeight += expandBy;
     expanded = true;
   }
+
+  // Shift existing tile coordinates to compensate for origin change
+  // This keeps existing tiles at their visual positions
+  shiftAllTileCoordinates(originDeltaX, originDeltaY);
 
   return expanded;
 }
