@@ -21,9 +21,9 @@ function openTileTester() {
   // Calculate grid size based on window and existing tiles
   calculateGridSize();
 
-  // Preserve existing pan position if set (from session load or previous panning)
-  // Only center on tiles if pan is at default {0, 0}
-  const shouldCenterOnTiles = TileTesterState.canvasPan.x === 0 && TileTesterState.canvasPan.y === 0;
+  // Restore view position from saved grid coordinates if available
+  // This is tile-size independent, so it works even if tile size changed
+  const hasViewCenterGrid = TileTesterState.viewCenterGrid !== null;
 
   // Show modal
   modal.classList.add('active');
@@ -43,8 +43,14 @@ function openTileTester() {
     container.style.backgroundColor = TileTesterState.backgroundColor;
   }
 
-  // Center view on existing tiles if pan hasn't been set
-  if (shouldCenterOnTiles) {
+  // Restore view position
+  if (hasViewCenterGrid) {
+    // Calculate canvasPan from saved grid coordinates
+    // This works correctly even if tile size changed since last session
+    const viewCenter = TileTesterState.viewCenterGrid;
+    TileTesterState.canvasPan = calculatePanForGridCenter(viewCenter.x, viewCenter.y);
+  } else {
+    // First time opening - center on existing tiles if any
     centerViewOnTiles();
   }
   updateCanvasTransform();
@@ -95,6 +101,10 @@ function closeTileTester() {
   const modal = document.getElementById('tileTesterModal');
 
   if (!modal) return;
+
+  // Save the current view center in grid coordinates before closing
+  // This allows restoring the view position when reopening, even if tile size changes
+  TileTesterState.viewCenterGrid = calculateViewCenterGrid();
 
   // Hide modal
   modal.classList.remove('active');

@@ -41,6 +41,10 @@ var TileTesterState = {
   canvasPan: { x: 0, y: 0 },
   isSpacePanning: false,
 
+  // Saved view center in grid coordinates (tile-size independent)
+  // This allows restoring the view position even when tile size changes
+  viewCenterGrid: null,  // { x: number, y: number } or null if not set
+
   // Painting state
   isPainting: false,
   lastPaintedCell: null,
@@ -307,6 +311,58 @@ function internalToTileCoords(internalX, internalY) {
   };
 }
 
+// Calculate the center of the visible viewport in grid coordinates
+// This is tile-size independent, so it can be used to restore view position
+function calculateViewCenterGrid() {
+  const tileSize = TileTesterState.tileSize;
+  const zoom = TileTesterState.canvasZoom || 1;
+  const pan = TileTesterState.canvasPan;
+  const origin = TileTesterState.gridOrigin;
+
+  // Get viewport center in screen coordinates
+  const viewportCenterX = window.innerWidth / 2;
+  const viewportCenterY = window.innerHeight / 2;
+
+  // Convert to canvas pixel coordinates (accounting for zoom and pan)
+  const canvasX = viewportCenterX / zoom - pan.x;
+  const canvasY = viewportCenterY / zoom - pan.y;
+
+  // Convert to internal grid coordinates
+  const internalGridX = canvasX / tileSize;
+  const internalGridY = canvasY / tileSize;
+
+  // Convert to tile coordinates (relative to origin)
+  return {
+    x: internalGridX - origin.x,
+    y: internalGridY - origin.y
+  };
+}
+
+// Calculate canvasPan to center the view on a specific grid position
+function calculatePanForGridCenter(gridX, gridY) {
+  const tileSize = TileTesterState.tileSize;
+  const zoom = TileTesterState.canvasZoom || 1;
+  const origin = TileTesterState.gridOrigin;
+
+  // Convert grid coordinates to internal grid coordinates
+  const internalGridX = gridX + origin.x;
+  const internalGridY = gridY + origin.y;
+
+  // Convert to canvas pixel coordinates
+  const canvasX = internalGridX * tileSize;
+  const canvasY = internalGridY * tileSize;
+
+  // Get viewport center
+  const viewportCenterX = window.innerWidth / 2;
+  const viewportCenterY = window.innerHeight / 2;
+
+  // Calculate pan to center this position in the viewport
+  return {
+    x: viewportCenterX / zoom - canvasX,
+    y: viewportCenterY / zoom - canvasY
+  };
+}
+
 // Clear all tiles on active layer
 function clearTileTesterGrid() {
   const layer = getActiveLayer();
@@ -318,7 +374,7 @@ function clearTileTesterGrid() {
   }
 }
 
-// Get tile tester data for session saving (sparse format v2)
+// Get tile tester data for session saving (sparse format v3)
 function getTileTesterData() {
   // Convert layers to sparse format for saving
   const sparseLayers = TileTesterState.layers.map(layer => ({
@@ -333,8 +389,16 @@ function getTileTesterData() {
     visible: layer.visible
   }));
 
+  // Get view center in grid coordinates
+  // If modal is open (mainCanvas exists), calculate current view center
+  // Otherwise use saved viewCenterGrid from when modal was closed
+  let viewCenter = TileTesterState.viewCenterGrid;
+  if (TileTesterState.mainCanvas) {
+    viewCenter = calculateViewCenterGrid();
+  }
+
   return {
-    version: 3,  // Tile tester data format version - v3 adds canvasPan
+    version: 3,  // Tile tester data format version - v3 adds viewCenterGrid
     layers: sparseLayers,
     activeLayerId: TileTesterState.activeLayerId,
     nextLayerId: TileTesterState.nextLayerId,
@@ -342,7 +406,7 @@ function getTileTesterData() {
     backgroundColor: TileTesterState.backgroundColor,
     paletteFitMode: TileTesterState.paletteFitMode,
     customTiles: JSON.parse(JSON.stringify(TileTesterState.customTiles)),
-    canvasPan: { ...TileTesterState.canvasPan }
+    viewCenterGrid: viewCenter ? { ...viewCenter } : null
   };
 }
 
@@ -436,9 +500,10 @@ function loadTileTesterData(data) {
     TileTesterState.customTiles = JSON.parse(JSON.stringify(data.customTiles));
   }
 
-  // Load canvas pan position (v3+)
-  if (data.canvasPan !== undefined) {
-    TileTesterState.canvasPan = { ...data.canvasPan };
+  // Load view center grid position (v3+)
+  // This is tile-size independent, so view can be restored correctly
+  if (data.viewCenterGrid !== undefined) {
+    TileTesterState.viewCenterGrid = data.viewCenterGrid ? { ...data.viewCenterGrid } : null;
   }
 }
 
