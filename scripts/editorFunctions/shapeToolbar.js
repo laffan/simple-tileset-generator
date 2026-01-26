@@ -1288,21 +1288,28 @@ function clipPathDataToBounds(pathData) {
     return pathData; // All within bounds, preserve original with control points
   }
 
-  // Convert vertices to simple polygon points
-  const polygon = pathData.vertices.map(v => ({ x: v.x, y: v.y }));
+  // Clamp vertices to 0-1 bounds while preserving control points
+  // This maintains curve information instead of converting to straight lines
+  const clampedVertices = pathData.vertices.map(v => {
+    const clamped = {
+      x: Math.max(0, Math.min(1, v.x)),
+      y: Math.max(0, Math.min(1, v.y))
+    };
 
-  // Clip against unit square using Sutherland-Hodgman algorithm
-  const clipped = sutherlandHodgmanClip(polygon, [
-    { x: 0, y: 0 }, { x: 1, y: 0 }, { x: 1, y: 1 }, { x: 0, y: 1 }
-  ]);
+    // Preserve control points - they are relative to vertex position
+    // and will still create curves even if the vertex was clamped
+    if (v.ctrlLeft) {
+      clamped.ctrlLeft = { x: v.ctrlLeft.x, y: v.ctrlLeft.y };
+    }
+    if (v.ctrlRight) {
+      clamped.ctrlRight = { x: v.ctrlRight.x, y: v.ctrlRight.y };
+    }
 
-  if (clipped.length < 3) {
-    return pathData; // Keep original if clipping eliminates shape
-  }
+    return clamped;
+  });
 
-  // Convert back to pathData format (note: control points are lost when clipping occurs)
   return {
-    vertices: clipped.map(p => ({ x: p.x, y: p.y })),
+    vertices: clampedVertices,
     closed: pathData.closed
   };
 }
