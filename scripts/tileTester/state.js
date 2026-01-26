@@ -430,8 +430,10 @@ function centerViewOnTiles() {
   const centerPixelY = centerInternalY * tileSize;
 
   // Calculate pan to center this in the viewport
-  const viewportWidth = window.innerWidth;
-  const viewportHeight = window.innerHeight;
+  const mainArea = document.querySelector('.tester-main-area');
+  const rect = mainArea ? mainArea.getBoundingClientRect() : { width: window.innerWidth, height: window.innerHeight };
+  const viewportWidth = rect.width;
+  const viewportHeight = rect.height;
 
   TileTesterState.canvasPan = {
     x: (viewportWidth / 2 / zoom) - centerPixelX - (tileSize / 2),
