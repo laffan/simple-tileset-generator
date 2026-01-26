@@ -1464,7 +1464,7 @@
 /* Close button */
 .tester-close-btn {
   position: absolute;
-  top: 15px;
+  top: 55px;
   right: 20px;
   background: rgba(0, 0, 0, 0.5);
   border: 2px solid white;

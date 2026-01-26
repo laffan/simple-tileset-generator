@@ -95,7 +95,7 @@ footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  z-index: 100;
+  z-index: 1001;
   width: 100%;
   padding: 0 30px;
   box-sizing: border-box;
