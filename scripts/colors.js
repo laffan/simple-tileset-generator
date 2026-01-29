@@ -317,8 +317,8 @@ function initColorWheel() {
   // Initialize tabs
   initColorTabs();
 
-  // Initialize color field on initial load (wheel tab is active by default)
-  initColorField();
+  // Load palettes on initial load (palettes tab is active by default)
+  loadPalettes();
 }
 
 function updateColorsPreview() {
