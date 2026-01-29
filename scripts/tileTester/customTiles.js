@@ -115,8 +115,263 @@ function clearCanvasSelection() {
   TileTesterState.isCanvasSelectionFinalized = false;
   TileTesterState.canvasSelectionStart = null;
   TileTesterState.canvasSelection = null;
+  // Clear drag state
+  TileTesterState.isSelectionDragging = false;
+  TileTesterState.selectionDragStart = null;
+  TileTesterState.selectionDragOffset = null;
+  TileTesterState.selectionDragTiles = null;
+  // Clear resize state
+  TileTesterState.isSelectionResizing = false;
+  TileTesterState.selectionResizeStart = null;
+  TileTesterState.selectionOriginalBounds = null;
+  TileTesterState.selectionResizeSize = null;
   hideSelectionUI();
   renderTileTesterMainCanvas();
+}
+
+// Capture tiles from visible layers within the current selection
+function captureSelectionTiles() {
+  const state = TileTesterState;
+  if (!state.canvasSelection) return null;
+
+  const sel = state.canvasSelection;
+
+  // Calculate grid bounds (internal grid coordinates)
+  const minGridX = Math.min(sel.startCol, sel.endCol);
+  const maxGridX = Math.max(sel.startCol, sel.endCol);
+  const minGridY = Math.min(sel.startRow, sel.endRow);
+  const maxGridY = Math.max(sel.startRow, sel.endRow);
+
+  const width = maxGridX - minGridX + 1;
+  const height = maxGridY - minGridY + 1;
+
+  // Collect tile references from ALL visible layers
+  const tileRefs = [];
+
+  for (let localY = 0; localY < height; localY++) {
+    for (let localX = 0; localX < width; localX++) {
+      const internalX = minGridX + localX;
+      const internalY = minGridY + localY;
+
+      // Convert to tile coordinates for sparse lookup
+      const tileCoords = internalToTileCoords(internalX, internalY);
+
+      // Collect tiles from ALL visible layers at this position
+      for (let i = 0; i < state.layers.length; i++) {
+        const layer = state.layers[i];
+        if (!layer.visible) continue;
+
+        const tile = getTileAtPosition(layer, tileCoords.x, tileCoords.y);
+        if (tile) {
+          // Create a copy of the tile reference
+          let tileRef;
+          if (tile.type && tile.name) {
+            tileRef = { ...tile };
+          } else if (tile.row !== undefined && tile.col !== undefined) {
+            tileRef = coordsToTileRef(tile.row, tile.col);
+            if (!tileRef) {
+              tileRef = { row: tile.row, col: tile.col };
+            }
+          }
+
+          if (tileRef) {
+            tileRefs.push({
+              ...tileRef,
+              localX: localX,
+              localY: localY,
+              layerIndex: i
+            });
+          }
+        }
+      }
+    }
+  }
+
+  return {
+    tiles: tileRefs,
+    width: width,
+    height: height,
+    minGridX: minGridX,
+    minGridY: minGridY
+  };
+}
+
+// Check if a grid position is inside the current finalized selection
+function isInsideSelection(gridX, gridY) {
+  const sel = TileTesterState.canvasSelection;
+  if (!sel || !TileTesterState.isCanvasSelectionFinalized) return false;
+
+  const minCol = Math.min(sel.startCol, sel.endCol);
+  const maxCol = Math.max(sel.startCol, sel.endCol);
+  const minRow = Math.min(sel.startRow, sel.endRow);
+  const maxRow = Math.max(sel.startRow, sel.endRow);
+
+  return gridX >= minCol && gridX <= maxCol && gridY >= minRow && gridY <= maxRow;
+}
+
+// Check if a click is on the resize handle (bottom-right corner)
+function isOnResizeHandle(e) {
+  const handle = document.getElementById('selectionResizeHandle');
+  if (!handle) return false;
+
+  const rect = handle.getBoundingClientRect();
+  return e.clientX >= rect.left && e.clientX <= rect.right &&
+         e.clientY >= rect.top && e.clientY <= rect.bottom;
+}
+
+// Remove tiles from visible layers within the selection area
+function removeSelectionTilesFromLayers() {
+  const state = TileTesterState;
+  if (!state.canvasSelection) return;
+
+  const sel = state.canvasSelection;
+
+  const minGridX = Math.min(sel.startCol, sel.endCol);
+  const maxGridX = Math.max(sel.startCol, sel.endCol);
+  const minGridY = Math.min(sel.startRow, sel.endRow);
+  const maxGridY = Math.max(sel.startRow, sel.endRow);
+
+  const width = maxGridX - minGridX + 1;
+  const height = maxGridY - minGridY + 1;
+
+  // Remove tiles from visible layers only
+  for (let localY = 0; localY < height; localY++) {
+    for (let localX = 0; localX < width; localX++) {
+      const internalX = minGridX + localX;
+      const internalY = minGridY + localY;
+      const tileCoords = internalToTileCoords(internalX, internalY);
+
+      for (let i = 0; i < state.layers.length; i++) {
+        const layer = state.layers[i];
+        if (!layer.visible) continue;
+        removeTileAtPosition(layer, tileCoords.x, tileCoords.y);
+      }
+    }
+  }
+}
+
+// Place captured tiles at a new position
+function placeSelectionTilesAt(tiles, targetGridX, targetGridY) {
+  const state = TileTesterState;
+  if (!tiles || tiles.length === 0) return;
+
+  // Sort by layer index to maintain correct ordering
+  const sortedTiles = [...tiles].sort((a, b) => (a.layerIndex || 0) - (b.layerIndex || 0));
+
+  // Place each tile at its new position on its original layer
+  sortedTiles.forEach(ref => {
+    const destInternalX = targetGridX + ref.localX;
+    const destInternalY = targetGridY + ref.localY;
+
+    // Ensure grid is expanded if needed
+    ensureGridForInternalPosition(destInternalX, destInternalY, 1);
+
+    // Convert to tile coordinates
+    const destCoords = internalToTileCoords(destInternalX, destInternalY);
+
+    // Get the layer this tile belongs to
+    const layer = state.layers[ref.layerIndex];
+    if (!layer || !layer.visible) return;
+
+    // Create new tile reference (without local position and layer info)
+    let newTile;
+    if (ref.type && ref.name) {
+      newTile = {
+        type: ref.type,
+        name: ref.name,
+        colorIndex: ref.colorIndex,
+        tileRow: ref.tileRow,
+        tileCol: ref.tileCol
+      };
+    } else if (ref.row !== undefined && ref.col !== undefined) {
+      const tileRef = coordsToTileRef(ref.row, ref.col);
+      newTile = tileRef || { row: ref.row, col: ref.col };
+    }
+
+    if (newTile) {
+      setTileAtPosition(layer, destCoords.x, destCoords.y, newTile);
+    }
+  });
+
+  // Update thumbnails for all visible layers
+  for (const layer of state.layers) {
+    if (layer.visible) {
+      updateLayerThumbnail(layer.id);
+    }
+  }
+}
+
+// Place repeated/tiled selection at the current resize dimensions
+function placeRepeatedSelectionTiles(originalTiles, originalWidth, originalHeight, targetGridX, targetGridY, newWidth, newHeight) {
+  const state = TileTesterState;
+  if (!originalTiles || originalTiles.length === 0) return;
+
+  // Calculate how many times to repeat in each direction
+  const repeatX = Math.ceil(newWidth / originalWidth);
+  const repeatY = Math.ceil(newHeight / originalHeight);
+
+  // Group tiles by layer for efficient placement
+  const tilesByLayer = {};
+  originalTiles.forEach(ref => {
+    const layerIdx = ref.layerIndex || 0;
+    if (!tilesByLayer[layerIdx]) {
+      tilesByLayer[layerIdx] = [];
+    }
+    tilesByLayer[layerIdx].push(ref);
+  });
+
+  // Place repeated tiles
+  for (let ry = 0; ry < repeatY; ry++) {
+    for (let rx = 0; rx < repeatX; rx++) {
+      Object.keys(tilesByLayer).forEach(layerIdx => {
+        const layer = state.layers[parseInt(layerIdx)];
+        if (!layer || !layer.visible) return;
+
+        tilesByLayer[layerIdx].forEach(ref => {
+          const destLocalX = rx * originalWidth + ref.localX;
+          const destLocalY = ry * originalHeight + ref.localY;
+
+          // Only place if within the new bounds
+          if (destLocalX >= newWidth || destLocalY >= newHeight) return;
+
+          const destInternalX = targetGridX + destLocalX;
+          const destInternalY = targetGridY + destLocalY;
+
+          // Ensure grid is expanded if needed
+          ensureGridForInternalPosition(destInternalX, destInternalY, 1);
+
+          // Convert to tile coordinates
+          const destCoords = internalToTileCoords(destInternalX, destInternalY);
+
+          // Create new tile reference
+          let newTile;
+          if (ref.type && ref.name) {
+            newTile = {
+              type: ref.type,
+              name: ref.name,
+              colorIndex: ref.colorIndex,
+              tileRow: ref.tileRow,
+              tileCol: ref.tileCol
+            };
+          } else if (ref.row !== undefined && ref.col !== undefined) {
+            const tileRef = coordsToTileRef(ref.row, ref.col);
+            newTile = tileRef || { row: ref.row, col: ref.col };
+          }
+
+          if (newTile) {
+            setTileAtPosition(layer, destCoords.x, destCoords.y, newTile);
+          }
+        });
+      });
+    }
+  }
+
+  // Update thumbnails for all visible layers
+  for (const layer of state.layers) {
+    if (layer.visible) {
+      updateLayerThumbnail(layer.id);
+    }
+  }
 }
 
 // Setup canvas selection events - called from setupMainCanvasEvents
@@ -127,18 +382,93 @@ function setupCanvasSelectionEvents() {
   // Store original mousedown handler
   const originalMouseDown = tileTesterEventHandlers.mainCanvasMouseDown;
 
-  // Replace with enhanced version that handles Cmd/Ctrl+drag
+  // Replace with enhanced version that handles Cmd/Ctrl+drag, selection dragging, and resizing
   tileTesterEventHandlers.mainCanvasMouseDown = function(e) {
-    // Check for Cmd/Ctrl+click for canvas selection
+    // Don't process if space panning
+    if (TileTesterState.isSpacePanning) {
+      if (originalMouseDown) originalMouseDown.call(this, e);
+      return;
+    }
+
+    // Check for resize handle click first (this takes priority)
+    if (e.button === 0 && TileTesterState.isCanvasSelectionFinalized && isOnResizeHandle(e)) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      const pos = getGridPositionFromCanvasClick(e);
+      if (!pos) return;
+
+      // Capture tiles and start resize operation
+      const captured = captureSelectionTiles();
+      if (captured && captured.tiles.length > 0) {
+        TileTesterState.isSelectionResizing = true;
+        TileTesterState.selectionResizeStart = { gridX: pos.gridX, gridY: pos.gridY };
+        TileTesterState.selectionDragTiles = captured.tiles;
+        TileTesterState.selectionOriginalBounds = {
+          minCol: captured.minGridX,
+          minRow: captured.minGridY,
+          width: captured.width,
+          height: captured.height
+        };
+        TileTesterState.selectionResizeSize = {
+          width: captured.width,
+          height: captured.height
+        };
+
+        // Remove original tiles from layers
+        removeSelectionTilesFromLayers();
+
+        hideSelectionUI();
+        mainCanvas.style.cursor = 'nwse-resize';
+        renderTileTesterMainCanvas();
+      }
+      return;
+    }
+
+    // Check for click inside finalized selection (for dragging)
+    if (e.button === 0 && TileTesterState.isCanvasSelectionFinalized && !e.metaKey && !e.ctrlKey) {
+      const pos = getGridPositionFromCanvasClick(e);
+      if (pos && isInsideSelection(pos.gridX, pos.gridY)) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        // Capture tiles and start drag operation
+        const captured = captureSelectionTiles();
+        if (captured && captured.tiles.length > 0) {
+          TileTesterState.isSelectionDragging = true;
+          TileTesterState.selectionDragStart = { gridX: pos.gridX, gridY: pos.gridY };
+          TileTesterState.selectionDragOffset = { x: 0, y: 0 };
+          TileTesterState.selectionDragTiles = captured.tiles;
+          TileTesterState.selectionOriginalBounds = {
+            minCol: captured.minGridX,
+            minRow: captured.minGridY,
+            width: captured.width,
+            height: captured.height
+          };
+
+          // Remove original tiles from layers
+          removeSelectionTilesFromLayers();
+
+          hideSelectionUI();
+          mainCanvas.style.cursor = 'grabbing';
+          renderTileTesterMainCanvas();
+        }
+        return;
+      }
+    }
+
+    // Check for Cmd/Ctrl+click for new canvas selection
     if (e.button === 0 && (e.metaKey || e.ctrlKey)) {
       e.preventDefault();
       e.stopPropagation();
 
-      // Don't start selection if space panning
-      if (TileTesterState.isSpacePanning) return;
-
       const pos = getGridPositionFromCanvasClick(e);
       if (!pos) return;
+
+      // Clear any existing drag/resize state
+      TileTesterState.isSelectionDragging = false;
+      TileTesterState.isSelectionResizing = false;
+      TileTesterState.selectionDragTiles = null;
 
       TileTesterState.isCanvasSelecting = true;
       TileTesterState.isCanvasSelectionFinalized = false;
@@ -155,7 +485,7 @@ function setupCanvasSelectionEvents() {
       return;
     }
 
-    // Clear canvas selection if clicking without Cmd/Ctrl
+    // Clear canvas selection if clicking outside without Cmd/Ctrl
     if (TileTesterState.canvasSelection && !e.metaKey && !e.ctrlKey) {
       clearCanvasSelection();
     }
@@ -170,7 +500,36 @@ function setupCanvasSelectionEvents() {
   const originalMouseMove = tileTesterEventHandlers.mainCanvasMouseMove;
 
   tileTesterEventHandlers.mainCanvasMouseMove = function(e) {
-    // Handle canvas selection drag
+    // Handle selection resize
+    if (TileTesterState.isSelectionResizing && TileTesterState.selectionOriginalBounds) {
+      const pos = getGridPositionFromCanvasClick(e);
+      if (pos) {
+        const bounds = TileTesterState.selectionOriginalBounds;
+
+        // Calculate new size based on mouse position relative to selection origin
+        const newWidth = Math.max(1, pos.gridX - bounds.minCol + 1);
+        const newHeight = Math.max(1, pos.gridY - bounds.minRow + 1);
+
+        TileTesterState.selectionResizeSize = { width: newWidth, height: newHeight };
+        renderTileTesterMainCanvas();
+      }
+      return;
+    }
+
+    // Handle selection drag
+    if (TileTesterState.isSelectionDragging && TileTesterState.selectionDragStart) {
+      const pos = getGridPositionFromCanvasClick(e);
+      if (pos) {
+        const offsetX = pos.gridX - TileTesterState.selectionDragStart.gridX;
+        const offsetY = pos.gridY - TileTesterState.selectionDragStart.gridY;
+
+        TileTesterState.selectionDragOffset = { x: offsetX, y: offsetY };
+        renderTileTesterMainCanvas();
+      }
+      return;
+    }
+
+    // Handle canvas selection creation drag
     if (TileTesterState.isCanvasSelecting && TileTesterState.canvasSelectionStart) {
       const pos = getGridPositionFromCanvasClick(e);
       if (pos) {
@@ -185,6 +544,20 @@ function setupCanvasSelectionEvents() {
       return;
     }
 
+    // Update cursor when hovering over finalized selection
+    if (TileTesterState.isCanvasSelectionFinalized && !TileTesterState.isPainting) {
+      if (isOnResizeHandle(e)) {
+        mainCanvas.style.cursor = 'nwse-resize';
+      } else {
+        const pos = getGridPositionFromCanvasClick(e);
+        if (pos && isInsideSelection(pos.gridX, pos.gridY)) {
+          mainCanvas.style.cursor = 'grab';
+        } else {
+          mainCanvas.style.cursor = '';
+        }
+      }
+    }
+
     // Call original handler
     if (originalMouseMove) {
       originalMouseMove.call(this, e);
@@ -195,7 +568,83 @@ function setupCanvasSelectionEvents() {
   const originalMouseUp = tileTesterEventHandlers.mainCanvasMouseUp;
 
   tileTesterEventHandlers.mainCanvasMouseUp = function(e) {
-    // Handle canvas selection end
+    // Handle selection resize end
+    if (TileTesterState.isSelectionResizing) {
+      const bounds = TileTesterState.selectionOriginalBounds;
+      const newSize = TileTesterState.selectionResizeSize;
+
+      if (bounds && newSize && TileTesterState.selectionDragTiles) {
+        // Place the repeated tiles at the new size
+        placeRepeatedSelectionTiles(
+          TileTesterState.selectionDragTiles,
+          bounds.width,
+          bounds.height,
+          bounds.minCol,
+          bounds.minRow,
+          newSize.width,
+          newSize.height
+        );
+
+        // Update the selection bounds to the new size
+        TileTesterState.canvasSelection = {
+          startRow: bounds.minRow,
+          startCol: bounds.minCol,
+          endRow: bounds.minRow + newSize.height - 1,
+          endCol: bounds.minCol + newSize.width - 1
+        };
+      }
+
+      // Reset resize state
+      TileTesterState.isSelectionResizing = false;
+      TileTesterState.selectionResizeStart = null;
+      TileTesterState.selectionOriginalBounds = null;
+      TileTesterState.selectionResizeSize = null;
+      TileTesterState.selectionDragTiles = null;
+
+      mainCanvas.style.cursor = '';
+      showSelectionUI();
+      renderTileTesterMainCanvas();
+      updateCanvasTransform();
+      return;
+    }
+
+    // Handle selection drag end
+    if (TileTesterState.isSelectionDragging) {
+      const bounds = TileTesterState.selectionOriginalBounds;
+      const offset = TileTesterState.selectionDragOffset;
+
+      if (bounds && offset && TileTesterState.selectionDragTiles) {
+        // Calculate new position
+        const newMinCol = bounds.minCol + offset.x;
+        const newMinRow = bounds.minRow + offset.y;
+
+        // Place the tiles at the new position
+        placeSelectionTilesAt(TileTesterState.selectionDragTiles, newMinCol, newMinRow);
+
+        // Update the selection bounds to the new position
+        TileTesterState.canvasSelection = {
+          startRow: newMinRow,
+          startCol: newMinCol,
+          endRow: newMinRow + bounds.height - 1,
+          endCol: newMinCol + bounds.width - 1
+        };
+      }
+
+      // Reset drag state
+      TileTesterState.isSelectionDragging = false;
+      TileTesterState.selectionDragStart = null;
+      TileTesterState.selectionDragOffset = null;
+      TileTesterState.selectionDragTiles = null;
+      TileTesterState.selectionOriginalBounds = null;
+
+      mainCanvas.style.cursor = '';
+      showSelectionUI();
+      renderTileTesterMainCanvas();
+      updateCanvasTransform();
+      return;
+    }
+
+    // Handle canvas selection creation end
     if (TileTesterState.isCanvasSelecting) {
       TileTesterState.isCanvasSelecting = false;
 
@@ -223,9 +672,45 @@ function setupCanvasSelectionEvents() {
   mainCanvas.addEventListener('mousemove', tileTesterEventHandlers.mainCanvasMouseMove);
   mainCanvas.addEventListener('mouseup', tileTesterEventHandlers.mainCanvasMouseUp);
 
+  // Add document-level mousemove handler for drag/resize operations
+  // This ensures smooth operations even when mouse moves outside the canvas
+  document.addEventListener('mousemove', function(e) {
+    // Only handle if we're actually in a drag or resize operation
+    if (!TileTesterState.isSelectionDragging && !TileTesterState.isSelectionResizing) return;
+
+    // Check if tile tester modal is active
+    const modal = document.getElementById('tileTesterModal');
+    if (!modal || !modal.classList.contains('active')) return;
+
+    // Trigger the same handler as the canvas mousemove
+    tileTesterEventHandlers.mainCanvasMouseMove.call(mainCanvas, e);
+  });
+
+  // Add document-level mouseup handler for drag/resize operations
+  // This ensures operations complete even if mouse is released outside the canvas
+  document.addEventListener('mouseup', function(e) {
+    // Only handle if we're actually in a drag or resize operation
+    if (!TileTesterState.isSelectionDragging && !TileTesterState.isSelectionResizing) return;
+
+    // Check if tile tester modal is active
+    const modal = document.getElementById('tileTesterModal');
+    if (!modal || !modal.classList.contains('active')) return;
+
+    // Trigger the same handler as the canvas mouseup
+    tileTesterEventHandlers.mainCanvasMouseUp.call(mainCanvas, e);
+  });
+
   // Add escape key handler to clear selection
   document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape' && TileTesterState.canvasSelection) {
+      // If dragging or resizing, cancel and restore tiles
+      if (TileTesterState.isSelectionDragging || TileTesterState.isSelectionResizing) {
+        const bounds = TileTesterState.selectionOriginalBounds;
+        if (bounds && TileTesterState.selectionDragTiles) {
+          // Restore tiles to original position
+          placeSelectionTilesAt(TileTesterState.selectionDragTiles, bounds.minCol, bounds.minRow);
+        }
+      }
       clearCanvasSelection();
     }
   });
@@ -233,24 +718,113 @@ function setupCanvasSelectionEvents() {
 
 // Render selection rectangle on canvas (blue color to differentiate from palette red)
 function renderCanvasSelection() {
-  const sel = TileTesterState.canvasSelection;
+  const state = TileTesterState;
+  const sel = state.canvasSelection;
   if (!sel) return;
 
-  const ctx = TileTesterState.mainCtx;
-  const tileSize = TileTesterState.tileSize;
+  const ctx = state.mainCtx;
+  const tileSize = state.tileSize;
+  const sourceCanvas = document.getElementById('canvas');
 
-  const minRow = Math.min(sel.startRow, sel.endRow);
-  const maxRow = Math.max(sel.startRow, sel.endRow);
-  const minCol = Math.min(sel.startCol, sel.endCol);
-  const maxCol = Math.max(sel.startCol, sel.endCol);
+  // Check if we're in drag or resize mode
+  const isDragging = state.isSelectionDragging && state.selectionDragOffset;
+  const isResizing = state.isSelectionResizing && state.selectionResizeSize;
 
+  // Calculate base selection bounds
+  let minRow = Math.min(sel.startRow, sel.endRow);
+  let minCol = Math.min(sel.startCol, sel.endCol);
+  let selWidth = Math.abs(sel.endCol - sel.startCol) + 1;
+  let selHeight = Math.abs(sel.endRow - sel.startRow) + 1;
+
+  // Render tile preview during drag or resize
+  if ((isDragging || isResizing) && state.selectionDragTiles && state.selectionOriginalBounds) {
+    const bounds = state.selectionOriginalBounds;
+    const offset = state.selectionDragOffset || { x: 0, y: 0 };
+    const newSize = state.selectionResizeSize || { width: bounds.width, height: bounds.height };
+
+    // Calculate preview position
+    const previewMinCol = bounds.minCol + offset.x;
+    const previewMinRow = bounds.minRow + offset.y;
+    const previewWidth = isResizing ? newSize.width : bounds.width;
+    const previewHeight = isResizing ? newSize.height : bounds.height;
+
+    // Draw ghost preview of tiles
+    ctx.globalAlpha = 0.6;
+
+    if (isResizing) {
+      // Draw repeated/tiled preview
+      const repeatX = Math.ceil(previewWidth / bounds.width);
+      const repeatY = Math.ceil(previewHeight / bounds.height);
+
+      for (let ry = 0; ry < repeatY; ry++) {
+        for (let rx = 0; rx < repeatX; rx++) {
+          state.selectionDragTiles.forEach(ref => {
+            const destLocalX = rx * bounds.width + ref.localX;
+            const destLocalY = ry * bounds.height + ref.localY;
+
+            // Only draw if within the new bounds
+            if (destLocalX >= previewWidth || destLocalY >= previewHeight) return;
+
+            const coords = getTileCanvasCoords(ref);
+            if (!coords) return;
+
+            const srcX = coords.col * tileSize;
+            const srcY = coords.row * tileSize;
+            const destX = (previewMinCol + destLocalX) * tileSize;
+            const destY = (previewMinRow + destLocalY) * tileSize;
+
+            ctx.drawImage(
+              sourceCanvas,
+              srcX, srcY, tileSize, tileSize,
+              destX, destY, tileSize, tileSize
+            );
+          });
+        }
+      }
+    } else {
+      // Draw simple drag preview
+      state.selectionDragTiles.forEach(ref => {
+        const coords = getTileCanvasCoords(ref);
+        if (!coords) return;
+
+        const srcX = coords.col * tileSize;
+        const srcY = coords.row * tileSize;
+        const destX = (previewMinCol + ref.localX) * tileSize;
+        const destY = (previewMinRow + ref.localY) * tileSize;
+
+        ctx.drawImage(
+          sourceCanvas,
+          srcX, srcY, tileSize, tileSize,
+          destX, destY, tileSize, tileSize
+        );
+      });
+    }
+
+    ctx.globalAlpha = 1;
+
+    // Draw selection rectangle around preview area
+    const x = previewMinCol * tileSize;
+    const y = previewMinRow * tileSize;
+    const width = previewWidth * tileSize;
+    const height = previewHeight * tileSize;
+
+    ctx.strokeStyle = '#007bff';
+    ctx.lineWidth = 3;
+    ctx.setLineDash([10, 5]);
+    ctx.strokeRect(x + 1.5, y + 1.5, width - 3, height - 3);
+    ctx.setLineDash([]);
+
+    return;
+  }
+
+  // Normal selection rendering (not dragging/resizing)
   const x = minCol * tileSize;
   const y = minRow * tileSize;
-  const width = (maxCol - minCol + 1) * tileSize;
-  const height = (maxRow - minRow + 1) * tileSize;
+  const width = selWidth * tileSize;
+  const height = selHeight * tileSize;
 
   // Check if selection is finalized (after mouseup) or active (during drag)
-  const isFinalized = TileTesterState.isCanvasSelectionFinalized;
+  const isFinalized = state.isCanvasSelectionFinalized;
 
   if (isFinalized) {
     // Finalized selection: dashed blue border only, no fill
@@ -280,9 +854,11 @@ function showSelectionUI() {
 
   const tileSize = TileTesterState.tileSize;
   const zoom = TileTesterState.canvasZoom || 1;
+  const pan = TileTesterState.canvasPan;
 
   // Calculate selection bounds
   const minRow = Math.min(sel.startRow, sel.endRow);
+  const maxRow = Math.max(sel.startRow, sel.endRow);
   const minCol = Math.min(sel.startCol, sel.endCol);
   const maxCol = Math.max(sel.startCol, sel.endCol);
 
@@ -325,6 +901,37 @@ function showSelectionUI() {
   });
 
   document.body.appendChild(ui);
+
+  // Create resize handle at bottom-right corner of selection
+  const resizeHandle = document.createElement('div');
+  resizeHandle.id = 'selectionResizeHandle';
+  resizeHandle.className = 'selection-resize-handle';
+
+  // Calculate position at bottom-right corner of selection
+  const selectionRight = (maxCol + 1) * tileSize * zoom;
+  const selectionBottom = (maxRow + 1) * tileSize * zoom;
+
+  resizeHandle.style.position = 'fixed';
+  resizeHandle.style.left = (canvasRect.left + selectionRight - 12) + 'px';
+  resizeHandle.style.top = (canvasRect.top + selectionBottom - 12) + 'px';
+  resizeHandle.style.zIndex = '1001';
+
+  // Add grid icon (4x4 dots pattern) using SVG
+  resizeHandle.innerHTML = `
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+      <circle cx="3" cy="3" r="1.5"/>
+      <circle cx="8" cy="3" r="1.5"/>
+      <circle cx="13" cy="3" r="1.5"/>
+      <circle cx="3" cy="8" r="1.5"/>
+      <circle cx="8" cy="8" r="1.5"/>
+      <circle cx="13" cy="8" r="1.5"/>
+      <circle cx="3" cy="13" r="1.5"/>
+      <circle cx="8" cy="13" r="1.5"/>
+      <circle cx="13" cy="13" r="1.5"/>
+    </svg>
+  `;
+
+  document.body.appendChild(resizeHandle);
 
   // Trigger a re-render to show the finalized selection
   renderTileTesterMainCanvas();
@@ -511,6 +1118,11 @@ function hideSelectionUI() {
   const existing = document.getElementById('customTileSelectionUI');
   if (existing) {
     existing.remove();
+  }
+  // Also remove resize handle
+  const resizeHandle = document.getElementById('selectionResizeHandle');
+  if (resizeHandle) {
+    resizeHandle.remove();
   }
 }
 

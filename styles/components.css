@@ -2793,6 +2793,33 @@
   background: #0056b3;
 }
 
+/* Selection Resize Handle */
+.selection-resize-handle {
+  width: 24px;
+  height: 24px;
+  background: #007bff;
+  border: 2px solid white;
+  border-radius: 4px;
+  cursor: nwse-resize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.selection-resize-handle:hover {
+  background: #0056b3;
+  transform: scale(1.1);
+}
+
+.selection-resize-handle svg {
+  width: 16px;
+  height: 16px;
+  pointer-events: none;
+}
+
 /* Session Links Styles */
 .session-links {
   display: inline-flex;

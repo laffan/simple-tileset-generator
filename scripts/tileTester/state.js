@@ -63,7 +63,19 @@ var TileTesterState = {
   canvasSelection: null,       // {startRow, startCol, endRow, endCol}
 
   // Ghost preview state - shows tile preview before placing
-  hoverPosition: null  // {gridX, gridY} - current hover position for ghost preview
+  hoverPosition: null,  // {gridX, gridY} - current hover position for ghost preview
+
+  // Selection drag state - for moving selected tiles
+  isSelectionDragging: false,
+  selectionDragStart: null,  // {gridX, gridY} - starting grid position of drag
+  selectionDragOffset: null, // {x, y} - current drag offset in grid cells
+  selectionDragTiles: null,  // Array of {tile, localX, localY, layerIndex} - captured tiles from selection
+
+  // Selection resize state - for tiling/repeating selected tiles
+  isSelectionResizing: false,
+  selectionResizeStart: null,    // {gridX, gridY} - starting grid position of resize
+  selectionOriginalBounds: null, // {minCol, minRow, width, height} - original selection size
+  selectionResizeSize: null      // {width, height} - current resize dimensions
 };
 
 // Create a new layer with sparse tile storage
@@ -486,6 +498,16 @@ function resetTileTesterState() {
   TileTesterState.canvasSelectionStart = null;
   TileTesterState.canvasSelection = null;
   TileTesterState.hoverPosition = null;
+  // Selection drag state
+  TileTesterState.isSelectionDragging = false;
+  TileTesterState.selectionDragStart = null;
+  TileTesterState.selectionDragOffset = null;
+  TileTesterState.selectionDragTiles = null;
+  // Selection resize state
+  TileTesterState.isSelectionResizing = false;
+  TileTesterState.selectionResizeStart = null;
+  TileTesterState.selectionOriginalBounds = null;
+  TileTesterState.selectionResizeSize = null;
 }
 
 // Center the view on existing tiles
