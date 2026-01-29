@@ -1,5 +1,9 @@
 /* Tile Tester Palette Window - Floating tilemap palette */
 
+// Track sidebar toggle initialization
+var sidebarToggleInitialized = false;
+var sidebarToggleHandler = null;
+
 // Setup the palette window with tileset
 function setupTileTesterPalette() {
   const paletteCanvas = document.getElementById('tileTesterPaletteCanvas');
@@ -86,14 +90,32 @@ function drawPaletteGridLines() {
 
 // Setup sidebar toggle button
 function setupSidebarToggle() {
+  // Guard against multiple initialization
+  if (sidebarToggleInitialized) return;
+  sidebarToggleInitialized = true;
+
   const toggleBtn = document.getElementById('tileTesterSidebarToggle');
   const paletteWindow = document.getElementById('tileTesterPaletteWindow');
 
   if (!toggleBtn || !paletteWindow) return;
 
-  toggleBtn.addEventListener('click', function() {
+  sidebarToggleHandler = function() {
     paletteWindow.classList.toggle('collapsed');
-  });
+  };
+
+  toggleBtn.addEventListener('click', sidebarToggleHandler);
+}
+
+// Remove sidebar toggle event listener
+function removeSidebarToggleEvents() {
+  const toggleBtn = document.getElementById('tileTesterSidebarToggle');
+
+  if (toggleBtn && sidebarToggleHandler) {
+    toggleBtn.removeEventListener('click', sidebarToggleHandler);
+    sidebarToggleHandler = null;
+  }
+
+  sidebarToggleInitialized = false;
 }
 
 // Update palette fit mode

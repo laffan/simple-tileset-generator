@@ -4,6 +4,27 @@
 var LAYER_THUMB_WIDTH = 100;
 var LAYER_THUMB_HEIGHT = 50;
 
+// Track if layers panel events are initialized
+var layersPanelEventsInitialized = false;
+
+// Store event handler references for removal
+var layersPanelEventHandlers = {
+  dragstart: null,
+  dragend: null,
+  dragover: null,
+  dragleave: null,
+  drop: null,
+  addLayerBtn: null
+};
+
+// Drag state - stored globally to avoid closure issues with multiple listeners
+var layerDragState = {
+  draggedItem: null,
+  draggedIndex: null,
+  dropTargetIndex: null,
+  dropBefore: false
+};
+
 // Setup the layers panel
 function setupLayersPanel() {
   renderLayersList();
@@ -41,8 +62,13 @@ function createLayerElement(layer, index) {
   div.dataset.layerId = layer.id;
   div.dataset.index = index;
 
+  const visibilityIcon = layer.visible ? '&#128065;' : '&#128064;'; // Open eye vs closed eye
+  const visibilityClass = layer.visible ? '' : ' hidden';
+  const visibilityTitle = layer.visible ? 'Hide layer' : 'Show layer';
+
   div.innerHTML = `
     <div class="tester-layer-drag-handle" draggable="true" title="Drag to reorder">&#x2630;</div>
+    <button class="tester-layer-visibility${visibilityClass}" title="${visibilityTitle}">${visibilityIcon}</button>
     <div class="tester-layer-thumbnail">
       <canvas id="layerThumb${layer.id}" width="${LAYER_THUMB_WIDTH}" height="${LAYER_THUMB_HEIGHT}"></canvas>
     </div>
@@ -59,8 +85,16 @@ function createLayerElement(layer, index) {
     if (e.target.closest('.tester-layer-opacity-wrapper')) return;
     if (e.target.closest('.tester-layer-delete')) return;
     if (e.target.closest('.tester-layer-drag-handle')) return;
+    if (e.target.closest('.tester-layer-visibility')) return;
     TileTesterState.activeLayerId = layer.id;
     renderLayersList();
+  });
+
+  // Visibility toggle button
+  const visibilityBtn = div.querySelector('.tester-layer-visibility');
+  visibilityBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    toggleLayerVisibility(layer.id);
   });
 
   // Opacity slider - prevent drag conflicts
@@ -160,6 +194,10 @@ function updateLayerThumbnail(layerId) {
 
 // Setup drag and drop for layer reordering
 function setupLayersPanelEvents() {
+  // Guard against multiple initialization
+  if (layersPanelEventsInitialized) return;
+  layersPanelEventsInitialized = true;
+
   const container = document.getElementById('tileTesterLayersList');
   const addBtn = document.getElementById('tileTesterAddLayerBtn');
 
@@ -167,16 +205,12 @@ function setupLayersPanelEvents() {
 
   // Add layer button
   if (addBtn) {
-    addBtn.addEventListener('click', addTileTesterLayer);
+    layersPanelEventHandlers.addLayerBtn = addTileTesterLayer;
+    addBtn.addEventListener('click', layersPanelEventHandlers.addLayerBtn);
   }
 
-  // Drag and drop
-  let draggedItem = null;
-  let draggedIndex = null;
-  let dropTargetIndex = null;
-  let dropBefore = false;
-
-  container.addEventListener('dragstart', function(e) {
+  // Drag and drop handlers using global state
+  layersPanelEventHandlers.dragstart = function(e) {
     // Only allow drag from the drag handle
     if (!e.target.classList || !e.target.classList.contains('tester-layer-drag-handle')) {
       e.preventDefault();
@@ -186,8 +220,8 @@ function setupLayersPanelEvents() {
     const layerItem = e.target.closest('.tester-layer-item');
     if (!layerItem) return;
 
-    draggedItem = layerItem;
-    draggedIndex = parseInt(layerItem.dataset.index);
+    layerDragState.draggedItem = layerItem;
+    layerDragState.draggedIndex = parseInt(layerItem.dataset.index);
 
     // Use the whole layer item as the drag image
     const rect = layerItem.getBoundingClientRect();
@@ -200,35 +234,35 @@ function setupLayersPanelEvents() {
     setTimeout(() => {
       layerItem.classList.add('dragging');
     }, 0);
-  });
+  };
 
-  container.addEventListener('dragend', function(e) {
-    if (draggedItem) {
-      draggedItem.classList.remove('dragging');
-      draggedItem = null;
-      draggedIndex = null;
+  layersPanelEventHandlers.dragend = function(e) {
+    if (layerDragState.draggedItem) {
+      layerDragState.draggedItem.classList.remove('dragging');
+      layerDragState.draggedItem = null;
+      layerDragState.draggedIndex = null;
     }
 
     // Reset drop tracking
-    dropTargetIndex = null;
-    dropBefore = false;
+    layerDragState.dropTargetIndex = null;
+    layerDragState.dropBefore = false;
 
     // Remove all drop indicators
     container.querySelectorAll('.tester-layer-drop-indicator').forEach(el => el.remove());
     container.querySelectorAll('.tester-layer-item').forEach(item => {
       item.classList.remove('drag-over');
     });
-  });
+  };
 
-  container.addEventListener('dragover', function(e) {
+  layersPanelEventHandlers.dragover = function(e) {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
 
-    if (!draggedItem) return;
+    if (!layerDragState.draggedItem) return;
 
     // Find the layer item we're hovering over (skip indicators and dragged item)
     let layerItem = e.target.closest('.tester-layer-item');
-    if (layerItem === draggedItem) layerItem = null;
+    if (layerItem === layerDragState.draggedItem) layerItem = null;
 
     // If hovering over indicator, find adjacent layer item
     if (!layerItem && e.target.classList.contains('tester-layer-drop-indicator')) {
@@ -238,7 +272,7 @@ function setupLayersPanelEvents() {
 
       // Find closest layer item
       for (const item of items) {
-        if (item === draggedItem) continue;
+        if (item === layerDragState.draggedItem) continue;
         const itemRect = item.getBoundingClientRect();
         if (Math.abs(itemRect.bottom - indicatorRect.top) < 10 ||
             Math.abs(itemRect.top - indicatorRect.bottom) < 10) {
@@ -261,14 +295,14 @@ function setupLayersPanelEvents() {
     const midY = rect.top + rect.height / 2;
 
     // Store drop position
-    dropTargetIndex = parseInt(layerItem.dataset.index);
-    dropBefore = e.clientY < midY;
+    layerDragState.dropTargetIndex = parseInt(layerItem.dataset.index);
+    layerDragState.dropBefore = e.clientY < midY;
 
     // Create drop indicator line
     const indicator = document.createElement('div');
     indicator.className = 'tester-layer-drop-indicator';
 
-    if (dropBefore) {
+    if (layerDragState.dropBefore) {
       // Insert before this item
       layerItem.parentNode.insertBefore(indicator, layerItem);
     } else {
@@ -277,9 +311,9 @@ function setupLayersPanelEvents() {
     }
 
     layerItem.classList.add('drag-over');
-  });
+  };
 
-  container.addEventListener('dragleave', function(e) {
+  layersPanelEventHandlers.dragleave = function(e) {
     // Only remove if leaving the container entirely
     if (!container.contains(e.relatedTarget)) {
       container.querySelectorAll('.tester-layer-drop-indicator').forEach(el => el.remove());
@@ -287,9 +321,9 @@ function setupLayersPanelEvents() {
         item.classList.remove('drag-over');
       });
     }
-  });
+  };
 
-  container.addEventListener('drop', function(e) {
+  layersPanelEventHandlers.drop = function(e) {
     e.preventDefault();
 
     // Remove indicators
@@ -298,25 +332,67 @@ function setupLayersPanelEvents() {
       item.classList.remove('drag-over');
     });
 
-    if (!draggedItem || dropTargetIndex === null) return;
-    if (dropTargetIndex === draggedIndex) return;
+    if (!layerDragState.draggedItem || layerDragState.dropTargetIndex === null) return;
+    if (layerDragState.dropTargetIndex === layerDragState.draggedIndex) return;
 
     // Calculate new index based on stored drop position
     let newIndex;
-    if (dropBefore) {
-      newIndex = dropTargetIndex + 1;
+    if (layerDragState.dropBefore) {
+      newIndex = layerDragState.dropTargetIndex + 1;
     } else {
-      newIndex = dropTargetIndex;
+      newIndex = layerDragState.dropTargetIndex;
     }
 
-    if (draggedIndex < newIndex) {
+    if (layerDragState.draggedIndex < newIndex) {
       newIndex--;
     }
 
-    reorderLayers(draggedIndex, newIndex);
+    reorderLayers(layerDragState.draggedIndex, newIndex);
 
     // Reset drop tracking
-    dropTargetIndex = null;
-    dropBefore = false;
-  });
+    layerDragState.dropTargetIndex = null;
+    layerDragState.dropBefore = false;
+  };
+
+  container.addEventListener('dragstart', layersPanelEventHandlers.dragstart);
+  container.addEventListener('dragend', layersPanelEventHandlers.dragend);
+  container.addEventListener('dragover', layersPanelEventHandlers.dragover);
+  container.addEventListener('dragleave', layersPanelEventHandlers.dragleave);
+  container.addEventListener('drop', layersPanelEventHandlers.drop);
+}
+
+// Remove layers panel event listeners
+function removeLayersPanelEvents() {
+  const container = document.getElementById('tileTesterLayersList');
+  const addBtn = document.getElementById('tileTesterAddLayerBtn');
+
+  if (container) {
+    if (layersPanelEventHandlers.dragstart) {
+      container.removeEventListener('dragstart', layersPanelEventHandlers.dragstart);
+    }
+    if (layersPanelEventHandlers.dragend) {
+      container.removeEventListener('dragend', layersPanelEventHandlers.dragend);
+    }
+    if (layersPanelEventHandlers.dragover) {
+      container.removeEventListener('dragover', layersPanelEventHandlers.dragover);
+    }
+    if (layersPanelEventHandlers.dragleave) {
+      container.removeEventListener('dragleave', layersPanelEventHandlers.dragleave);
+    }
+    if (layersPanelEventHandlers.drop) {
+      container.removeEventListener('drop', layersPanelEventHandlers.drop);
+    }
+  }
+
+  if (addBtn && layersPanelEventHandlers.addLayerBtn) {
+    addBtn.removeEventListener('click', layersPanelEventHandlers.addLayerBtn);
+  }
+
+  // Reset state
+  layerDragState.draggedItem = null;
+  layerDragState.draggedIndex = null;
+  layerDragState.dropTargetIndex = null;
+  layerDragState.dropBefore = false;
+
+  layersPanelEventsInitialized = false;
 }

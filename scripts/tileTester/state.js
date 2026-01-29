@@ -94,10 +94,21 @@ function getActiveLayer() {
   return TileTesterState.layers.find(l => l.id === TileTesterState.activeLayerId);
 }
 
-// Add a new layer
+// Add a new layer above the currently selected layer
 function addTileTesterLayer() {
   const layer = createTileTesterLayer('Layer ' + (TileTesterState.layers.length + 1));
-  TileTesterState.layers.push(layer);
+
+  // Find the index of the currently active layer
+  const activeIndex = TileTesterState.layers.findIndex(l => l.id === TileTesterState.activeLayerId);
+
+  if (activeIndex !== -1) {
+    // Insert above the active layer (higher index = renders on top)
+    TileTesterState.layers.splice(activeIndex + 1, 0, layer);
+  } else {
+    // No active layer, add to top
+    TileTesterState.layers.push(layer);
+  }
+
   TileTesterState.activeLayerId = layer.id;
   renderLayersList();
   renderTileTesterMainCanvas();
@@ -126,6 +137,16 @@ function setLayerOpacity(layerId, opacity) {
   const layer = TileTesterState.layers.find(l => l.id === layerId);
   if (layer) {
     layer.opacity = Math.max(0, Math.min(1, opacity));
+    renderTileTesterMainCanvas();
+  }
+}
+
+// Toggle layer visibility
+function toggleLayerVisibility(layerId) {
+  const layer = TileTesterState.layers.find(l => l.id === layerId);
+  if (layer) {
+    layer.visible = !layer.visible;
+    renderLayersList();
     renderTileTesterMainCanvas();
   }
 }

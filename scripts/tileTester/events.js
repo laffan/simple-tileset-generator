@@ -377,6 +377,16 @@ function removeTileTesterEvents() {
   TileTesterState.canvasPan = { x: 0, y: 0 };
   TileTesterState.isSpacePanning = false;
 
+  // Remove layers panel events
+  if (typeof removeLayersPanelEvents === 'function') {
+    removeLayersPanelEvents();
+  }
+
+  // Remove sidebar toggle events
+  if (typeof removeSidebarToggleEvents === 'function') {
+    removeSidebarToggleEvents();
+  }
+
   tileTesterEventsInitialized = false;
 }
 
@@ -387,7 +397,7 @@ function setupZoomControls() {
   zoomLinks.forEach(link => {
     link.addEventListener('click', function(e) {
       e.preventDefault();
-      const zoom = parseInt(this.dataset.zoom, 10);
+      const zoom = parseFloat(this.dataset.zoom);
       setCanvasZoom(zoom);
 
       // Update active state
