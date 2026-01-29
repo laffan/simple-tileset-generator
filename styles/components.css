@@ -1441,29 +1441,29 @@
   color: #333;
 }
 
-/* Download dropdown in preview header */
+/* Download dropdown */
 .download-dropdown {
   position: relative;
   display: inline-block;
 }
 
 .download-dropdown-trigger {
-  font-size: 12px;
-  color: #666;
+  font-size: 14px;
+  color: white;
   text-decoration: none;
   cursor: pointer;
   font-weight: normal;
 }
 
 .download-dropdown-trigger:hover {
-  color: #333;
+  color: #ccc;
   text-decoration: underline;
 }
 
 .download-dropdown-menu {
   display: none;
   position: absolute;
-  top: 100%;
+  bottom: 100%;
   left: 50%;
   transform: translateX(-50%);
   background: white;
@@ -1472,29 +1472,29 @@
   box-shadow: 0 2px 8px rgba(0,0,0,0.15);
   z-index: 100;
   min-width: 120px;
-  margin-top: 4px;
+  margin-bottom: 8px;
 }
 
 .download-dropdown-menu::before {
   content: '';
   position: absolute;
-  top: -6px;
+  bottom: -6px;
   left: 50%;
   transform: translateX(-50%);
   border-left: 6px solid transparent;
   border-right: 6px solid transparent;
-  border-bottom: 6px solid #ddd;
+  border-top: 6px solid #ddd;
 }
 
 .download-dropdown-menu::after {
   content: '';
   position: absolute;
-  top: -5px;
+  bottom: -5px;
   left: 50%;
   transform: translateX(-50%);
   border-left: 5px solid transparent;
   border-right: 5px solid transparent;
-  border-bottom: 5px solid white;
+  border-top: 5px solid white;
 }
 
 .download-dropdown.open .download-dropdown-menu {
@@ -1522,18 +1522,6 @@
   border-radius: 0 0 4px 4px;
 }
 
-.previewHeaderControls .download-separator {
-  color: #ccc;
-  font-size: 12px;
-}
-
-.header-separator {
-  display: inline-block;
-  width: 1px;
-  height: 12px;
-  background: #ddd;
-  margin: 0 4px;
-}
 
 /* Tile tester modal - full screen */
 .tester-modal {

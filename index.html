@@ -19,6 +19,26 @@
                 <input type="file" id="loadSessionInput" accept=".json" />
             </div>
             <div class="footer__right">
+                <div class="download-links" id="tilesetDownloadLinks">
+                    <span class="download-label">Download:</span>
+                    <div class="download-dropdown" id="pngDownloadDropdown">
+                        <a href="#" class="download-dropdown-trigger" data-format="png">PNG</a>
+                        <div class="download-dropdown-menu">
+                            <a href="#" class="download-option" data-format="png" data-target="single">Single sheet</a>
+                            <a href="#" class="download-option" data-format="png" data-target="main">Tiles only</a>
+                            <a href="#" class="download-option" data-format="png" data-target="combined">Combined only</a>
+                        </div>
+                    </div>
+                    <span class="download-separator">|</span>
+                    <div class="download-dropdown" id="svgDownloadDropdown">
+                        <a href="#" class="download-dropdown-trigger" data-format="svg">SVG</a>
+                        <div class="download-dropdown-menu">
+                            <a href="#" class="download-option" data-format="svg" data-target="single">Single sheet</a>
+                            <a href="#" class="download-option" data-format="svg" data-target="main">Tiles only</a>
+                            <a href="#" class="download-option" data-format="svg" data-target="combined">Combined only</a>
+                        </div>
+                    </div>
+                </div>
             </div>
         </footer>
 
@@ -90,24 +110,6 @@
                 <h3 class="previewHeader">
                     <span>Tiles</span>
                     <div class="previewHeaderControls">
-                        <div class="download-dropdown" id="pngDownloadDropdown">
-                            <a href="#" class="download-dropdown-trigger" data-format="png">PNG</a>
-                            <div class="download-dropdown-menu">
-                                <a href="#" class="download-option" data-format="png" data-target="single">Single sheet</a>
-                                <a href="#" class="download-option" data-format="png" data-target="main">Tiles only</a>
-                                <a href="#" class="download-option" data-format="png" data-target="combined">Combined only</a>
-                            </div>
-                        </div>
-                        <span class="download-separator">|</span>
-                        <div class="download-dropdown" id="svgDownloadDropdown">
-                            <a href="#" class="download-dropdown-trigger" data-format="svg">SVG</a>
-                            <div class="download-dropdown-menu">
-                                <a href="#" class="download-option" data-format="svg" data-target="single">Single sheet</a>
-                                <a href="#" class="download-option" data-format="svg" data-target="main">Tiles only</a>
-                                <a href="#" class="download-option" data-format="svg" data-target="combined">Combined only</a>
-                            </div>
-                        </div>
-                        <span class="header-separator"></span>
                         <a href="#" id="testTilesetBtn" class="testLink"
                             >Test &amp; Combine</a
                         >
