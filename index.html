@@ -90,9 +90,23 @@
                 <h3 class="previewHeader">
                     <span>Tiles</span>
                     <div class="previewHeaderControls">
-                        <a href="#" class="tileset-download-link" data-format="png" data-target="main">PNG</a>
+                        <div class="download-dropdown" id="pngDownloadDropdown">
+                            <a href="#" class="download-dropdown-trigger" data-format="png">PNG</a>
+                            <div class="download-dropdown-menu">
+                                <a href="#" class="download-option" data-format="png" data-target="single">Single sheet</a>
+                                <a href="#" class="download-option" data-format="png" data-target="main">Tiles only</a>
+                                <a href="#" class="download-option" data-format="png" data-target="combined">Combined only</a>
+                            </div>
+                        </div>
                         <span class="download-separator">|</span>
-                        <a href="#" class="tileset-download-link" data-format="svg" data-target="main">SVG</a>
+                        <div class="download-dropdown" id="svgDownloadDropdown">
+                            <a href="#" class="download-dropdown-trigger" data-format="svg">SVG</a>
+                            <div class="download-dropdown-menu">
+                                <a href="#" class="download-option" data-format="svg" data-target="single">Single sheet</a>
+                                <a href="#" class="download-option" data-format="svg" data-target="main">Tiles only</a>
+                                <a href="#" class="download-option" data-format="svg" data-target="combined">Combined only</a>
+                            </div>
+                        </div>
                         <span class="header-separator"></span>
                         <a href="#" id="testTilesetBtn" class="testLink"
                             >Test &amp; Combine</a
@@ -108,14 +122,7 @@
 
                 <!-- Combined tiles from tile tester -->
                 <div class="custom-tiles-preview-section" id="customTilesPreviewSection" style="display: none;">
-                    <h4 class="combined-tiles-header">
-                        <span>Combined Tiles</span>
-                        <span class="combined-tiles-download-links">
-                            <a href="#" class="tileset-download-link" data-format="png" data-target="combined">PNG</a>
-                            <span class="download-separator">|</span>
-                            <a href="#" class="tileset-download-link" data-format="svg" data-target="combined">SVG</a>
-                        </span>
-                    </h4>
+                    <h4>Combined Tiles</h4>
                     <div class="custom-tiles-preview-container" id="customTilesPreviewContainer"></div>
                 </div>
 

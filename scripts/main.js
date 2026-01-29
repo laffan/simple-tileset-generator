@@ -24,15 +24,57 @@ document.getElementById('selectAllCombinations').addEventListener('click', selec
 document.getElementById('deselectAllCombinations').addEventListener('click', deselectAllCombinations);
 
 
-// Download link handling for tilesets
+// Download dropdown handling
 (function() {
-  document.querySelectorAll('.tileset-download-link').forEach(link => {
-    link.addEventListener('click', function(e) {
+  // Handle dropdown trigger clicks
+  document.querySelectorAll('.download-dropdown-trigger').forEach(trigger => {
+    trigger.addEventListener('click', function(e) {
       e.preventDefault();
+      e.stopPropagation();
+
+      const dropdown = this.closest('.download-dropdown');
+      const format = this.dataset.format;
+      const customTiles = TileTesterState && TileTesterState.customTiles ? TileTesterState.customTiles : [];
+
+      // If no combined tiles, download directly (tiles only)
+      if (customTiles.length === 0) {
+        if (format === 'svg') {
+          downloadMainTilesetSVG();
+        } else {
+          downloadMainTilesetPNG();
+        }
+        return;
+      }
+
+      // Toggle dropdown
+      const wasOpen = dropdown.classList.contains('open');
+      // Close all dropdowns first
+      document.querySelectorAll('.download-dropdown').forEach(d => d.classList.remove('open'));
+      if (!wasOpen) {
+        dropdown.classList.add('open');
+      }
+    });
+  });
+
+  // Handle dropdown option clicks
+  document.querySelectorAll('.download-option').forEach(option => {
+    option.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+
       const format = this.dataset.format;
       const target = this.dataset.target;
 
-      if (target === 'main') {
+      // Close dropdown
+      document.querySelectorAll('.download-dropdown').forEach(d => d.classList.remove('open'));
+
+      if (target === 'single') {
+        if (format === 'svg') {
+          downloadSingleSheetSVG();
+        } else {
+          downloadSingleSheetPNG();
+        }
+      } else if (target === 'main') {
         if (format === 'svg') {
           downloadMainTilesetSVG();
         } else {
@@ -47,7 +89,48 @@ document.getElementById('deselectAllCombinations').addEventListener('click', des
       }
     });
   });
+
+  // Close dropdowns when clicking outside
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('.download-dropdown')) {
+      document.querySelectorAll('.download-dropdown').forEach(d => d.classList.remove('open'));
+    }
+  });
 })();
+
+// Download single sheet (main tileset + combined tiles) as PNG
+function downloadSingleSheetPNG() {
+  const customTiles = TileTesterState && TileTesterState.customTiles ? TileTesterState.customTiles : [];
+
+  if (customTiles.length === 0) {
+    // No combined tiles, just download main
+    downloadMainTilesetPNG();
+    return;
+  }
+
+  const combinedCanvas = createCombinedTilesetCanvas();
+  const image = combinedCanvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
+  const link = document.createElement('a');
+  link.download = 'tileset.png';
+  link.href = image;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+// Download single sheet (main tileset + combined tiles) as SVG
+function downloadSingleSheetSVG() {
+  const customTiles = TileTesterState && TileTesterState.customTiles ? TileTesterState.customTiles : [];
+
+  if (customTiles.length === 0) {
+    // No combined tiles, just download main
+    downloadMainTilesetSVG();
+    return;
+  }
+
+  const svg = generateSingleSheetSVG();
+  downloadSVG(svg, 'tileset.svg');
+}
 
 // Download main tileset only as PNG
 function downloadMainTilesetPNG() {
@@ -330,9 +413,12 @@ function generateCombinedTilesSVG() {
   // Generate SVG content
   let svgContent = `<svg xmlns="http://www.w3.org/2000/svg" width="${totalWidth}" height="${totalHeight}">\n`;
 
-  // Get color palette
+  // Get color palette (ensure # prefix)
   const colorInput = document.getElementById('colorInput').value;
-  const colors = colorInput.split(',').map(c => c.trim()).filter(c => c);
+  const colors = colorInput.split(',').map(c => {
+    c = c.trim();
+    return c.startsWith('#') ? c : '#' + c;
+  }).filter(c => c && c !== '#');
 
   let xOffset = 0;
 
@@ -354,6 +440,146 @@ function generateCombinedTilesSVG() {
         // Generate tile SVG at this position
         const tileSvg = generateTileSVGAtPosition(coords.row, color, tileSize, destX, destY);
         svgContent += tileSvg;
+      });
+
+      yOffset += customTile.height * tileSize;
+    });
+
+    xOffset += column.width;
+  });
+
+  svgContent += '</svg>';
+  return svgContent;
+}
+
+// Generate SVG for single sheet (main tileset + combined tiles)
+function generateSingleSheetSVG() {
+  const customTiles = TileTesterState && TileTesterState.customTiles ? TileTesterState.customTiles : [];
+  const tileSize = parseInt(document.getElementById('sizeInput').value, 10) || 64;
+  const mainCanvas = document.getElementById('canvas');
+  const mainWidth = mainCanvas.width;
+  const mainHeight = mainCanvas.height;
+
+  // Get color palette (ensure # prefix)
+  const colorInput = document.getElementById('colorInput').value;
+  const colors = colorInput.split(',').map(c => {
+    c = c.trim();
+    return c.startsWith('#') ? c : '#' + c;
+  }).filter(c => c && c !== '#');
+
+  // Get selected items
+  const selectedShapes = getSelectedShapes();
+  const selectedPatterns = getSelectedPatterns();
+  const selectedCombinations = getSelectedCombinations();
+
+  if (customTiles.length === 0) {
+    // Just return main tileset SVG
+    return generateTilesetSVG();
+  }
+
+  // Calculate combined tiles layout
+  let customTileColumns = [];
+  let currentColumn = [];
+  let currentColumnHeight = 0;
+
+  customTiles.forEach(ct => {
+    const tileHeight = ct.height * tileSize;
+    if (currentColumnHeight + tileHeight > mainHeight && currentColumn.length > 0) {
+      customTileColumns.push({
+        tiles: currentColumn,
+        height: currentColumnHeight,
+        width: Math.max(...currentColumn.map(t => t.width)) * tileSize
+      });
+      currentColumn = [];
+      currentColumnHeight = 0;
+    }
+    currentColumn.push(ct);
+    currentColumnHeight += tileHeight;
+  });
+
+  if (currentColumn.length > 0) {
+    customTileColumns.push({
+      tiles: currentColumn,
+      height: currentColumnHeight,
+      width: Math.max(...currentColumn.map(t => t.width)) * tileSize
+    });
+  }
+
+  const customTilesWidth = customTileColumns.reduce((sum, col) => sum + col.width, 0);
+  const totalWidth = mainWidth + customTilesWidth;
+  const totalHeight = mainHeight;
+
+  // Start SVG
+  let svgContent = `<svg xmlns="http://www.w3.org/2000/svg" width="${totalWidth}" height="${totalHeight}">\n`;
+
+  // Generate main tileset part
+  let row = 0;
+
+  // Shapes
+  selectedShapes.forEach(shapeName => {
+    const pathData = shapePathData[shapeName];
+    if (!pathData) return;
+
+    colors.forEach((color, colIndex) => {
+      const x = colIndex * tileSize;
+      const y = row * tileSize;
+      svgContent += generateShapeSVGAtOffset(pathData, color, tileSize, x, y);
+    });
+    row++;
+  });
+
+  // Patterns
+  selectedPatterns.forEach(patternName => {
+    const pixelData = patternPixelData[patternName];
+    if (!pixelData) return;
+
+    colors.forEach((color, colIndex) => {
+      const x = colIndex * tileSize;
+      const y = row * tileSize;
+      svgContent += generatePatternSVGAtOffset(pixelData, color, tileSize, x, y);
+    });
+    row++;
+  });
+
+  // Combinations
+  selectedCombinations.forEach(combId => {
+    const combData = customCombinationRegistry[combId];
+    if (!combData) return;
+
+    const combRows = combData.tileRows || 1;
+    const combCols = combData.tileCols || 1;
+
+    for (let tr = 0; tr < combRows; tr++) {
+      for (let tc = 0; tc < combCols; tc++) {
+        colors.forEach((color, colIndex) => {
+          const x = colIndex * tileSize;
+          const y = row * tileSize;
+          svgContent += generateCombinationTileSVGAtOffset(combData, tr, tc, color, tileSize, x, y);
+        });
+        row++;
+      }
+    }
+  });
+
+  // Generate combined tiles part
+  let xOffset = mainWidth;
+
+  customTileColumns.forEach(column => {
+    let yOffset = 0;
+
+    column.tiles.forEach(customTile => {
+      const sortedRefs = [...customTile.tileRefs].sort((a, b) => (a.layerIndex || 0) - (b.layerIndex || 0));
+
+      sortedRefs.forEach(ref => {
+        const coords = getTileCanvasCoords(ref);
+        if (!coords) return;
+
+        const destX = xOffset + ref.localX * tileSize;
+        const destY = yOffset + ref.localY * tileSize;
+        const colorIndex = coords.col;
+        const color = colors[colorIndex] || '#000000';
+
+        svgContent += generateTileSVGAtPosition(coords.row, color, tileSize, destX, destY);
       });
 
       yOffset += customTile.height * tileSize;

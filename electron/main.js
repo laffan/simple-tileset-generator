@@ -62,27 +62,39 @@ function createWindow() {
                 },
                 { type: 'separator' },
                 {
-                    label: 'Download Tiles as PNG',
+                    label: 'Download Single Sheet (PNG)',
                     accelerator: 'CmdOrCtrl+Shift+P',
                     click: () => {
-                        mainWindow.webContents.executeJavaScript('document.querySelector(\'[data-format="png"][data-target="main"]\').click()');
+                        mainWindow.webContents.executeJavaScript('downloadSingleSheetPNG()');
                     }
                 },
                 {
-                    label: 'Download Tiles as SVG',
+                    label: 'Download Single Sheet (SVG)',
                     accelerator: 'CmdOrCtrl+Shift+S',
                     click: () => {
-                        mainWindow.webContents.executeJavaScript('document.querySelector(\'[data-format="svg"][data-target="main"]\').click()');
+                        mainWindow.webContents.executeJavaScript('downloadSingleSheetSVG()');
                     }
                 },
                 {
-                    label: 'Download Combined Tiles as PNG',
+                    label: 'Download Tiles Only (PNG)',
+                    click: () => {
+                        mainWindow.webContents.executeJavaScript('downloadMainTilesetPNG()');
+                    }
+                },
+                {
+                    label: 'Download Tiles Only (SVG)',
+                    click: () => {
+                        mainWindow.webContents.executeJavaScript('downloadMainTilesetSVG()');
+                    }
+                },
+                {
+                    label: 'Download Combined Only (PNG)',
                     click: () => {
                         mainWindow.webContents.executeJavaScript('downloadCombinedTilesPNG()');
                     }
                 },
                 {
-                    label: 'Download Combined Tiles as SVG',
+                    label: 'Download Combined Only (SVG)',
                     click: () => {
                         mainWindow.webContents.executeJavaScript('downloadCombinedTilesSVG()');
                     }
