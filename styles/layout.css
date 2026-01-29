@@ -86,7 +86,7 @@ header h1 {
   box-sizing: border-box;
 }
 
-footer {
+.top-header {
   position: fixed;
   top: 0;
   left: 0;
@@ -101,20 +101,20 @@ footer {
   box-sizing: border-box;
 }
 
-.footer__left {
+.top-header__left {
   display: flex;
   gap: 10px;
   flex: 1;
 }
 
-.footer__center {
+.top-header__center {
   display: flex;
   gap: 10px;
   justify-content: center;
   flex: 1;
 }
 
-.footer__right {
+.top-header__right {
   display: flex;
   gap: 10px;
   justify-content: flex-end;
