@@ -144,11 +144,16 @@ function setupTileTesterButton() {
 function initTileTester() {
   setupTileTesterButton();
 
-  // Close on escape key
+  // Close on escape key (but not if there's an active selection)
   document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
       const modal = document.getElementById('tileTesterModal');
       if (modal && modal.classList.contains('active')) {
+        // If there's an active canvas selection, let the customTiles handler clear it
+        // instead of closing the modal
+        if (TileTesterState.canvasSelection) {
+          return;
+        }
         closeTileTester();
       }
     }

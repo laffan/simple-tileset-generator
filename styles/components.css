@@ -2807,6 +2807,8 @@
   color: white;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
   transition: background 0.15s ease, transform 0.15s ease;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .selection-resize-handle:hover {
@@ -2818,6 +2820,12 @@
   width: 16px;
   height: 16px;
   pointer-events: none;
+}
+
+/* Prevent text selection on selection menu */
+.custom-tile-selection-ui.custom-tile-selection-menu {
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 /* Session Links Styles */

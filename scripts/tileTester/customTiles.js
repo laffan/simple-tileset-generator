@@ -916,7 +916,7 @@ function showSelectionUI() {
   resizeHandle.style.top = (canvasRect.top + selectionBottom - 12) + 'px';
   resizeHandle.style.zIndex = '1001';
 
-  // Add grid icon (4x4 dots pattern) using SVG
+  // Add grid icon (3x3 dots pattern) using SVG
   resizeHandle.innerHTML = `
     <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
       <circle cx="3" cy="3" r="1.5"/>
@@ -930,6 +930,39 @@ function showSelectionUI() {
       <circle cx="13" cy="13" r="1.5"/>
     </svg>
   `;
+
+  // Add mousedown handler directly on the resize handle
+  resizeHandle.addEventListener('mousedown', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const mainCanvas = document.getElementById('tileTesterMainCanvas');
+    if (!mainCanvas) return;
+
+    // Capture tiles and start resize operation
+    const captured = captureSelectionTiles();
+    if (captured && captured.tiles.length > 0) {
+      TileTesterState.isSelectionResizing = true;
+      TileTesterState.selectionDragTiles = captured.tiles;
+      TileTesterState.selectionOriginalBounds = {
+        minCol: captured.minGridX,
+        minRow: captured.minGridY,
+        width: captured.width,
+        height: captured.height
+      };
+      TileTesterState.selectionResizeSize = {
+        width: captured.width,
+        height: captured.height
+      };
+
+      // Remove original tiles from layers
+      removeSelectionTilesFromLayers();
+
+      hideSelectionUI();
+      mainCanvas.style.cursor = 'nwse-resize';
+      renderTileTesterMainCanvas();
+    }
+  });
 
   document.body.appendChild(resizeHandle);
 
