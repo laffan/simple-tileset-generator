@@ -387,6 +387,11 @@ function removeTileTesterEvents() {
     removeSidebarToggleEvents();
   }
 
+  // Remove section fold events
+  if (typeof removeSectionFoldEvents === 'function') {
+    removeSectionFoldEvents();
+  }
+
   tileTesterEventsInitialized = false;
 }
 

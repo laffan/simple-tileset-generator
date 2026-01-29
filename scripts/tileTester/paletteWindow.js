@@ -4,6 +4,10 @@
 var sidebarToggleInitialized = false;
 var sidebarToggleHandler = null;
 
+// Track section fold initialization
+var sectionFoldInitialized = false;
+var sectionFoldHandlers = [];
+
 // Setup the palette window with tileset
 function setupTileTesterPalette() {
   const paletteCanvas = document.getElementById('tileTesterPaletteCanvas');
@@ -29,6 +33,9 @@ function setupTileTesterPalette() {
 
   // Setup sidebar toggle
   setupSidebarToggle();
+
+  // Setup section fold toggles
+  setupSectionFolds();
 
   // Initial fit mode
   updatePaletteFitMode();
@@ -116,6 +123,40 @@ function removeSidebarToggleEvents() {
   }
 
   sidebarToggleInitialized = false;
+}
+
+// Setup section fold toggles
+function setupSectionFolds() {
+  // Guard against multiple initialization
+  if (sectionFoldInitialized) return;
+  sectionFoldInitialized = true;
+
+  const foldButtons = document.querySelectorAll('.tester-section-fold');
+
+  foldButtons.forEach(btn => {
+    const handler = function(e) {
+      e.stopPropagation();
+      const section = btn.closest('.tester-sidebar-section');
+      if (section) {
+        section.classList.toggle('collapsed');
+        // Update button title
+        const isCollapsed = section.classList.contains('collapsed');
+        btn.title = isCollapsed ? 'Expand section' : 'Collapse section';
+      }
+    };
+
+    btn.addEventListener('click', handler);
+    sectionFoldHandlers.push({ btn, handler });
+  });
+}
+
+// Remove section fold event listeners
+function removeSectionFoldEvents() {
+  sectionFoldHandlers.forEach(({ btn, handler }) => {
+    btn.removeEventListener('click', handler);
+  });
+  sectionFoldHandlers = [];
+  sectionFoldInitialized = false;
 }
 
 // Update palette fit mode

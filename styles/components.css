@@ -1513,6 +1513,47 @@
   flex-direction: column;
 }
 
+/* Sidebar section fold/collapse functionality */
+.tester-sidebar-section {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  transition: flex 0.2s ease;
+}
+
+.tester-sidebar-section.collapsed {
+  flex: 0 0 auto !important;
+}
+
+.tester-sidebar-section.collapsed .tester-section-content {
+  display: none;
+}
+
+.tester-sidebar-section.collapsed .tester-section-fold {
+  transform: rotate(-90deg);
+}
+
+.tester-section-fold {
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: transparent;
+  color: #666;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0;
+  margin-right: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.tester-section-fold:hover {
+  color: #333;
+}
+
 .tester-sidebar-toggle {
   position: absolute;
   right: -30px;
@@ -1548,7 +1589,6 @@
 
 .tester-palette-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   padding: 10px 15px;
   background: #f5f5f5;
@@ -1560,6 +1600,7 @@
   font-size: 13px;
   font-weight: 600;
   color: #333;
+  flex: 1;
 }
 
 .tester-palette-controls {
@@ -1587,12 +1628,16 @@
   font-weight: 600;
 }
 
+/* Palette section wrapper */
+.tester-palette-section {
+  flex: 1 1 50%;
+}
+
 .tester-palette-container {
   padding: 10px;
   overflow: auto;
-  flex: 0 1 50%;
-  max-height: 50%;
-  min-height: 100px;
+  flex: 1;
+  min-height: 0;
 }
 
 .tester-palette-wrapper {
@@ -1710,7 +1755,6 @@
 
 .tester-layers-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   margin-bottom: 8px;
   flex-shrink: 0;
@@ -1720,6 +1764,7 @@
   font-size: 12px;
   font-weight: 600;
   color: #666;
+  flex: 1;
 }
 
 .tester-add-layer-btn {
@@ -2521,7 +2566,6 @@
 
 .tester-custom-tiles-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   margin-bottom: 8px;
   flex-shrink: 0;
@@ -2531,6 +2575,7 @@
   font-size: 12px;
   font-weight: 600;
   color: #666;
+  flex: 1;
 }
 
 .tester-custom-tiles-container {

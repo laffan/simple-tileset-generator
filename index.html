@@ -715,7 +715,10 @@
                     </button>
 
                     <div class="tester-sidebar-content">
+                    <!-- Tile Palette Section -->
+                    <div id="tileTesterPaletteSection" class="tester-sidebar-section tester-palette-section">
                     <div class="tester-palette-header">
+                        <button class="tester-section-fold" title="Collapse section">&#9662;</button>
                         <span>Tile Palette</span>
                         <div class="tester-palette-controls">
                             <label class="tester-fit-label">
@@ -729,7 +732,7 @@
                     </div>
                     <div
                         id="tileTesterPaletteContainer"
-                        class="tester-palette-container"
+                        class="tester-palette-container tester-section-content"
                     >
                         <div
                             id="tileTesterPaletteWrapper"
@@ -738,13 +741,15 @@
                             <canvas id="tileTesterPaletteCanvas"></canvas>
                         </div>
                     </div>
+                    </div>
 
                     <!-- Layers Section -->
                     <div
                         id="tileTesterLayersSection"
-                        class="tester-layers-section"
+                        class="tester-sidebar-section tester-layers-section"
                     >
                         <div class="tester-layers-header">
+                            <button class="tester-section-fold" title="Collapse section">&#9662;</button>
                             <span>Layers</span>
                             <button
                                 id="tileTesterAddLayerBtn"
@@ -755,7 +760,7 @@
                         </div>
                         <div
                             id="tileTesterLayersList"
-                            class="tester-layers-list"
+                            class="tester-layers-list tester-section-content"
                         >
                             <!-- Layers will be rendered here dynamically -->
                         </div>
@@ -764,14 +769,15 @@
                     <!-- Custom Tiles Section -->
                     <div
                         id="tileTesterCustomTilesSection"
-                        class="tester-custom-tiles-section"
+                        class="tester-sidebar-section tester-custom-tiles-section"
                     >
                         <div class="tester-custom-tiles-header">
+                            <button class="tester-section-fold" title="Collapse section">&#9662;</button>
                             <span>Custom Tiles</span>
                         </div>
                         <div
                             id="tileTesterCustomTilesContainer"
-                            class="tester-custom-tiles-container"
+                            class="tester-custom-tiles-container tester-section-content"
                         >
                             <!-- Custom tiles will be rendered here dynamically -->
                         </div>

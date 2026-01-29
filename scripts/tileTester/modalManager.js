@@ -72,6 +72,16 @@ function openTileTester() {
     paletteWindow.classList.remove('content-hidden');
   }
 
+  // Reset section fold states
+  const sections = document.querySelectorAll('.tester-sidebar-section');
+  sections.forEach(section => {
+    section.classList.remove('collapsed');
+    const foldBtn = section.querySelector('.tester-section-fold');
+    if (foldBtn) {
+      foldBtn.title = 'Collapse section';
+    }
+  });
+
   // Setup window resize handler
   tileTesterResizeHandler = function() {
     // Recalculate minimum grid size based on window, but don't shrink existing grid
