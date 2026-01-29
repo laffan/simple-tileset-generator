@@ -135,11 +135,11 @@
 
                 <!-- Color picker tabs -->
                 <div class="color-tabs">
-                    <button class="color-tab active" data-tab="wheel">
-                        Picker
-                    </button>
-                    <button class="color-tab" data-tab="palettes">
+                    <button class="color-tab active" data-tab="palettes">
                         Palettes
+                    </button>
+                    <button class="color-tab" data-tab="wheel">
+                        Picker
                     </button>
                     <button class="color-tab" data-tab="swatches">
                         Swatches
@@ -149,8 +149,13 @@
                     </button>
                 </div>
 
+                <!-- Palettes tab content -->
+                <div class="color-tab-content active" id="palettes-tab">
+                    <div id="palettesContainer"></div>
+                </div>
+
                 <!-- Wheel tab content (Picker) -->
-                <div class="color-tab-content active" id="wheel-tab">
+                <div class="color-tab-content" id="wheel-tab">
                     <div class="color-wheel-container">
                         <div class="wheel-sliders">
                             <div class="wheel-slider-row">
@@ -199,11 +204,6 @@
                             </div>
                         </div>
                     </div>
-                </div>
-
-                <!-- Palettes tab content -->
-                <div class="color-tab-content" id="palettes-tab">
-                    <div id="palettesContainer"></div>
                 </div>
 
                 <!-- Swatches tab content -->
