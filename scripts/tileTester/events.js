@@ -372,9 +372,7 @@ function removeTileTesterEvents() {
     tileTesterEventHandlers.closeBtnHandler = null;
   }
 
-  // Reset zoom and pan
-  TileTesterState.canvasZoom = 1;
-  TileTesterState.canvasPan = { x: 0, y: 0 };
+  // Reset panning state (but preserve zoom and pan position)
   TileTesterState.isSpacePanning = false;
 
   // Remove layers panel events
@@ -409,6 +407,24 @@ function setupZoomControls() {
       zoomLinks.forEach(l => l.classList.remove('active'));
       this.classList.add('active');
     });
+  });
+
+  // Update active state to match current zoom level
+  updateZoomControlsUI();
+}
+
+// Update zoom controls UI to reflect current zoom level
+function updateZoomControlsUI() {
+  const zoomLinks = document.querySelectorAll('.tester-zoom-link');
+  const currentZoom = TileTesterState.canvasZoom || 1;
+
+  zoomLinks.forEach(link => {
+    const linkZoom = parseFloat(link.dataset.zoom);
+    if (linkZoom === currentZoom) {
+      link.classList.add('active');
+    } else {
+      link.classList.remove('active');
+    }
   });
 }
 

@@ -355,14 +355,17 @@ function getTileTesterData() {
   }));
 
   return {
-    version: 2,  // Tile tester data format version
+    version: 3,  // Tile tester data format version
     layers: sparseLayers,
     activeLayerId: TileTesterState.activeLayerId,
     nextLayerId: TileTesterState.nextLayerId,
     gridOrigin: { ...TileTesterState.gridOrigin },
     backgroundColor: TileTesterState.backgroundColor,
     paletteFitMode: TileTesterState.paletteFitMode,
-    customTiles: JSON.parse(JSON.stringify(TileTesterState.customTiles))
+    customTiles: JSON.parse(JSON.stringify(TileTesterState.customTiles)),
+    canvasZoom: TileTesterState.canvasZoom,
+    canvasPan: { ...TileTesterState.canvasPan },
+    tileSize: TileTesterState.tileSize
   };
 }
 
@@ -454,6 +457,17 @@ function loadTileTesterData(data) {
   }
   if (data.customTiles !== undefined) {
     TileTesterState.customTiles = JSON.parse(JSON.stringify(data.customTiles));
+  }
+
+  // Load zoom, pan, and tile size (v3+)
+  if (data.canvasZoom !== undefined) {
+    TileTesterState.canvasZoom = data.canvasZoom;
+  }
+  if (data.canvasPan !== undefined) {
+    TileTesterState.canvasPan = { ...data.canvasPan };
+  }
+  if (data.tileSize !== undefined) {
+    TileTesterState.tileSize = data.tileSize;
   }
 }
 
