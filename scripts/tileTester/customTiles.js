@@ -308,7 +308,7 @@ function showSelectionUI() {
 
   // Menu items
   const menuItems = [
-    { label: 'Add to Custom Tiles', action: addCustomTileFromSelection },
+    { label: 'Add Combined Tile', action: addCustomTileFromSelection },
     { label: 'Save Selection (PNG)', action: saveSelectionAsPNG },
     { label: 'Save Selection (SVG)', action: saveSelectionAsSVG }
   ];

@@ -19,12 +19,6 @@
                 <input type="file" id="loadSessionInput" accept=".json" />
             </div>
             <div class="footer__right">
-                <div class="download-links" id="tilesetDownloadLinks">
-                    <span class="download-label">Download Tileset:</span>
-                    <a href="#" class="download-link" data-format="png">PNG</a>
-                    <span class="download-separator">|</span>
-                    <a href="#" class="download-link" data-format="svg">SVG</a>
-                </div>
             </div>
         </footer>
 
@@ -94,8 +88,12 @@
 
             <div class="Column__Right">
                 <h3 class="previewHeader">
-                    <span>Preview</span>
+                    <span>Tiles</span>
                     <div class="previewHeaderControls">
+                        <a href="#" class="tileset-download-link" data-format="png" data-target="main">PNG</a>
+                        <span class="download-separator">|</span>
+                        <a href="#" class="tileset-download-link" data-format="svg" data-target="main">SVG</a>
+                        <span class="header-separator"></span>
                         <a href="#" id="testTilesetBtn" class="testLink"
                             >Test &amp; Combine</a
                         >
@@ -108,9 +106,16 @@
                     <canvas id="canvas"></canvas>
                 </div>
 
-                <!-- Custom tiles from tile tester -->
+                <!-- Combined tiles from tile tester -->
                 <div class="custom-tiles-preview-section" id="customTilesPreviewSection" style="display: none;">
-                    <h4>Custom Tiles</h4>
+                    <h4 class="combined-tiles-header">
+                        <span>Combined Tiles</span>
+                        <span class="combined-tiles-download-links">
+                            <a href="#" class="tileset-download-link" data-format="png" data-target="combined">PNG</a>
+                            <span class="download-separator">|</span>
+                            <a href="#" class="tileset-download-link" data-format="svg" data-target="combined">SVG</a>
+                        </span>
+                    </h4>
                     <div class="custom-tiles-preview-container" id="customTilesPreviewContainer"></div>
                 </div>
 
@@ -766,14 +771,14 @@
                         </div>
                     </div>
 
-                    <!-- Custom Tiles Section -->
+                    <!-- Combined Tiles Section -->
                     <div
                         id="tileTesterCustomTilesSection"
                         class="tester-sidebar-section tester-custom-tiles-section"
                     >
                         <div class="tester-custom-tiles-header">
                             <button class="tester-section-fold" title="Collapse section">&#9662;</button>
-                            <span>Custom Tiles</span>
+                            <span>Combined Tiles</span>
                         </div>
                         <div
                             id="tileTesterCustomTilesContainer"

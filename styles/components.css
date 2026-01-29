@@ -1441,6 +1441,56 @@
   color: #333;
 }
 
+/* Tileset download links in preview header */
+.tileset-download-link {
+  font-size: 12px;
+  color: #666;
+  text-decoration: none;
+  cursor: pointer;
+  font-weight: normal;
+}
+
+.tileset-download-link:hover {
+  color: #333;
+  text-decoration: underline;
+}
+
+.previewHeaderControls .download-separator {
+  color: #ccc;
+  font-size: 12px;
+}
+
+.header-separator {
+  display: inline-block;
+  width: 1px;
+  height: 12px;
+  background: #ddd;
+  margin: 0 4px;
+}
+
+/* Combined tiles header */
+.combined-tiles-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 0;
+}
+
+.combined-tiles-download-links {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.combined-tiles-download-links .tileset-download-link {
+  font-size: 11px;
+}
+
+.combined-tiles-download-links .download-separator {
+  color: #ccc;
+  font-size: 11px;
+}
+
 /* Tile tester modal - full screen */
 .tester-modal {
   background: #000;

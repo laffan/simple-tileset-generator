@@ -62,17 +62,29 @@ function createWindow() {
                 },
                 { type: 'separator' },
                 {
-                    label: 'Download Tileset as PNG',
+                    label: 'Download Tiles as PNG',
                     accelerator: 'CmdOrCtrl+Shift+P',
                     click: () => {
-                        mainWindow.webContents.executeJavaScript('document.querySelector(\'[data-format="png"]\').click()');
+                        mainWindow.webContents.executeJavaScript('document.querySelector(\'[data-format="png"][data-target="main"]\').click()');
                     }
                 },
                 {
-                    label: 'Download Tileset as SVG',
+                    label: 'Download Tiles as SVG',
                     accelerator: 'CmdOrCtrl+Shift+S',
                     click: () => {
-                        mainWindow.webContents.executeJavaScript('document.querySelector(\'[data-format="svg"]\').click()');
+                        mainWindow.webContents.executeJavaScript('document.querySelector(\'[data-format="svg"][data-target="main"]\').click()');
+                    }
+                },
+                {
+                    label: 'Download Combined Tiles as PNG',
+                    click: () => {
+                        mainWindow.webContents.executeJavaScript('downloadCombinedTilesPNG()');
+                    }
+                },
+                {
+                    label: 'Download Combined Tiles as SVG',
+                    click: () => {
+                        mainWindow.webContents.executeJavaScript('downloadCombinedTilesSVG()');
                     }
                 },
                 { type: 'separator' },
