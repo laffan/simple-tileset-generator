@@ -118,6 +118,11 @@ function closeTileTester() {
     tileTesterResizeHandler = null;
   }
 
+  // Hide selection UI (tooltip and resize handle) before cleaning up state
+  if (typeof hideSelectionUI === 'function') {
+    hideSelectionUI();
+  }
+
   // Clean up
   removeTileTesterEvents();
   resetTileTesterState();
@@ -144,14 +149,24 @@ function setupTileTesterButton() {
 function initTileTester() {
   setupTileTesterButton();
 
-  // Close on escape key (but not if there's an active selection)
+  // Close on escape key (but clear selection first if there's one)
   document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
       const modal = document.getElementById('tileTesterModal');
       if (modal && modal.classList.contains('active')) {
-        // If there's an active canvas selection, let the customTiles handler clear it
-        // instead of closing the modal
+        // If there's an active canvas selection, clear it instead of closing the modal
         if (TileTesterState.canvasSelection) {
+          // If dragging or resizing, cancel and restore tiles
+          if (TileTesterState.isSelectionDragging || TileTesterState.isSelectionResizing) {
+            const bounds = TileTesterState.selectionOriginalBounds;
+            if (bounds && TileTesterState.selectionDragTiles && typeof placeSelectionTilesAt === 'function') {
+              placeSelectionTilesAt(TileTesterState.selectionDragTiles, bounds.minCol, bounds.minRow);
+            }
+          }
+          // Clear the selection
+          if (typeof clearCanvasSelection === 'function') {
+            clearCanvasSelection();
+          }
           return;
         }
         closeTileTester();

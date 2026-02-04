@@ -11,6 +11,8 @@ function addCustomTileFromSelection() {
   if (!state.canvasSelection) return;
 
   const sel = state.canvasSelection;
+  const tileSize = state.tileSize;
+  const sourceCanvas = document.getElementById('canvas');
 
   // Calculate grid bounds (these are internal grid coordinates)
   const minGridX = Math.min(sel.startCol, sel.endCol);
@@ -24,11 +26,14 @@ function addCustomTileFromSelection() {
   // Collect tile references from ALL visible layers (composite view)
   // Each position can have multiple tiles from different layers
   const tileRefs = [];
+  // Track positions with multiple tiles for merging
+  const refsByPosition = {};
 
   for (let localY = 0; localY < height; localY++) {
     for (let localX = 0; localX < width; localX++) {
       const internalX = minGridX + localX;
       const internalY = minGridY + localY;
+      const posKey = `${localX},${localY}`;
 
       // Convert to tile coordinates for sparse lookup
       const tileCoords = internalToTileCoords(internalX, internalY);
@@ -55,12 +60,20 @@ function addCustomTileFromSelection() {
           }
 
           if (tileRef) {
-            tileRefs.push({
+            const refWithPos = {
               ...tileRef,
               localX: localX,
               localY: localY,
-              layerIndex: i  // Track which layer this came from (for proper ordering)
-            });
+              layerIndex: i,  // Track which layer this came from (for proper ordering)
+              layerOpacity: layer.opacity  // Track layer opacity for merging
+            };
+            tileRefs.push(refWithPos);
+
+            // Track by position for overlap detection
+            if (!refsByPosition[posKey]) {
+              refsByPosition[posKey] = [];
+            }
+            refsByPosition[posKey].push(refWithPos);
           }
         }
       }
@@ -73,12 +86,47 @@ function addCustomTileFromSelection() {
     return;
   }
 
+  // Pre-render merged visuals for positions with multiple tiles
+  const mergedPositions = {};
+  for (const posKey in refsByPosition) {
+    const refsAtPos = refsByPosition[posKey];
+    if (refsAtPos.length > 1) {
+      // This position has overlapping tiles - pre-render the merged visual
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = tileSize;
+      tempCanvas.height = tileSize;
+      const tempCtx = tempCanvas.getContext('2d');
+
+      // Sort by layer index and draw in order
+      const sortedRefs = [...refsAtPos].sort((a, b) => (a.layerIndex || 0) - (b.layerIndex || 0));
+      sortedRefs.forEach(ref => {
+        const coords = getTileCanvasCoords(ref);
+        if (!coords) return;
+
+        const srcX = coords.col * tileSize;
+        const srcY = coords.row * tileSize;
+
+        tempCtx.globalAlpha = ref.layerOpacity !== undefined ? ref.layerOpacity : 1;
+        tempCtx.drawImage(
+          sourceCanvas,
+          srcX, srcY, tileSize, tileSize,
+          0, 0, tileSize, tileSize
+        );
+      });
+      tempCtx.globalAlpha = 1;
+
+      // Store as data URL
+      mergedPositions[posKey] = tempCanvas.toDataURL('image/png');
+    }
+  }
+
   // Create the custom tile
   const customTile = {
     id: generateCustomTileId(),
     tileRefs: tileRefs,
     width: width,
-    height: height
+    height: height,
+    mergedPositions: Object.keys(mergedPositions).length > 0 ? mergedPositions : null
   };
 
   state.customTiles.push(customTile);
@@ -248,6 +296,78 @@ function removeSelectionTilesFromLayers() {
       }
     }
   }
+}
+
+// Clear tiles on the active layer within the selection area
+function clearSelectionOnActiveLayer() {
+  const state = TileTesterState;
+  if (!state.canvasSelection) return;
+
+  const layer = getActiveLayer();
+  if (!layer) return;
+
+  const sel = state.canvasSelection;
+
+  const minGridX = Math.min(sel.startCol, sel.endCol);
+  const maxGridX = Math.max(sel.startCol, sel.endCol);
+  const minGridY = Math.min(sel.startRow, sel.endRow);
+  const maxGridY = Math.max(sel.startRow, sel.endRow);
+
+  const width = maxGridX - minGridX + 1;
+  const height = maxGridY - minGridY + 1;
+
+  // Remove tiles from active layer only
+  for (let localY = 0; localY < height; localY++) {
+    for (let localX = 0; localX < width; localX++) {
+      const internalX = minGridX + localX;
+      const internalY = minGridY + localY;
+      const tileCoords = internalToTileCoords(internalX, internalY);
+      removeTileAtPosition(layer, tileCoords.x, tileCoords.y);
+    }
+  }
+
+  // Update layer thumbnail
+  updateLayerThumbnail(layer.id);
+
+  // Clear selection and redraw
+  clearCanvasSelection();
+}
+
+// Clear tiles on all layers within the selection area
+function clearSelectionOnAllLayers() {
+  const state = TileTesterState;
+  if (!state.canvasSelection) return;
+
+  const sel = state.canvasSelection;
+
+  const minGridX = Math.min(sel.startCol, sel.endCol);
+  const maxGridX = Math.max(sel.startCol, sel.endCol);
+  const minGridY = Math.min(sel.startRow, sel.endRow);
+  const maxGridY = Math.max(sel.startRow, sel.endRow);
+
+  const width = maxGridX - minGridX + 1;
+  const height = maxGridY - minGridY + 1;
+
+  // Remove tiles from ALL layers
+  for (let localY = 0; localY < height; localY++) {
+    for (let localX = 0; localX < width; localX++) {
+      const internalX = minGridX + localX;
+      const internalY = minGridY + localY;
+      const tileCoords = internalToTileCoords(internalX, internalY);
+
+      for (const layer of state.layers) {
+        removeTileAtPosition(layer, tileCoords.x, tileCoords.y);
+      }
+    }
+  }
+
+  // Update all layer thumbnails
+  for (const layer of state.layers) {
+    updateLayerThumbnail(layer.id);
+  }
+
+  // Clear selection and redraw
+  clearCanvasSelection();
 }
 
 // Place captured tiles at a new position
@@ -700,20 +820,8 @@ function setupCanvasSelectionEvents() {
     tileTesterEventHandlers.mainCanvasMouseUp.call(mainCanvas, e);
   });
 
-  // Add escape key handler to clear selection
-  document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape' && TileTesterState.canvasSelection) {
-      // If dragging or resizing, cancel and restore tiles
-      if (TileTesterState.isSelectionDragging || TileTesterState.isSelectionResizing) {
-        const bounds = TileTesterState.selectionOriginalBounds;
-        if (bounds && TileTesterState.selectionDragTiles) {
-          // Restore tiles to original position
-          placeSelectionTilesAt(TileTesterState.selectionDragTiles, bounds.minCol, bounds.minRow);
-        }
-      }
-      clearCanvasSelection();
-    }
-  });
+  // Note: Escape key handling is centralized in modalManager.js initTileTester()
+  // to avoid duplicate handlers being registered each time the modal opens
 }
 
 // Render selection rectangle on canvas (blue color to differentiate from palette red)
@@ -885,6 +993,8 @@ function showSelectionUI() {
   // Menu items
   const menuItems = [
     { label: 'Add Combined Tile', action: addCustomTileFromSelection },
+    { label: 'Clear Layer', action: clearSelectionOnActiveLayer },
+    { label: 'Clear All', action: clearSelectionOnAllLayers },
     { label: 'Save Selection (PNG)', action: saveSelectionAsPNG },
     { label: 'Save Selection (SVG)', action: saveSelectionAsSVG }
   ];
@@ -1193,10 +1303,35 @@ function renderCustomTilesInPalette() {
 
     // Draw the tile references (sorted by layer index to maintain proper ordering)
     if (sourceCanvas) {
+      // Track drawn positions to avoid drawing merged ones twice
+      const drawnPositions = new Set();
+
+      // First draw any merged positions
+      if (customTile.mergedPositions) {
+        for (const posKey in customTile.mergedPositions) {
+          const [localX, localY] = posKey.split(',').map(Number);
+          const destX = localX * tileSize;
+          const destY = localY * tileSize;
+
+          const dataURL = customTile.mergedPositions[posKey];
+          // Use cached image or create new one
+          const img = new Image();
+          img.src = dataURL;
+          // Draw synchronously if already loaded, otherwise it will appear on next render
+          if (img.complete) {
+            previewCtx.drawImage(img, destX, destY, tileSize, tileSize);
+          }
+          drawnPositions.add(posKey);
+        }
+      }
+
       // Sort by layer index to draw in correct order (bottom to top)
       const sortedRefs = [...customTile.tileRefs].sort((a, b) => (a.layerIndex || 0) - (b.layerIndex || 0));
 
       sortedRefs.forEach(ref => {
+        const posKey = `${ref.localX},${ref.localY}`;
+        if (drawnPositions.has(posKey)) return; // Skip if already drawn as merged
+
         // Get canvas coordinates - handles both semantic refs and old-style {row, col}
         const coords = getTileCanvasCoords(ref);
         if (!coords) return;
@@ -1206,11 +1341,18 @@ function renderCustomTilesInPalette() {
         const destX = ref.localX * tileSize;
         const destY = ref.localY * tileSize;
 
+        // Apply layer opacity if captured
+        const opacity = ref.layerOpacity !== undefined ? ref.layerOpacity : 1;
+        previewCtx.globalAlpha = opacity;
+
         previewCtx.drawImage(
           sourceCanvas,
           srcX, srcY, tileSize, tileSize,
           destX, destY, tileSize, tileSize
         );
+
+        previewCtx.globalAlpha = 1;
+        drawnPositions.add(posKey);
       });
     }
 
@@ -1296,13 +1438,20 @@ function placeCustomTileAt(gridX, gridY) {
   const layer = getActiveLayer();
   if (!layer) return;
 
-  // Sort refs by layer index to place in correct order (though all go to current layer)
-  const sortedRefs = [...customTile.tileRefs].sort((a, b) => (a.layerIndex || 0) - (b.layerIndex || 0));
+  // Group refs by position to handle merging properly
+  const refsByPosition = {};
+  customTile.tileRefs.forEach(ref => {
+    const posKey = `${ref.localX},${ref.localY}`;
+    if (!refsByPosition[posKey]) {
+      refsByPosition[posKey] = [];
+    }
+    refsByPosition[posKey].push(ref);
+  });
 
   // FIRST: expand grid to fit all tiles (may shift origin)
   // Find bounds of custom tile
   let minLocalX = 0, maxLocalX = 0, minLocalY = 0, maxLocalY = 0;
-  sortedRefs.forEach(ref => {
+  customTile.tileRefs.forEach(ref => {
     minLocalX = Math.min(minLocalX, ref.localX);
     maxLocalX = Math.max(maxLocalX, ref.localX);
     minLocalY = Math.min(minLocalY, ref.localY);
@@ -1312,37 +1461,55 @@ function placeCustomTileAt(gridX, gridY) {
   ensureGridForInternalPosition(gridX + minLocalX, gridY + minLocalY, 1);
   ensureGridForInternalPosition(gridX + maxLocalX, gridY + maxLocalY, 1);
 
-  // NOW place all tiles using the updated origin
-  sortedRefs.forEach(ref => {
-    const destInternalX = gridX + ref.localX;
-    const destInternalY = gridY + ref.localY;
+  // NOW place tiles using the updated origin
+  // Process each unique position
+  for (const posKey in refsByPosition) {
+    const [localX, localY] = posKey.split(',').map(Number);
+    const refsAtPos = refsByPosition[posKey];
+
+    const destInternalX = gridX + localX;
+    const destInternalY = gridY + localY;
 
     // Convert to tile coordinates using updated origin
     const destCoords = internalToTileCoords(destInternalX, destInternalY);
     const destTileX = destCoords.x;
     const destTileY = destCoords.y;
 
-    // Place tile - preserve semantic reference if present
-    let newTile;
-    if (ref.type && ref.name) {
-      // Semantic reference - copy it (without localX/localY/layerIndex)
-      newTile = {
-        type: ref.type,
-        name: ref.name,
-        colorIndex: ref.colorIndex,
-        tileRow: ref.tileRow,
-        tileCol: ref.tileCol
+    // Check if this position has pre-rendered merged data
+    if (customTile.mergedPositions && customTile.mergedPositions[posKey]) {
+      // Use the merged tile reference
+      const mergedTile = {
+        type: 'merged',
+        dataURL: customTile.mergedPositions[posKey]
       };
-    } else if (ref.row !== undefined && ref.col !== undefined) {
-      // Old-style {row, col} - convert to semantic ref
-      const tileRef = coordsToTileRef(ref.row, ref.col);
-      newTile = tileRef || { row: ref.row, col: ref.col };
-    }
+      setTileAtPosition(layer, destTileX, destTileY, mergedTile);
+    } else {
+      // Single tile at this position - use normal placement
+      // Sort by layer index and use the top-most one (last in sort order)
+      const sortedRefs = [...refsAtPos].sort((a, b) => (a.layerIndex || 0) - (b.layerIndex || 0));
+      const ref = sortedRefs[sortedRefs.length - 1]; // Use top-most
 
-    if (newTile) {
-      setTileAtPosition(layer, destTileX, destTileY, newTile);
+      let newTile;
+      if (ref.type && ref.name) {
+        // Semantic reference - copy it (without localX/localY/layerIndex)
+        newTile = {
+          type: ref.type,
+          name: ref.name,
+          colorIndex: ref.colorIndex,
+          tileRow: ref.tileRow,
+          tileCol: ref.tileCol
+        };
+      } else if (ref.row !== undefined && ref.col !== undefined) {
+        // Old-style {row, col} - convert to semantic ref
+        const tileRef = coordsToTileRef(ref.row, ref.col);
+        newTile = tileRef || { row: ref.row, col: ref.col };
+      }
+
+      if (newTile) {
+        setTileAtPosition(layer, destTileX, destTileY, newTile);
+      }
     }
-  });
+  }
 
   // Render and update transform
   renderTileTesterMainCanvas();

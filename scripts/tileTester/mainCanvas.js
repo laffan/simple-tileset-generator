@@ -56,6 +56,9 @@ function renderTileTesterMainCanvas() {
   updateGridOverlay();
 }
 
+// Cache for loaded merged tile images
+var mergedTileImageCache = {};
+
 // Draw tiles for a specific layer (sparse format)
 function drawLayerTiles(layer) {
   const ctx = TileTesterState.mainCtx;
@@ -75,14 +78,6 @@ function drawLayerTiles(layer) {
     const tileX = entry.x;
     const tileY = entry.y;
 
-    // Get canvas coordinates - handles both semantic refs and old-style {row, col}
-    const coords = getTileCanvasCoords(tile);
-    if (!coords) continue; // Skip if tile not found in current tileset
-
-    // Calculate source position from original tileset
-    const srcX = coords.col * tileSize;
-    const srcY = coords.row * tileSize;
-
     // Convert tile coordinates to internal grid coordinates for rendering
     const internalX = tileX + origin.x;
     const internalY = tileY + origin.y;
@@ -90,6 +85,32 @@ function drawLayerTiles(layer) {
     // Calculate destination position
     const destX = internalX * tileSize;
     const destY = internalY * tileSize;
+
+    // Check if this is a merged tile (pre-rendered from multiple layers)
+    if (tile && tile.type === 'merged' && tile.dataURL) {
+      // Draw from cached image or load it
+      if (mergedTileImageCache[tile.dataURL]) {
+        ctx.drawImage(mergedTileImageCache[tile.dataURL], destX, destY, tileSize, tileSize);
+      } else {
+        // Load the image asynchronously
+        const img = new Image();
+        img.onload = function() {
+          mergedTileImageCache[tile.dataURL] = img;
+          // Re-render the canvas after image loads
+          renderTileTesterMainCanvas();
+        };
+        img.src = tile.dataURL;
+      }
+      continue;
+    }
+
+    // Get canvas coordinates - handles both semantic refs and old-style {row, col}
+    const coords = getTileCanvasCoords(tile);
+    if (!coords) continue; // Skip if tile not found in current tileset
+
+    // Calculate source position from original tileset
+    const srcX = coords.col * tileSize;
+    const srcY = coords.row * tileSize;
 
     // Draw tile from original tileset canvas (not palette which has grid lines)
     ctx.drawImage(
@@ -268,9 +289,40 @@ function drawGhostPreview() {
   // Handle custom tile selection
   if (TileTesterState.selectedCustomTile) {
     const customTile = TileTesterState.selectedCustomTile;
+
+    // If there are merged positions, draw those first, then draw non-merged refs
+    const drawnPositions = new Set();
+
+    // Draw merged positions
+    if (customTile.mergedPositions) {
+      for (const posKey in customTile.mergedPositions) {
+        const [localX, localY] = posKey.split(',').map(Number);
+        const destX = (hoverPos.gridX + localX) * tileSize;
+        const destY = (hoverPos.gridY + localY) * tileSize;
+
+        // Draw from cached image if available
+        const dataURL = customTile.mergedPositions[posKey];
+        if (mergedTileImageCache[dataURL]) {
+          ctx.drawImage(mergedTileImageCache[dataURL], destX, destY, tileSize, tileSize);
+        } else {
+          // Load image for future use
+          const img = new Image();
+          img.onload = function() {
+            mergedTileImageCache[dataURL] = img;
+          };
+          img.src = dataURL;
+        }
+        drawnPositions.add(posKey);
+      }
+    }
+
+    // Draw non-merged tile refs
     const sortedRefs = [...customTile.tileRefs].sort((a, b) => (a.layerIndex || 0) - (b.layerIndex || 0));
 
     sortedRefs.forEach(ref => {
+      const posKey = `${ref.localX},${ref.localY}`;
+      if (drawnPositions.has(posKey)) return; // Skip if already drawn as merged
+
       const coords = getTileCanvasCoords(ref);
       if (!coords) return;
 
@@ -284,6 +336,8 @@ function drawGhostPreview() {
         srcX, srcY, tileSize, tileSize,
         destX, destY, tileSize, tileSize
       );
+
+      drawnPositions.add(posKey);
     });
   }
   // Handle multi-tile selection
@@ -387,14 +441,23 @@ function downloadTileTesterCanvas() {
         const tileX = entry.x;
         const tileY = entry.y;
 
+        const destX = (tileX - offsetX) * tileSize;
+        const destY = (tileY - offsetY) * tileSize;
+
+        // Handle merged tiles
+        if (tile && tile.type === 'merged' && tile.dataURL) {
+          if (mergedTileImageCache[tile.dataURL]) {
+            tempCtx.drawImage(mergedTileImageCache[tile.dataURL], destX, destY, tileSize, tileSize);
+          }
+          continue;
+        }
+
         // Get canvas coordinates - handles both semantic refs and old-style {row, col}
         const coords = getTileCanvasCoords(tile);
         if (!coords) continue;
 
         const srcX = coords.col * tileSize;
         const srcY = coords.row * tileSize;
-        const destX = (tileX - offsetX) * tileSize;
-        const destY = (tileY - offsetY) * tileSize;
 
         tempCtx.drawImage(
           sourceCanvas,
