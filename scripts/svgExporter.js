@@ -808,3 +808,204 @@ function downloadTilemapSVG() {
   const svg = generateTilemapSVG();
   downloadSVG(svg, 'tilemap.svg');
 }
+
+// =====================================================
+// TMX (Tiled Map Editor) Export Functions
+// =====================================================
+
+// Get tileset dimensions for TMX export
+function getTilesetDimensions() {
+  const sourceCanvas = document.getElementById('canvas');
+  const tileSize = TileTesterState.tileSize;
+
+  if (!sourceCanvas) {
+    return { width: 0, height: 0, columns: 0, rows: 0, tileCount: 0 };
+  }
+
+  const columns = Math.floor(sourceCanvas.width / tileSize);
+  const rows = Math.floor(sourceCanvas.height / tileSize);
+
+  return {
+    width: sourceCanvas.width,
+    height: sourceCanvas.height,
+    columns: columns,
+    rows: rows,
+    tileCount: columns * rows,
+    tileSize: tileSize
+  };
+}
+
+// Convert tile coordinates to TMX tile ID (1-indexed, 0 = empty)
+function getTileIdForTMX(tile) {
+  if (!tile) return 0;
+
+  const coords = getTileCanvasCoords(tile);
+  if (!coords) return 0;
+
+  const tilesetDims = getTilesetDimensions();
+  // TMX uses 1-indexed tile IDs, row-major order
+  // ID = row * columns + col + 1
+  return coords.row * tilesetDims.columns + coords.col + 1;
+}
+
+// Generate TMX XML content for Tiled export
+function generateTMXContent(tilesetFilename) {
+  const tileSize = TileTesterState.tileSize;
+  const tilesetDims = getTilesetDimensions();
+
+  // Get bounds of all tiles to determine map size
+  const bounds = getTileBounds();
+
+  // If no tiles, use the current visible grid
+  let mapWidth, mapHeight, offsetX, offsetY;
+  if (!bounds.hasTiles) {
+    mapWidth = TileTesterState.gridWidth;
+    mapHeight = TileTesterState.gridHeight;
+    offsetX = 0;
+    offsetY = 0;
+  } else {
+    mapWidth = bounds.maxX - bounds.minX + 1;
+    mapHeight = bounds.maxY - bounds.minY + 1;
+    offsetX = bounds.minX;
+    offsetY = bounds.minY;
+  }
+
+  // Build the TMX XML
+  let tmx = '<?xml version="1.0" encoding="UTF-8"?>\n';
+  tmx += '<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" ';
+  tmx += `width="${mapWidth}" height="${mapHeight}" tilewidth="${tileSize}" tileheight="${tileSize}" `;
+  tmx += `infinite="0" nextlayerid="${TileTesterState.layers.length + 1}" nextobjectid="1">\n`;
+
+  // Add tileset reference
+  tmx += ` <tileset firstgid="1" name="tiles" tilewidth="${tileSize}" tileheight="${tileSize}" `;
+  tmx += `tilecount="${tilesetDims.tileCount}" columns="${tilesetDims.columns}">\n`;
+  tmx += `  <image source="${tilesetFilename}" width="${tilesetDims.width}" height="${tilesetDims.height}"/>\n`;
+  tmx += ` </tileset>\n`;
+
+  // Add each visible layer
+  TileTesterState.layers.forEach((layer, index) => {
+    if (!layer.visible) return;
+
+    tmx += ` <layer id="${index + 1}" name="${escapeXML(layer.name)}" width="${mapWidth}" height="${mapHeight}">\n`;
+    tmx += `  <data encoding="csv">\n`;
+
+    // Build the tile data grid
+    const rows = [];
+    for (let y = 0; y < mapHeight; y++) {
+      const row = [];
+      for (let x = 0; x < mapWidth; x++) {
+        // Convert from export coordinates to tile coordinates
+        const tileX = x + offsetX;
+        const tileY = y + offsetY;
+
+        // Find tile at this position in the layer
+        let tileId = 0;
+        if (layer.tiles && Array.isArray(layer.tiles)) {
+          const entry = layer.tiles.find(e => e.x === tileX && e.y === tileY);
+          if (entry && entry.tile) {
+            // For merged tiles, we can't represent them in TMX (they're pre-rendered)
+            // So we skip them (show as empty)
+            if (entry.tile.type !== 'merged') {
+              tileId = getTileIdForTMX(entry.tile);
+            }
+          }
+        }
+        row.push(tileId);
+      }
+      rows.push(row.join(','));
+    }
+
+    tmx += rows.join(',\n') + '\n';
+    tmx += `</data>\n`;
+    tmx += ` </layer>\n`;
+  });
+
+  tmx += '</map>';
+
+  return tmx;
+}
+
+// Escape special XML characters
+function escapeXML(str) {
+  if (!str) return '';
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
+
+// Download Tiled export with PNG tileset
+async function downloadTiledPNG() {
+  if (typeof JSZip === 'undefined') {
+    alert('JSZip library not loaded. Cannot create Tiled export.');
+    return;
+  }
+
+  const sourceCanvas = document.getElementById('canvas');
+  if (!sourceCanvas) {
+    alert('Tileset canvas not found.');
+    return;
+  }
+
+  const zip = new JSZip();
+
+  // Add the TMX file
+  const tmxContent = generateTMXContent('tiles.png');
+  zip.file('tilemap.tmx', tmxContent);
+
+  // Add the tileset PNG
+  const pngDataUrl = sourceCanvas.toDataURL('image/png');
+  // Remove the data URL prefix to get just the base64 data
+  const pngBase64 = pngDataUrl.replace(/^data:image\/png;base64,/, '');
+  zip.file('tiles.png', pngBase64, { base64: true });
+
+  // Generate and download the zip
+  try {
+    const content = await zip.generateAsync({ type: 'blob' });
+    const link = document.createElement('a');
+    link.download = 'tilemap-tiled.zip';
+    link.href = URL.createObjectURL(content);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(link.href);
+  } catch (err) {
+    console.error('Error generating Tiled ZIP:', err);
+    alert('Error creating Tiled export: ' + err.message);
+  }
+}
+
+// Download Tiled export with SVG tileset
+async function downloadTiledSVG() {
+  if (typeof JSZip === 'undefined') {
+    alert('JSZip library not loaded. Cannot create Tiled export.');
+    return;
+  }
+
+  const zip = new JSZip();
+
+  // Add the TMX file
+  const tmxContent = generateTMXContent('tiles.svg');
+  zip.file('tilemap.tmx', tmxContent);
+
+  // Add the tileset SVG
+  const svgContent = generateTilesetSVG();
+  zip.file('tiles.svg', svgContent);
+
+  // Generate and download the zip
+  try {
+    const content = await zip.generateAsync({ type: 'blob' });
+    const link = document.createElement('a');
+    link.download = 'tilemap-tiled.zip';
+    link.href = URL.createObjectURL(content);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(link.href);
+  } catch (err) {
+    console.error('Error generating Tiled ZIP:', err);
+    alert('Error creating Tiled export: ' + err.message);
+  }
+}

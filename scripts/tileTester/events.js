@@ -20,7 +20,8 @@ var tileTesterEventHandlers = {
   paletteMouseUp: null,
   paletteMouseLeave: null,
   downloadLinkHandlers: [],  // Store download link handlers to prevent accumulation
-  closeBtnHandler: null      // Store close button handler to prevent accumulation
+  closeBtnHandler: null,     // Store close button handler to prevent accumulation
+  modalClickHandler: null    // Store modal click handler for dropdown closing
 };
 
 // Setup all event listeners for tile tester
@@ -264,28 +265,61 @@ function setupControlButtonEvents() {
     });
   }
 
-  // Download link handling - store handlers to prevent accumulation
-  const downloadLinks = document.getElementById('tileTesterDownloadLinks');
-  if (downloadLinks) {
+  // Download dropdown handling
+  const downloadDropdown = document.getElementById('tileTesterDownloadDropdown');
+  if (downloadDropdown) {
     // Clear any previously stored handlers first
     tileTesterEventHandlers.downloadLinkHandlers = [];
 
-    downloadLinks.querySelectorAll('.download-link').forEach(link => {
-      const handler = function(e) {
+    // Handle dropdown trigger clicks
+    const trigger = downloadDropdown.querySelector('.tester-download-trigger');
+    if (trigger) {
+      const triggerHandler = function(e) {
         e.preventDefault();
+        e.stopPropagation();
+        const wasOpen = downloadDropdown.classList.contains('open');
+        downloadDropdown.classList.toggle('open', !wasOpen);
+      };
+      tileTesterEventHandlers.downloadLinkHandlers.push({ link: trigger, handler: triggerHandler });
+      trigger.addEventListener('click', triggerHandler);
+    }
+
+    // Handle dropdown option clicks
+    downloadDropdown.querySelectorAll('.tester-download-option').forEach(option => {
+      const optionHandler = function(e) {
+        e.preventDefault();
+        e.stopPropagation();
         const format = this.dataset.format;
 
-        if (format === 'svg') {
-          downloadTilemapSVG();
-        } else {
+        // Close dropdown
+        downloadDropdown.classList.remove('open');
+
+        // Execute appropriate download
+        if (format === 'png') {
           downloadTileTesterCanvas();
+        } else if (format === 'svg') {
+          downloadTilemapSVG();
+        } else if (format === 'tiled-png') {
+          downloadTiledPNG();
+        } else if (format === 'tiled-svg') {
+          downloadTiledSVG();
         }
       };
-
-      // Store reference to link and handler for removal later
-      tileTesterEventHandlers.downloadLinkHandlers.push({ link, handler });
-      link.addEventListener('click', handler);
+      tileTesterEventHandlers.downloadLinkHandlers.push({ link: option, handler: optionHandler });
+      option.addEventListener('click', optionHandler);
     });
+
+    // Close dropdown when clicking outside (within the modal)
+    const modalClickHandler = function(e) {
+      if (!e.target.closest('.tester-download-dropdown')) {
+        downloadDropdown.classList.remove('open');
+      }
+    };
+    // Store the handler for cleanup
+    if (!tileTesterEventHandlers.modalClickHandler) {
+      tileTesterEventHandlers.modalClickHandler = modalClickHandler;
+      document.getElementById('tileTesterModal').addEventListener('click', modalClickHandler);
+    }
   }
 
   // Initial visibility check for clear background link
@@ -363,6 +397,21 @@ function removeTileTesterEvents() {
       link.removeEventListener('click', handler);
     });
     tileTesterEventHandlers.downloadLinkHandlers = [];
+  }
+
+  // Remove modal click handler for dropdown
+  if (tileTesterEventHandlers.modalClickHandler) {
+    const modal = document.getElementById('tileTesterModal');
+    if (modal) {
+      modal.removeEventListener('click', tileTesterEventHandlers.modalClickHandler);
+    }
+    tileTesterEventHandlers.modalClickHandler = null;
+  }
+
+  // Close dropdown if open
+  const downloadDropdown = document.getElementById('tileTesterDownloadDropdown');
+  if (downloadDropdown) {
+    downloadDropdown.classList.remove('open');
   }
 
   // Remove close button handler

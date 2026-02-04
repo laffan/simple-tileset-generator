@@ -20,7 +20,7 @@
             </div>
             <div class="top-header__right">
                 <div class="download-links" id="tilesetDownloadLinks">
-                    <span class="download-label">Download:</span>
+                    <span class="download-label">Download Tileset:</span>
                     <div class="download-dropdown" id="pngDownloadDropdown">
                         <a href="#" class="download-dropdown-trigger" data-format="png">PNG</a>
                         <div class="download-dropdown-menu">
@@ -838,10 +838,15 @@
                         </div>
                         <!-- Right: Download -->
                         <div class="tester-bar-right" id="tileTesterDownloadLinks">
-                            <span class="bar-label">Download Image:</span>
-                            <a href="#" class="bar-link download-link" data-format="png">PNG</a>
-                            <span class="bar-separator">|</span>
-                            <a href="#" class="bar-link download-link" data-format="svg">SVG</a>
+                            <div class="tester-download-dropdown" id="tileTesterDownloadDropdown">
+                                <a href="#" class="tester-download-trigger">Download Canvas</a>
+                                <div class="tester-download-menu">
+                                    <a href="#" class="tester-download-option" data-format="png">PNG</a>
+                                    <a href="#" class="tester-download-option" data-format="svg">SVG</a>
+                                    <a href="#" class="tester-download-option" data-format="tiled-png">Tiled (PNG)</a>
+                                    <a href="#" class="tester-download-option" data-format="tiled-svg">Tiled (SVG)</a>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1027,6 +1032,7 @@
         <!-- Scripts loaded in dependency order -->
         <!-- Two.js: Local version for offline/Electron use, CDN fallback for web -->
         <script src="lib/two.min.js" onerror="this.onerror=null;this.src='https://cdnjs.cloudflare.com/ajax/libs/two.js/0.8.10/two.min.js';"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
         <script src="scripts/config.js"></script>
 
         <!-- Shape registry and individual shape renderers -->
