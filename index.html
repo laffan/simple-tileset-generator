@@ -469,48 +469,53 @@
                         <!-- Left side: Toolbar -->
                         <div class="pattern-toolbar">
                             <div class="pattern-size-control">
-                                <span class="pattern-toolbar-label"
-                                    >Grid Size</span
-                                >
-                                <div class="pattern-size-btn-group">
-                                    <button
-                                        class="pattern-size-btn"
-                                        data-size="4"
-                                    >
-                                        4
-                                    </button>
-                                    <button
-                                        class="pattern-size-btn active"
-                                        data-size="8"
-                                    >
-                                        8
-                                    </button>
-                                    <button
-                                        class="pattern-size-btn"
-                                        data-size="16"
-                                    >
-                                        16
-                                    </button>
-                                    <button
-                                        class="pattern-size-btn"
-                                        data-size="32"
-                                    >
-                                        32
-                                    </button>
-                                    <button
-                                        class="pattern-size-btn pattern-size-custom-btn"
-                                        id="patternSizeCustomBtn"
-                                    >
-                                        Custom
-                                    </button>
+                                <span class="pattern-toolbar-label">Grid Size</span>
+                                <div class="pattern-size-btn-group pattern-size-grid">
+                                    <button class="pattern-size-btn" data-size="8">8</button>
+                                    <button class="pattern-size-btn active" data-size="16">16</button>
+                                    <button class="pattern-size-btn" data-size="32">32</button>
+                                    <button class="pattern-size-btn" data-size="64">64</button>
+                                    <button class="pattern-size-btn" data-size="128">128</button>
+                                    <button class="pattern-size-btn" data-size="256">256</button>
+                                    <button class="pattern-size-btn pattern-size-custom-btn" id="patternSizeCustomBtn">Custom</button>
                                 </div>
-                                <input
-                                    type="hidden"
-                                    id="patternSizeInput"
-                                    value="8"
-                                />
+                                <input type="hidden" id="patternSizeInput" value="16" />
                             </div>
                             <div class="pattern-toolbar-divider"></div>
+
+                            <!-- Brushes Section -->
+                            <div class="pattern-brushes-section">
+                                <span class="pattern-toolbar-label">Brushes</span>
+                                <div class="pattern-brush-grid">
+                                    <button class="pattern-brush-btn active" data-brush="square" title="Square brush">
+                                        <canvas class="brush-preview-canvas" width="24" height="24"></canvas>
+                                    </button>
+                                    <button class="pattern-brush-btn" data-brush="round" title="Round brush">
+                                        <canvas class="brush-preview-canvas" width="24" height="24"></canvas>
+                                    </button>
+                                    <button class="pattern-brush-btn" data-brush="airbrush" title="Airbrush (random spray)">
+                                        <canvas class="brush-preview-canvas" width="24" height="24"></canvas>
+                                    </button>
+                                </div>
+                                <div class="pattern-brush-custom-row">
+                                    <button class="pattern-brush-btn pattern-brush-custom" data-brush="custom" title="Custom brush" disabled>
+                                        <canvas class="brush-preview-canvas" width="24" height="24"></canvas>
+                                    </button>
+                                    <button id="uploadBrushBtn" class="pattern-tool-btn upload-brush-btn" title="Upload custom brush">
+                                        Upload Brush
+                                    </button>
+                                    <input type="file" id="brushUploadInput" accept="image/*" style="display: none" />
+                                </div>
+                                <button id="patternEraseToggle" class="pattern-erase-toggle">
+                                    Erase
+                                </button>
+                                <div class="pattern-brush-size-control">
+                                    <span class="brush-size-label">Size: <span id="brushSizeDisplay">1</span></span>
+                                    <input type="range" id="brushSizeSlider" min="1" max="16" value="1" step="1" />
+                                </div>
+                            </div>
+                            <div class="pattern-toolbar-divider"></div>
+
                             <button
                                 id="patternInvertBtn"
                                 class="pattern-tool-btn"
@@ -521,9 +526,9 @@
                             <button
                                 id="patternUploadBtn"
                                 class="pattern-tool-btn"
-                                title="Upload image"
+                                title="Upload pattern image"
                             >
-                                Upload
+                                Upload Pattern
                             </button>
                             <button
                                 id="patternDownloadBtn"
@@ -601,8 +606,12 @@
                         </thead>
                         <tbody>
                             <tr>
-                                <td>Draw/erase pixels</td>
+                                <td>Draw pixels</td>
                                 <td>Click + drag</td>
+                            </tr>
+                            <tr>
+                                <td>Erase pixels</td>
+                                <td>Toggle "Erase" button</td>
                             </tr>
                             <tr>
                                 <td>Draw straight line</td>
@@ -611,6 +620,14 @@
                             <tr>
                                 <td>Pan pattern</td>
                                 <td>Space + drag</td>
+                            </tr>
+                            <tr>
+                                <td>Change brush</td>
+                                <td>Click brush in Brushes section</td>
+                            </tr>
+                            <tr>
+                                <td>Upload custom brush</td>
+                                <td>Click "Upload Brush" button</td>
                             </tr>
                         </tbody>
                     </table>
@@ -1110,6 +1127,7 @@
 
         <!-- Pattern Editor function modules -->
         <script src="scripts/patternEditorFunctions/state.js"></script>
+        <script src="scripts/patternEditorFunctions/brushes.js"></script>
         <script src="scripts/patternEditorFunctions/canvas.js"></script>
         <script src="scripts/patternEditorFunctions/drawing.js"></script>
         <script src="scripts/patternEditorFunctions/events.js"></script>

@@ -68,6 +68,14 @@ function openPatternEditor(patternIndex) {
     UndoRedoManager.clearPatternHistory();
   }
 
+  // Initialize brush system
+  if (typeof resetBrushState === 'function') {
+    resetBrushState();
+  }
+  if (typeof initBrushPreviews === 'function') {
+    initBrushPreviews();
+  }
+
   // Setup events
   setupPatternEditorEvents();
 

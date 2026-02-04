@@ -25,9 +25,13 @@ function startPatternDrawing(e) {
   state.startPixel = pixel;
   state.currentPixel = pixel;
 
-  // Determine draw color based on current pixel state
-  const currentValue = state.pixelData[pixel.row] ? state.pixelData[pixel.row][pixel.col] : 0;
-  state.drawColor = currentValue === 1 ? 0 : 1;
+  // Determine draw color based on erase mode or current pixel state
+  if (typeof BrushState !== 'undefined' && BrushState.isErasing) {
+    state.drawColor = 0; // Always erase
+  } else {
+    const currentValue = state.pixelData[pixel.row] ? state.pixelData[pixel.row][pixel.col] : 0;
+    state.drawColor = currentValue === 1 ? 0 : 1;
+  }
 
   // Check if shift is held for line mode
   if (e.shiftKey) {
@@ -35,8 +39,8 @@ function startPatternDrawing(e) {
     // Initialize preview data for line mode
     state.previewData = copyPatternPixels(state.pixelData);
   } else {
-    // Freehand mode - toggle the first pixel immediately
-    togglePatternPixel(pixel.row, pixel.col, state.drawColor);
+    // Freehand mode - apply brush at the first pixel
+    applyBrushAtPixel(pixel.row, pixel.col, state.drawColor);
   }
 
   drawPatternEditorCanvas();
@@ -67,8 +71,8 @@ function handlePatternMouseMove(e) {
     // Update line preview
     updateLinePreview();
   } else {
-    // Freehand drawing - toggle pixels as we drag
-    togglePatternPixel(pixel.row, pixel.col, state.drawColor);
+    // Freehand drawing - apply brush as we drag
+    applyBrushAtPixel(pixel.row, pixel.col, state.drawColor);
   }
 
   drawPatternEditorCanvas();
@@ -126,6 +130,56 @@ function togglePatternPixel(row, col, value) {
   state.pixelData[row][col] = value !== undefined ? value : (state.pixelData[row][col] === 1 ? 0 : 1);
 }
 
+// Apply brush at a given pixel position
+function applyBrushAtPixel(centerRow, centerCol, value) {
+  const state = PatternEditorState;
+
+  // Get pixels affected by the brush
+  let pixels;
+  if (typeof getBrushPixels === 'function') {
+    pixels = getBrushPixels(centerRow, centerCol);
+  } else {
+    // Fallback to single pixel if brush system not loaded
+    pixels = [{ row: centerRow, col: centerCol }];
+  }
+
+  // Apply value to all affected pixels
+  pixels.forEach(pixel => {
+    // Wrap coordinates to pattern bounds for seamless editing
+    const wrappedRow = ((pixel.row % state.patternSize) + state.patternSize) % state.patternSize;
+    const wrappedCol = ((pixel.col % state.patternSize) + state.patternSize) % state.patternSize;
+
+    if (!state.pixelData[wrappedRow]) {
+      state.pixelData[wrappedRow] = [];
+    }
+    state.pixelData[wrappedRow][wrappedCol] = value;
+  });
+}
+
+// Apply brush at a given pixel position in preview data (for line mode)
+function applyBrushAtPixelPreview(centerRow, centerCol, value, previewData, patternSize) {
+  // Get pixels affected by the brush
+  let pixels;
+  if (typeof getBrushPixels === 'function') {
+    pixels = getBrushPixels(centerRow, centerCol);
+  } else {
+    // Fallback to single pixel if brush system not loaded
+    pixels = [{ row: centerRow, col: centerCol }];
+  }
+
+  // Apply value to all affected pixels in preview data
+  pixels.forEach(pixel => {
+    // Wrap coordinates to pattern bounds
+    const wrappedRow = ((pixel.row % patternSize) + patternSize) % patternSize;
+    const wrappedCol = ((pixel.col % patternSize) + patternSize) % patternSize;
+
+    if (!previewData[wrappedRow]) {
+      previewData[wrappedRow] = [];
+    }
+    previewData[wrappedRow][wrappedCol] = value;
+  });
+}
+
 function updateLinePreview() {
   const state = PatternEditorState;
   if (!state.startPixel || !state.currentPixel) return;
@@ -133,7 +187,7 @@ function updateLinePreview() {
   // Reset preview to current state
   state.previewData = copyPatternPixels(state.pixelData);
 
-  // Draw line using Bresenham's algorithm
+  // Draw line using Bresenham's algorithm with brush
   const x0 = state.startPixel.col;
   const y0 = state.startPixel.row;
   const x1 = state.currentPixel.col;
@@ -149,8 +203,8 @@ function updateLinePreview() {
   let y = y0;
 
   while (true) {
-    if (!state.previewData[y]) state.previewData[y] = [];
-    state.previewData[y][x] = state.drawColor;
+    // Apply brush at each point along the line
+    applyBrushAtPixelPreview(y, x, state.drawColor, state.previewData, state.patternSize);
 
     if (x === x1 && y === y1) break;
 

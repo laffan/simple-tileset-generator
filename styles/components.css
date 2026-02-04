@@ -1015,7 +1015,7 @@
   padding: 10px;
   background: #f5f5f5;
   border-radius: 4px;
-  width: 90px;
+  width: 120px;
   flex-shrink: 0;
 }
 
@@ -1033,7 +1033,7 @@
   align-items: center;
 }
 
-/* Pattern size button group */
+/* Pattern size button group - 2 column grid */
 .pattern-size-btn-group {
   display: flex;
   flex-direction: column;
@@ -1041,12 +1041,22 @@
   width: 100%;
 }
 
+.pattern-size-btn-group.pattern-size-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+}
+
+.pattern-size-btn-group.pattern-size-grid .pattern-size-custom-btn {
+  grid-column: 1 / -1;
+}
+
 .pattern-size-btn {
-  padding: 6px 8px;
+  padding: 4px 6px;
   border: 1px solid #ccc;
   background: #fff;
   cursor: pointer;
-  font-size: 11px;
+  font-size: 10px;
   border-radius: 4px;
   text-align: center;
   transition: all 0.15s ease;
@@ -1092,6 +1102,144 @@
 
 .pattern-tool-btn:hover {
   background: #e5e5e5;
+}
+
+/* Brushes section */
+.pattern-brushes-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pattern-brush-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+}
+
+.pattern-brush-btn {
+  width: 100%;
+  aspect-ratio: 1;
+  border: 1px solid #ccc;
+  background: #fff;
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.pattern-brush-btn:hover:not(:disabled) {
+  background: #f0f0f0;
+  border-color: #999;
+}
+
+.pattern-brush-btn.active {
+  background: #007bff;
+  border-color: #007bff;
+}
+
+.pattern-brush-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.brush-preview-canvas {
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+}
+
+.pattern-brush-custom-row {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px;
+  align-items: stretch;
+}
+
+.pattern-brush-custom-row .pattern-brush-btn {
+  width: 36px;
+  height: 36px;
+  aspect-ratio: auto;
+}
+
+.upload-brush-btn {
+  font-size: 9px;
+  padding: 4px 6px;
+}
+
+.pattern-erase-toggle {
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  background: #fff;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 11px;
+  text-align: center;
+  transition: all 0.15s ease;
+}
+
+.pattern-erase-toggle:hover {
+  background: #f0f0f0;
+  border-color: #999;
+}
+
+.pattern-erase-toggle.active {
+  background: #dc3545;
+  color: white;
+  border-color: #dc3545;
+}
+
+.pattern-brush-size-control {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.brush-size-label {
+  font-size: 10px;
+  color: #666;
+  text-align: center;
+}
+
+.pattern-brush-size-control input[type="range"] {
+  width: 100%;
+  height: 16px;
+  -webkit-appearance: none;
+  background: transparent;
+}
+
+.pattern-brush-size-control input[type="range"]::-webkit-slider-runnable-track {
+  height: 4px;
+  background: #ddd;
+  border-radius: 2px;
+}
+
+.pattern-brush-size-control input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  background: #007bff;
+  border-radius: 50%;
+  margin-top: -4px;
+  cursor: pointer;
+}
+
+.pattern-brush-size-control input[type="range"]::-moz-range-track {
+  height: 4px;
+  background: #ddd;
+  border-radius: 2px;
+}
+
+.pattern-brush-size-control input[type="range"]::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  background: #007bff;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
 }
 
 /* Pattern editor container - center */

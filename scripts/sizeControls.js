@@ -2,7 +2,7 @@
 
 // Preset sizes for tiles and patterns
 const PRESET_TILE_SIZES = [8, 16, 32, 64, 128, 256];
-const PRESET_PATTERN_SIZES = [4, 8, 16, 32];
+const PRESET_PATTERN_SIZES = [8, 16, 32, 64, 128, 256];
 
 // Track if current size is custom
 let isCustomTileSize = false;

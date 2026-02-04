@@ -49,6 +49,11 @@ function setupPatternEditorEvents() {
   if (downloadBtn) {
     downloadBtn.addEventListener('click', downloadPattern);
   }
+
+  // Setup brush events
+  if (typeof setupBrushEvents === 'function') {
+    setupBrushEvents();
+  }
 }
 
 function removePatternEditorEvents() {
