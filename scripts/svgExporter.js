@@ -559,13 +559,20 @@ function generateTilemapSVG() {
       const tileX = entry.x;
       const tileY = entry.y;
 
-      // Get the tile's canvas coordinates
-      const coords = getTileCanvasCoords(tile);
-      if (!coords) continue;
-
       // Calculate position relative to export bounds
       const destX = (tileX - offsetX) * tileSize;
       const destY = (tileY - offsetY) * tileSize;
+
+      // Check if this is a merged tile (embedded bitmap)
+      if (tile && tile.type === 'merged' && tile.dataURL) {
+        // Embed as SVG image element with base64 data
+        layerContent.push(`    <image x="${destX}" y="${destY}" width="${tileSize}" height="${tileSize}" href="${tile.dataURL}" />`);
+        continue;
+      }
+
+      // Get the tile's canvas coordinates
+      const coords = getTileCanvasCoords(tile);
+      if (!coords) continue;
 
       // Determine what type of tile this is and generate appropriate SVG
       const tileElements = generateTileSVGFromCoords(coords, tileSize, destX, destY);

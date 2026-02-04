@@ -213,7 +213,10 @@ function captureSelectionTiles() {
         if (tile) {
           // Create a copy of the tile reference
           let tileRef;
-          if (tile.type && tile.name) {
+          if (tile.type === 'merged' && tile.dataURL) {
+            // Merged tile - copy it directly
+            tileRef = { type: 'merged', dataURL: tile.dataURL };
+          } else if (tile.type && tile.name) {
             tileRef = { ...tile };
           } else if (tile.row !== undefined && tile.col !== undefined) {
             tileRef = coordsToTileRef(tile.row, tile.col);
@@ -395,7 +398,10 @@ function placeSelectionTilesAt(tiles, targetGridX, targetGridY) {
 
     // Create new tile reference (without local position and layer info)
     let newTile;
-    if (ref.type && ref.name) {
+    if (ref.type === 'merged' && ref.dataURL) {
+      // Merged tile - copy it directly
+      newTile = { type: 'merged', dataURL: ref.dataURL };
+    } else if (ref.type && ref.name) {
       newTile = {
         type: ref.type,
         name: ref.name,
@@ -465,7 +471,10 @@ function placeRepeatedSelectionTiles(originalTiles, originalWidth, originalHeigh
 
           // Create new tile reference
           let newTile;
-          if (ref.type && ref.name) {
+          if (ref.type === 'merged' && ref.dataURL) {
+            // Merged tile - copy it directly
+            newTile = { type: 'merged', dataURL: ref.dataURL };
+          } else if (ref.type && ref.name) {
             newTile = {
               type: ref.type,
               name: ref.name,
@@ -873,13 +882,20 @@ function renderCanvasSelection() {
             // Only draw if within the new bounds
             if (destLocalX >= previewWidth || destLocalY >= previewHeight) return;
 
+            const destX = (previewMinCol + destLocalX) * tileSize;
+            const destY = (previewMinRow + destLocalY) * tileSize;
+
+            // Handle merged tiles
+            if (ref.type === 'merged' && ref.dataURL && typeof mergedTileImageCache !== 'undefined' && mergedTileImageCache[ref.dataURL]) {
+              ctx.drawImage(mergedTileImageCache[ref.dataURL], destX, destY, tileSize, tileSize);
+              return;
+            }
+
             const coords = getTileCanvasCoords(ref);
             if (!coords) return;
 
             const srcX = coords.col * tileSize;
             const srcY = coords.row * tileSize;
-            const destX = (previewMinCol + destLocalX) * tileSize;
-            const destY = (previewMinRow + destLocalY) * tileSize;
 
             ctx.drawImage(
               sourceCanvas,
@@ -892,13 +908,20 @@ function renderCanvasSelection() {
     } else {
       // Draw simple drag preview
       state.selectionDragTiles.forEach(ref => {
+        const destX = (previewMinCol + ref.localX) * tileSize;
+        const destY = (previewMinRow + ref.localY) * tileSize;
+
+        // Handle merged tiles
+        if (ref.type === 'merged' && ref.dataURL && typeof mergedTileImageCache !== 'undefined' && mergedTileImageCache[ref.dataURL]) {
+          ctx.drawImage(mergedTileImageCache[ref.dataURL], destX, destY, tileSize, tileSize);
+          return;
+        }
+
         const coords = getTileCanvasCoords(ref);
         if (!coords) return;
 
         const srcX = coords.col * tileSize;
         const srcY = coords.row * tileSize;
-        const destX = (previewMinCol + ref.localX) * tileSize;
-        const destY = (previewMinRow + ref.localY) * tileSize;
 
         ctx.drawImage(
           sourceCanvas,
@@ -1119,15 +1142,23 @@ function saveSelectionAsPNG() {
 
         const tile = getTileAtPosition(layer, tileCoords.x, tileCoords.y);
         if (tile) {
+          const destX = localX * tileSize;
+          const destY = localY * tileSize;
+
+          tempCtx.globalAlpha = layer.opacity;
+
+          // Check if this is a merged tile
+          if (tile.type === 'merged' && tile.dataURL && mergedTileImageCache[tile.dataURL]) {
+            tempCtx.drawImage(mergedTileImageCache[tile.dataURL], destX, destY, tileSize, tileSize);
+            continue;
+          }
+
           const coords = getTileCanvasCoords(tile);
           if (!coords) continue;
 
           const srcX = coords.col * tileSize;
           const srcY = coords.row * tileSize;
-          const destX = localX * tileSize;
-          const destY = localY * tileSize;
 
-          tempCtx.globalAlpha = layer.opacity;
           tempCtx.drawImage(
             sourceCanvas,
             srcX, srcY, tileSize, tileSize,
@@ -1195,13 +1226,20 @@ function saveSelectionAsSVG() {
         const tile = getTileAtPosition(layer, tileCoords.x, tileCoords.y);
         if (!tile) continue;
 
-        // Get the tile's canvas coordinates
-        const coords = getTileCanvasCoords(tile);
-        if (!coords) continue;
-
         // Calculate destination position in the SVG
         const destX = localX * tileSize;
         const destY = localY * tileSize;
+
+        // Check if this is a merged tile (embedded bitmap)
+        if (tile.type === 'merged' && tile.dataURL) {
+          // Embed as SVG image element with base64 data
+          layerContent.push(`    <image x="${destX}" y="${destY}" width="${tileSize}" height="${tileSize}" href="${tile.dataURL}" />`);
+          continue;
+        }
+
+        // Get the tile's canvas coordinates
+        const coords = getTileCanvasCoords(tile);
+        if (!coords) continue;
 
         // Generate SVG elements for this tile using the existing SVG exporter
         const tileElements = generateTileSVGFromCoords(coords, tileSize, destX, destY);
@@ -1306,7 +1344,7 @@ function renderCustomTilesInPalette() {
       // Track drawn positions to avoid drawing merged ones twice
       const drawnPositions = new Set();
 
-      // First draw any merged positions
+      // First draw any merged positions using cached images
       if (customTile.mergedPositions) {
         for (const posKey in customTile.mergedPositions) {
           const [localX, localY] = posKey.split(',').map(Number);
@@ -1314,12 +1352,21 @@ function renderCustomTilesInPalette() {
           const destY = localY * tileSize;
 
           const dataURL = customTile.mergedPositions[posKey];
-          // Use cached image or create new one
-          const img = new Image();
-          img.src = dataURL;
-          // Draw synchronously if already loaded, otherwise it will appear on next render
-          if (img.complete) {
-            previewCtx.drawImage(img, destX, destY, tileSize, tileSize);
+
+          // Check if image is already cached
+          if (typeof mergedTileImageCache !== 'undefined' && mergedTileImageCache[dataURL]) {
+            previewCtx.drawImage(mergedTileImageCache[dataURL], destX, destY, tileSize, tileSize);
+          } else {
+            // Load and cache the image, then re-render
+            const img = new Image();
+            img.onload = function() {
+              if (typeof mergedTileImageCache !== 'undefined') {
+                mergedTileImageCache[dataURL] = img;
+              }
+              // Re-render after image loads
+              renderCustomTilesInPalette();
+            };
+            img.src = dataURL;
           }
           drawnPositions.add(posKey);
         }
