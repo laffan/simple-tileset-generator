@@ -498,10 +498,11 @@
                                     </button>
                                     <button class="pattern-brush-btn pattern-brush-custom" data-brush="custom" title="Custom brush" style="display: none;">
                                         <canvas class="brush-preview-canvas" width="20" height="20"></canvas>
+                                        <span class="custom-brush-delete" id="customBrushDelete" title="Delete custom brush">&times;</span>
                                     </button>
                                 </div>
                                 <button id="patternEraseToggle" class="pattern-erase-toggle">
-                                    Erase
+                                    Erase (X)
                                 </button>
                                 <div class="pattern-brush-size-control">
                                     <span class="brush-size-label">Size: <span id="brushSizeDisplay">1</span></span>
@@ -509,7 +510,7 @@
                                 </div>
                                 <div class="pattern-brush-density-control" id="airbrushDensityControl" style="display: none;">
                                     <span class="brush-size-label">Density: <span id="brushDensityDisplay">30</span>%</span>
-                                    <input type="range" id="brushDensitySlider" min="10" max="100" value="30" step="5" />
+                                    <input type="range" id="brushDensitySlider" min="3" max="100" value="30" step="1" />
                                 </div>
                                 <a href="#" id="uploadBrushLink" class="upload-brush-link">Upload Brush</a>
                                 <input type="file" id="brushUploadInput" accept="image/*" style="display: none" />
@@ -1128,6 +1129,7 @@
         <!-- Pattern Editor function modules -->
         <script src="scripts/patternEditorFunctions/state.js"></script>
         <script src="scripts/patternEditorFunctions/brushes.js"></script>
+        <script src="scripts/patternEditorFunctions/selection.js"></script>
         <script src="scripts/patternEditorFunctions/canvas.js"></script>
         <script src="scripts/patternEditorFunctions/drawing.js"></script>
         <script src="scripts/patternEditorFunctions/events.js"></script>

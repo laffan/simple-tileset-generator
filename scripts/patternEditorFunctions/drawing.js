@@ -3,6 +3,13 @@
 function startPatternDrawing(e) {
   const state = PatternEditorState;
 
+  // Handle selection tool first (cmd+drag)
+  if (typeof handlePatternSelectionMouseDown === 'function') {
+    if (handlePatternSelectionMouseDown(e)) {
+      return; // Selection handled the event
+    }
+  }
+
   // If spacebar is held, start panning instead of drawing
   if (state.isSpacebarHeld) {
     // Capture state before panning starts
@@ -49,6 +56,13 @@ function startPatternDrawing(e) {
 function handlePatternMouseMove(e) {
   const state = PatternEditorState;
 
+  // Handle selection tool first
+  if (typeof handlePatternSelectionMouseMove === 'function') {
+    if (handlePatternSelectionMouseMove(e)) {
+      return; // Selection handled the event
+    }
+  }
+
   // Handle panning mode
   if (state.isPanning) {
     handlePatternPanning(e);
@@ -94,8 +108,15 @@ function handlePatternMouseMove(e) {
   updatePatternPreviewCanvas();
 }
 
-function stopPatternDrawing() {
+function stopPatternDrawing(e) {
   const state = PatternEditorState;
+
+  // Handle selection tool first
+  if (typeof handlePatternSelectionMouseUp === 'function') {
+    if (handlePatternSelectionMouseUp(e)) {
+      return; // Selection handled the event
+    }
+  }
 
   // Handle panning stop
   if (state.isPanning) {

@@ -1247,6 +1247,81 @@
   margin-top: 5px;
 }
 
+/* Pattern selection UI */
+.pattern-selection-menu {
+  position: absolute;
+  display: flex;
+  gap: 4px;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transform: translateX(-50%) translateY(-100%);
+  z-index: 100;
+}
+
+.pattern-selection-menu-item {
+  padding: 4px 8px;
+  border: 1px solid #ccc;
+  background: #fff;
+  border-radius: 3px;
+  font-size: 11px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.pattern-selection-menu-item:hover {
+  background: #f0f0f0;
+  border-color: #999;
+}
+
+.pattern-selection-resize-handle {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  background: #fff;
+  border: 1px solid #007bff;
+  border-radius: 3px;
+  cursor: nwse-resize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #007bff;
+  z-index: 100;
+}
+
+.pattern-selection-resize-handle:hover {
+  background: #e7f1ff;
+}
+
+/* Custom brush delete button */
+.pattern-brush-btn.pattern-brush-custom {
+  position: relative;
+}
+
+.custom-brush-delete {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 14px;
+  height: 14px;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: bold;
+  line-height: 14px;
+  text-align: center;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.custom-brush-delete:hover {
+  background: #c82333;
+}
+
 /* Pattern editor container - center */
 .pattern-editor-container {
   flex: 1;

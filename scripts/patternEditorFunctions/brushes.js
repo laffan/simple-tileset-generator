@@ -324,7 +324,7 @@ function setBrushSize(size) {
 
 // Set airbrush density
 function setAirbrushDensity(density) {
-  BrushState.airbrushDensity = Math.max(10, Math.min(100, parseInt(density) || 30));
+  BrushState.airbrushDensity = Math.max(3, Math.min(100, parseInt(density) || 30));
 
   // Update display
   const display = document.getElementById('brushDensityDisplay');
@@ -492,6 +492,35 @@ function setupBrushEvents() {
       uploadInput.click();
     });
     uploadInput.addEventListener('change', handleBrushUpload);
+  }
+
+  // Custom brush delete button
+  const deleteBtn = document.getElementById('customBrushDelete');
+  if (deleteBtn) {
+    deleteBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation(); // Prevent selecting the custom brush
+      deleteCustomBrush();
+    });
+  }
+}
+
+// Delete custom brush with confirmation
+function deleteCustomBrush() {
+  if (!BrushState.customBrushData) return;
+
+  if (confirm('Delete custom brush?')) {
+    BrushState.customBrushData = null;
+
+    // Hide the custom brush button
+    updateCustomBrushVisibility();
+
+    // Switch to square brush if custom was selected
+    if (BrushState.currentBrush === 'custom') {
+      setCurrentBrush('square');
+    }
+
+    updateBrushPreviews();
   }
 }
 

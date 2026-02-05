@@ -80,9 +80,18 @@ function drawPatternEditorCanvas() {
     }
   }
 
-  // Draw ghost brush preview
-  if (typeof BrushState !== 'undefined' && BrushState.hoverPixel && !state.isDrawing) {
+  // Draw ghost brush preview (only if not selecting)
+  if (typeof BrushState !== 'undefined' && BrushState.hoverPixel && !state.isDrawing &&
+      typeof PatternSelectionState !== 'undefined' && !PatternSelectionState.isFinalized &&
+      !PatternSelectionState.isSelecting) {
     drawBrushGhostPreview(primaryTileX, primaryTileY, patternPixelSize);
+  }
+
+  // Draw selection
+  if (typeof renderPatternSelection === 'function' && typeof PatternSelectionState !== 'undefined' &&
+      (PatternSelectionState.isSelecting || PatternSelectionState.isFinalized ||
+       PatternSelectionState.isDragging || PatternSelectionState.isResizing)) {
+    renderPatternSelection(primaryTileX, primaryTileY, patternPixelSize);
   }
 
   // Draw the red boundary box - stays fixed (doesn't move with panning)
