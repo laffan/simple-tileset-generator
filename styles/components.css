@@ -2815,14 +2815,80 @@
   image-rendering: crisp-edges;
 }
 
+/* Pattern scale header (fixed at top of patterns tab) */
+.combination-pattern-scale-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #f5f5f5;
+  padding: 8px;
+  border-bottom: 1px solid #ddd;
+}
+
+.pattern-scale-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 500;
+  color: #666;
+  margin-bottom: 6px;
+  text-align: center;
+}
+
+.pattern-scale-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.pattern-scale-row {
+  display: flex;
+  gap: 3px;
+}
+
+.pattern-scale-btn {
+  flex: 1;
+  padding: 4px 2px;
+  font-size: 10px;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.pattern-scale-btn:hover {
+  background: #e5e5e5;
+  border-color: #999;
+}
+
+.pattern-scale-btn.active {
+  background: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
 /* Patterns palette */
 .combination-pattern-palette {
   padding: 8px;
+  padding-top: 8px;
   max-height: 360px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+/* Pattern palette content wrapper for proper scrolling */
+#combinationPatternPaletteContent {
+  display: flex;
+  flex-direction: column;
+  max-height: 450px;
+  overflow: hidden;
+}
+
+#combinationPatternPaletteContent .combination-pattern-palette {
+  flex: 1;
+  overflow-y: auto;
 }
 
 /* Pattern item with preview and grid size buttons */
@@ -2880,32 +2946,7 @@
   border-radius: 2px;
 }
 
-/* Grid size buttons */
-.combination-pattern-sizes {
-  display: flex;
-  gap: 2px;
-}
-
-.combination-pattern-size-btn {
-  flex: 1;
-  padding: 3px 2px;
-  font-size: 9px;
-  background: #f0f0f0;
-  border: 1px solid #ccc;
-  border-radius: 2px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.combination-pattern-size-btn:hover {
-  background: #e5e5e5;
-}
-
-.combination-pattern-size-btn.active {
-  background: #007bff;
-  color: white;
-  border-color: #007bff;
-}
+/* Old per-pattern grid size buttons - removed, now using global scale header */
 
 /* No pattern option */
 .combination-no-pattern {

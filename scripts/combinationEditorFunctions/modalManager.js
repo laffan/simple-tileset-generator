@@ -539,6 +539,15 @@ function setupCombinationEditorUI() {
     };
   });
 
+  // Pattern scale buttons (global for all patterns)
+  const patternScaleBtns = document.querySelectorAll('.pattern-scale-btn');
+  patternScaleBtns.forEach(btn => {
+    btn.onclick = function() {
+      const size = parseInt(this.dataset.size);
+      selectPatternScale(size);
+    };
+  });
+
   // Grid size +/- buttons
   const gridSizeButtons = document.querySelectorAll('.grid-size-btn');
   gridSizeButtons.forEach(btn => {
@@ -931,7 +940,7 @@ function buildCombinationPatternPalette() {
     normalPreviewWrap.appendChild(normalCanvas);
     normalPreviewWrap.onclick = function(e) {
       e.stopPropagation();
-      selectCombinationPattern(patternName, CombinationEditorState.selectedPatternSize || 16, false);
+      selectCombinationPattern(patternName, CombinationEditorState.selectedPatternSize || 32, false);
     };
     previewsRow.appendChild(normalPreviewWrap);
 
@@ -949,36 +958,11 @@ function buildCombinationPatternPalette() {
     invertedPreviewWrap.appendChild(invertedCanvas);
     invertedPreviewWrap.onclick = function(e) {
       e.stopPropagation();
-      selectCombinationPattern(patternName, CombinationEditorState.selectedPatternSize || 16, true);
+      selectCombinationPattern(patternName, CombinationEditorState.selectedPatternSize || 32, true);
     };
     previewsRow.appendChild(invertedPreviewWrap);
 
     item.appendChild(previewsRow);
-
-    // Grid size buttons row
-    const sizesRow = document.createElement('div');
-    sizesRow.className = 'combination-pattern-sizes';
-
-    [4, 8, 16, 32].forEach(size => {
-      const sizeBtn = document.createElement('button');
-      sizeBtn.className = 'combination-pattern-size-btn';
-      sizeBtn.textContent = size;
-      sizeBtn.dataset.size = size;
-
-      // Mark active if this pattern and size are selected
-      if (isSelected && CombinationEditorState.selectedPatternSize === size) {
-        sizeBtn.classList.add('active');
-      }
-
-      sizeBtn.onclick = function(e) {
-        e.stopPropagation();
-        selectCombinationPattern(patternName, size, CombinationEditorState.selectedPatternInvert);
-      };
-
-      sizesRow.appendChild(sizeBtn);
-    });
-
-    item.appendChild(sizesRow);
     paletteContainer.appendChild(item);
   });
 }
@@ -1016,7 +1000,7 @@ function getCombPatternData() {
   const patternData = getPatternPixelData(patternName);
   if (!patternData) return null;
 
-  const targetSize = CombinationEditorState.selectedPatternSize || 16;
+  const targetSize = CombinationEditorState.selectedPatternSize || 32;
   const sourceSize = patternData.size || 8;
   const shouldInvert = CombinationEditorState.selectedPatternInvert || false;
 
@@ -1043,6 +1027,27 @@ function getCombPatternData() {
     size: targetSize,
     pixels: scaledPixels
   };
+}
+
+// Select a pattern scale (global for all patterns)
+function selectPatternScale(size) {
+  // Update state
+  CombinationEditorState.selectedPatternSize = size;
+
+  // Update scale button UI
+  const scaleBtns = document.querySelectorAll('.pattern-scale-btn');
+  scaleBtns.forEach(btn => {
+    btn.classList.toggle('active', parseInt(btn.dataset.size) === size);
+  });
+
+  // If a pattern is currently selected, re-apply it with the new size
+  if (CombinationEditorState.selectedPatternName) {
+    selectCombinationPattern(
+      CombinationEditorState.selectedPatternName,
+      size,
+      CombinationEditorState.selectedPatternInvert
+    );
+  }
 }
 
 // Select a pattern for the combination (or null for no pattern)
@@ -1126,12 +1131,12 @@ function updatePatternPaletteSelection() {
     if (invertedPreview) {
       invertedPreview.classList.toggle('selected', isSelected && patternInvert);
     }
+  });
 
-    // Update size buttons
-    item.querySelectorAll('.combination-pattern-size-btn').forEach(btn => {
-      const btnSize = parseInt(btn.dataset.size, 10);
-      btn.classList.toggle('active', isSelected && btnSize === patternSize);
-    });
+  // Update global scale buttons
+  const scaleBtns = document.querySelectorAll('.pattern-scale-btn');
+  scaleBtns.forEach(btn => {
+    btn.classList.toggle('active', parseInt(btn.dataset.size) === patternSize);
   });
 }
 
@@ -1147,7 +1152,7 @@ function loadPathPatternInfo() {
   } else {
     // No pattern for this path
     CombinationEditorState.selectedPatternName = null;
-    CombinationEditorState.selectedPatternSize = 16;
+    CombinationEditorState.selectedPatternSize = 32;
     CombinationEditorState.selectedPatternInvert = false;
   }
 
