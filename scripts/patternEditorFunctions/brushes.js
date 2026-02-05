@@ -90,14 +90,22 @@ const BrushTypes = {
       const pixels = [];
       const radius = size / 2;
 
-      // Use density from BrushState (10-100%)
+      // Use density from BrushState (3-100%)
       const densityPercent = density || BrushState.airbrushDensity;
       const sprayCount = Math.max(1, Math.floor(size * size * (densityPercent / 100)));
 
+      // Interpolate between uniform (low density) and center-weighted (high density)
+      // At 3% density: fully uniform distribution
+      // At 100% density: center-weighted distribution
+      const centerWeight = Math.pow(densityPercent / 100, 0.5); // 0 = uniform, 1 = center-weighted
+
       for (let i = 0; i < sprayCount; i++) {
-        // Random angle and distance from center (weighted towards center)
         const angle = Math.random() * Math.PI * 2;
-        const distance = Math.random() * Math.random() * radius; // Squared random for center weighting
+
+        // Blend between uniform and center-weighted distribution
+        const uniformDist = Math.sqrt(Math.random()) * radius; // Uniform in circle
+        const centerDist = Math.random() * Math.random() * radius; // Center-weighted
+        const distance = uniformDist * (1 - centerWeight) + centerDist * centerWeight;
 
         const dr = Math.round(Math.sin(angle) * distance);
         const dc = Math.round(Math.cos(angle) * distance);
@@ -110,8 +118,8 @@ const BrushTypes = {
         }
       }
 
-      // Always include the center pixel
-      if (!pixels.some(p => p.row === centerRow && p.col === centerCol)) {
+      // Only include center pixel at higher densities (above 50%)
+      if (densityPercent > 50 && !pixels.some(p => p.row === centerRow && p.col === centerCol)) {
         pixels.push({ row: centerRow, col: centerCol });
       }
 

@@ -1289,6 +1289,9 @@
   justify-content: center;
   color: #007bff;
   z-index: 100;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
 }
 
 .pattern-selection-resize-handle:hover {

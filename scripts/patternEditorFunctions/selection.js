@@ -88,6 +88,30 @@ function clearSelectionPixels() {
   updatePatternPreviewCanvas();
 }
 
+// Fill pixels in the selection area
+function fillSelectionPixels() {
+  const state = PatternEditorState;
+  const bounds = getSelectionBounds();
+  if (!bounds) return;
+
+  // Capture undo state
+  if (typeof UndoRedoManager !== 'undefined') {
+    UndoRedoManager.capturePatternState();
+  }
+
+  for (let row = bounds.minRow; row <= bounds.maxRow; row++) {
+    for (let col = bounds.minCol; col <= bounds.maxCol; col++) {
+      if (!state.pixelData[row]) {
+        state.pixelData[row] = [];
+      }
+      state.pixelData[row][col] = 1;
+    }
+  }
+
+  drawPatternEditorCanvas();
+  updatePatternPreviewCanvas();
+}
+
 // Create a custom brush from the current selection
 function createBrushFromSelection() {
   const pixels = captureSelectionPixels();
@@ -207,6 +231,7 @@ function showPatternSelectionUI() {
 
   const menuItems = [
     { label: 'New Custom Brush', action: createBrushFromSelection },
+    { label: 'Fill', action: () => { fillSelectionPixels(); clearPatternSelection(); } },
     { label: 'Clear', action: () => { clearSelectionPixels(); clearPatternSelection(); } }
   ];
 
@@ -242,6 +267,27 @@ function showPatternSelectionUI() {
 
   handle.style.left = `${selX + selWidth - 6}px`;
   handle.style.top = `${selY + selHeight - 6}px`;
+
+  // Add mousedown handler to resize handle for proper drag initiation
+  handle.addEventListener('mousedown', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const pixel = getPixelFromEvent(e);
+    if (!pixel) return;
+
+    PatternSelectionState.isResizing = true;
+    PatternSelectionState.resizeStart = { row: pixel.row, col: pixel.col };
+    PatternSelectionState.originalBounds = bounds;
+    PatternSelectionState.resizeSize = { width: bounds.width, height: bounds.height };
+    PatternSelectionState.capturedPixels = captureSelectionPixels();
+
+    // Clear original pixels
+    clearSelectionPixelsNoUndo();
+
+    hidePatternSelectionUI();
+    state.editorCanvas.style.cursor = 'nwse-resize';
+  });
 
   container.appendChild(handle);
 }
