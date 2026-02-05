@@ -5,7 +5,9 @@ const BrushState = {
   currentBrush: 'square',  // 'square', 'round', 'airbrush', 'custom'
   brushSize: 1,            // 1-16 pixels
   isErasing: false,        // Erase mode toggle
-  customBrushData: null    // Custom brush pixel data (2D array)
+  customBrushData: null,   // Custom brush pixel data (2D array)
+  airbrushDensity: 30,     // 10-100% density for airbrush
+  hoverPixel: null         // Current hover pixel for ghost preview
 };
 
 // Brush type definitions
@@ -35,7 +37,7 @@ const BrushTypes = {
       ctx.fillRect(0, 0, canvasSize, canvasSize);
 
       // Draw square brush preview
-      const padding = 4;
+      const padding = 3;
       const brushSize = canvasSize - padding * 2;
       ctx.fillStyle = isActive ? '#fff' : '#333';
       ctx.fillRect(padding, padding, brushSize, brushSize);
@@ -72,7 +74,7 @@ const BrushTypes = {
       // Draw circle brush preview
       const centerX = canvasSize / 2;
       const centerY = canvasSize / 2;
-      const radius = (canvasSize - 8) / 2;
+      const radius = (canvasSize - 6) / 2;
 
       ctx.beginPath();
       ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
@@ -84,15 +86,15 @@ const BrushTypes = {
   // Airbrush - random spray pattern
   airbrush: {
     name: 'Airbrush',
-    getPixels: function(centerRow, centerCol, size) {
+    getPixels: function(centerRow, centerCol, size, customData, density) {
       const pixels = [];
       const radius = size / 2;
-      const halfSize = Math.ceil(radius);
 
-      // Spray density based on size (more pixels for larger brushes)
-      const density = Math.max(3, Math.floor(size * size * 0.3));
+      // Use density from BrushState (10-100%)
+      const densityPercent = density || BrushState.airbrushDensity;
+      const sprayCount = Math.max(1, Math.floor(size * size * (densityPercent / 100)));
 
-      for (let i = 0; i < density; i++) {
+      for (let i = 0; i < sprayCount; i++) {
         // Random angle and distance from center (weighted towards center)
         const angle = Math.random() * Math.PI * 2;
         const distance = Math.random() * Math.random() * radius; // Squared random for center weighting
@@ -126,7 +128,7 @@ const BrushTypes = {
       // Draw spray pattern preview (deterministic for preview)
       const centerX = canvasSize / 2;
       const centerY = canvasSize / 2;
-      const radius = (canvasSize - 8) / 2;
+      const radius = (canvasSize - 6) / 2;
 
       ctx.fillStyle = isActive ? '#fff' : '#333';
 
@@ -137,10 +139,11 @@ const BrushTypes = {
         [-0.2, 0.4], [0.35, -0.1], [-0.4, -0.2], [0.05, 0.5], [-0.3, -0.4]
       ];
 
+      const pixelSize = Math.max(1, canvasSize / 12);
       points.forEach(([dx, dy]) => {
         const x = centerX + dx * radius;
         const y = centerY + dy * radius;
-        ctx.fillRect(x - 1, y - 1, 2, 2);
+        ctx.fillRect(x - pixelSize/2, y - pixelSize/2, pixelSize, pixelSize);
       });
     }
   },
@@ -190,12 +193,6 @@ const BrushTypes = {
       ctx.fillRect(0, 0, canvasSize, canvasSize);
 
       if (!customData || !customData.length) {
-        // Draw placeholder (question mark or empty)
-        ctx.fillStyle = isActive ? 'rgba(255,255,255,0.3)' : '#ccc';
-        ctx.font = '14px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('?', canvasSize / 2, canvasSize / 2);
         return;
       }
 
@@ -240,11 +237,17 @@ function initBrushPreviews() {
     const isActive = btn.classList.contains('active');
 
     if (brushType === 'custom') {
-      BrushTypes[brushType].renderPreview(ctx, 24, isActive, BrushState.customBrushData);
+      BrushTypes[brushType].renderPreview(ctx, 20, isActive, BrushState.customBrushData);
     } else {
-      BrushTypes[brushType].renderPreview(ctx, 24, isActive);
+      BrushTypes[brushType].renderPreview(ctx, 20, isActive);
     }
   });
+
+  // Show custom brush button if we have custom data
+  updateCustomBrushVisibility();
+
+  // Update density slider visibility
+  updateDensitySliderVisibility();
 }
 
 // Update all brush preview canvases (called when selection changes)
@@ -260,11 +263,27 @@ function updateBrushPreviews() {
     const isActive = btn.classList.contains('active');
 
     if (brushType === 'custom') {
-      BrushTypes[brushType].renderPreview(ctx, 24, isActive, BrushState.customBrushData);
+      BrushTypes[brushType].renderPreview(ctx, 20, isActive, BrushState.customBrushData);
     } else {
-      BrushTypes[brushType].renderPreview(ctx, 24, isActive);
+      BrushTypes[brushType].renderPreview(ctx, 20, isActive);
     }
   });
+}
+
+// Show/hide custom brush button based on whether we have custom data
+function updateCustomBrushVisibility() {
+  const customBtn = document.querySelector('.pattern-brush-btn[data-brush="custom"]');
+  if (customBtn) {
+    customBtn.style.display = BrushState.customBrushData ? '' : 'none';
+  }
+}
+
+// Show/hide density slider based on brush type
+function updateDensitySliderVisibility() {
+  const densityControl = document.getElementById('airbrushDensityControl');
+  if (densityControl) {
+    densityControl.style.display = BrushState.currentBrush === 'airbrush' ? '' : 'none';
+  }
 }
 
 // Set current brush type
@@ -281,6 +300,9 @@ function setCurrentBrush(brushType) {
 
   // Update previews
   updateBrushPreviews();
+
+  // Show/hide density slider
+  updateDensitySliderVisibility();
 }
 
 // Set brush size
@@ -297,6 +319,23 @@ function setBrushSize(size) {
   const slider = document.getElementById('brushSizeSlider');
   if (slider && parseInt(slider.value) !== BrushState.brushSize) {
     slider.value = BrushState.brushSize;
+  }
+}
+
+// Set airbrush density
+function setAirbrushDensity(density) {
+  BrushState.airbrushDensity = Math.max(10, Math.min(100, parseInt(density) || 30));
+
+  // Update display
+  const display = document.getElementById('brushDensityDisplay');
+  if (display) {
+    display.textContent = BrushState.airbrushDensity;
+  }
+
+  // Update slider
+  const slider = document.getElementById('brushDensitySlider');
+  if (slider && parseInt(slider.value) !== BrushState.airbrushDensity) {
+    slider.value = BrushState.airbrushDensity;
   }
 }
 
@@ -328,7 +367,35 @@ function getBrushPixels(centerRow, centerCol) {
     return brushType.getPixels(centerRow, centerCol, BrushState.brushSize, BrushState.customBrushData);
   }
 
+  if (BrushState.currentBrush === 'airbrush') {
+    return brushType.getPixels(centerRow, centerCol, BrushState.brushSize, null, BrushState.airbrushDensity);
+  }
+
   return brushType.getPixels(centerRow, centerCol, BrushState.brushSize);
+}
+
+// Get pixels for ghost preview (non-random for airbrush)
+function getBrushPixelsForPreview(centerRow, centerCol) {
+  const brushType = BrushTypes[BrushState.currentBrush];
+  if (!brushType) {
+    return [{ row: centerRow, col: centerCol }];
+  }
+
+  // For airbrush, use round brush shape for preview to avoid random flickering
+  if (BrushState.currentBrush === 'airbrush') {
+    return BrushTypes.round.getPixels(centerRow, centerCol, BrushState.brushSize);
+  }
+
+  if (BrushState.currentBrush === 'custom') {
+    return brushType.getPixels(centerRow, centerCol, BrushState.brushSize, BrushState.customBrushData);
+  }
+
+  return brushType.getPixels(centerRow, centerCol, BrushState.brushSize);
+}
+
+// Set hover pixel for ghost preview
+function setHoverPixel(pixel) {
+  BrushState.hoverPixel = pixel;
 }
 
 // Load custom brush from image
@@ -370,13 +437,8 @@ function loadCustomBrushFromImage(img) {
   // Store custom brush data
   BrushState.customBrushData = brushData;
 
-  // Enable custom brush button
-  const customBtn = document.querySelector('.pattern-brush-btn[data-brush="custom"]');
-  if (customBtn) {
-    customBtn.disabled = false;
-  }
-
-  // Select the custom brush
+  // Show and select the custom brush
+  updateCustomBrushVisibility();
   setCurrentBrush('custom');
 
   // Update previews
@@ -413,11 +475,22 @@ function setupBrushEvents() {
     });
   }
 
-  // Upload brush button
-  const uploadBtn = document.getElementById('uploadBrushBtn');
+  // Density slider
+  const densitySlider = document.getElementById('brushDensitySlider');
+  if (densitySlider) {
+    densitySlider.addEventListener('input', function() {
+      setAirbrushDensity(this.value);
+    });
+  }
+
+  // Upload brush link
+  const uploadLink = document.getElementById('uploadBrushLink');
   const uploadInput = document.getElementById('brushUploadInput');
-  if (uploadBtn && uploadInput) {
-    uploadBtn.addEventListener('click', () => uploadInput.click());
+  if (uploadLink && uploadInput) {
+    uploadLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      uploadInput.click();
+    });
     uploadInput.addEventListener('change', handleBrushUpload);
   }
 }
@@ -446,10 +519,28 @@ function resetBrushState() {
   BrushState.currentBrush = 'square';
   BrushState.brushSize = 1;
   BrushState.isErasing = false;
+  BrushState.airbrushDensity = 30;
+  BrushState.hoverPixel = null;
   // Keep custom brush data between sessions
 
   // Update UI
   setBrushSize(1);
+  setAirbrushDensity(30);
   toggleEraseMode(false);
   setCurrentBrush('square');
+  updateCustomBrushVisibility();
+}
+
+// Get custom brush data for session saving
+function getCustomBrushDataForSession() {
+  return BrushState.customBrushData;
+}
+
+// Load custom brush data from session
+function loadCustomBrushDataFromSession(data) {
+  if (data && Array.isArray(data) && data.length > 0) {
+    BrushState.customBrushData = data;
+    updateCustomBrushVisibility();
+    updateBrushPreviews();
+  }
 }

@@ -7,7 +7,7 @@ function setupPatternEditorEvents() {
   state.editorCanvas.addEventListener('mousedown', startPatternDrawing);
   state.editorCanvas.addEventListener('mousemove', handlePatternMouseMove);
   state.editorCanvas.addEventListener('mouseup', stopPatternDrawing);
-  state.editorCanvas.addEventListener('mouseleave', stopPatternDrawing);
+  state.editorCanvas.addEventListener('mouseleave', handlePatternMouseLeave);
 
   // Touch events
   state.editorCanvas.addEventListener('touchstart', handlePatternTouchStart);
@@ -63,7 +63,7 @@ function removePatternEditorEvents() {
     state.editorCanvas.removeEventListener('mousedown', startPatternDrawing);
     state.editorCanvas.removeEventListener('mousemove', handlePatternMouseMove);
     state.editorCanvas.removeEventListener('mouseup', stopPatternDrawing);
-    state.editorCanvas.removeEventListener('mouseleave', stopPatternDrawing);
+    state.editorCanvas.removeEventListener('mouseleave', handlePatternMouseLeave);
     state.editorCanvas.removeEventListener('touchstart', handlePatternTouchStart);
     state.editorCanvas.removeEventListener('touchmove', handlePatternTouchMove);
     state.editorCanvas.removeEventListener('touchend', handlePatternTouchEnd);
@@ -105,6 +105,17 @@ function handlePatternTouchMove(e) {
 function handlePatternTouchEnd(e) {
   e.preventDefault();
   stopPatternDrawing();
+}
+
+function handlePatternMouseLeave() {
+  // Clear hover pixel for ghost preview
+  if (typeof setHoverPixel === 'function') {
+    setHoverPixel(null);
+  }
+  // Stop any drawing
+  stopPatternDrawing();
+  // Redraw to remove ghost preview
+  drawPatternEditorCanvas();
 }
 
 function getPixelFromEvent(e) {
@@ -309,7 +320,18 @@ function downloadPattern() {
 function handlePatternEditorKeyDown(e) {
   const state = PatternEditorState;
 
-  // Only handle spacebar
+  // Handle 'x' key for toggling eraser
+  if (e.code === 'KeyX' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+    e.preventDefault();
+    if (typeof toggleEraseMode === 'function') {
+      toggleEraseMode();
+      // Redraw to update ghost preview color
+      drawPatternEditorCanvas();
+    }
+    return;
+  }
+
+  // Handle spacebar for panning
   if (e.code !== 'Space') return;
 
   // Prevent default scrolling behavior

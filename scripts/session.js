@@ -46,6 +46,7 @@ function getSessionData() {
     customShapes: getCustomShapeData(), // Save custom shape path data
     customPatterns: getCustomPatternData(), // Save custom pattern pixel data
     customCombinations: getCustomCombinationData(), // Save custom combination data
+    customBrush: typeof getCustomBrushDataForSession === 'function' ? getCustomBrushDataForSession() : null, // Save custom brush data
     tileTester: getTileTesterData() // Save tile tester state
   };
 }
@@ -151,6 +152,11 @@ function applySessionData(data) {
   // Load tile tester state (version 5+)
   if (data.tileTester !== undefined) {
     loadTileTesterData(data.tileTester);
+  }
+
+  // Load custom brush data
+  if (data.customBrush && typeof loadCustomBrushDataFromSession === 'function') {
+    loadCustomBrushDataFromSession(data.customBrush);
   }
 
   // Update the UI

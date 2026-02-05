@@ -25,12 +25,11 @@ function startPatternDrawing(e) {
   state.startPixel = pixel;
   state.currentPixel = pixel;
 
-  // Determine draw color based on erase mode or current pixel state
+  // Determine draw color based on erase mode (no longer toggles based on current pixel)
   if (typeof BrushState !== 'undefined' && BrushState.isErasing) {
-    state.drawColor = 0; // Always erase
+    state.drawColor = 0; // Erase mode
   } else {
-    const currentValue = state.pixelData[pixel.row] ? state.pixelData[pixel.row][pixel.col] : 0;
-    state.drawColor = currentValue === 1 ? 0 : 1;
+    state.drawColor = 1; // Draw mode
   }
 
   // Check if shift is held for line mode
@@ -56,7 +55,23 @@ function handlePatternMouseMove(e) {
     return;
   }
 
-  if (!state.isDrawing) return;
+  // Always track hover pixel for ghost preview
+  const hoverPixel = getPixelFromEvent(e);
+  if (hoverPixel && isPixelInBounds(hoverPixel)) {
+    if (typeof setHoverPixel === 'function') {
+      setHoverPixel(hoverPixel);
+    }
+  } else {
+    if (typeof setHoverPixel === 'function') {
+      setHoverPixel(null);
+    }
+  }
+
+  // If not drawing, just redraw for hover preview
+  if (!state.isDrawing) {
+    drawPatternEditorCanvas();
+    return;
+  }
 
   const pixel = getPixelFromEvent(e);
   if (!pixel || !isPixelInBounds(pixel)) return;

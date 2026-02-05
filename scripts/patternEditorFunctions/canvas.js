@@ -80,6 +80,11 @@ function drawPatternEditorCanvas() {
     }
   }
 
+  // Draw ghost brush preview
+  if (typeof BrushState !== 'undefined' && BrushState.hoverPixel && !state.isDrawing) {
+    drawBrushGhostPreview(primaryTileX, primaryTileY, patternPixelSize);
+  }
+
   // Draw the red boundary box - stays fixed (doesn't move with panning)
   const boundaryX = state.boundaryOffsetX + (state.BOUNDARY_SIZE - patternPixelSize) / 2;
   const boundaryY = state.boundaryOffsetY + (state.BOUNDARY_SIZE - patternPixelSize) / 2;
@@ -91,6 +96,47 @@ function drawPatternEditorCanvas() {
     patternPixelSize,
     patternPixelSize
   );
+}
+
+function drawBrushGhostPreview(primaryTileX, primaryTileY, patternPixelSize) {
+  const state = PatternEditorState;
+  const ctx = state.editorCtx;
+
+  if (!BrushState.hoverPixel) return;
+
+  // Get pixels that would be affected by the brush
+  const previewPixels = typeof getBrushPixelsForPreview === 'function'
+    ? getBrushPixelsForPreview(BrushState.hoverPixel.row, BrushState.hoverPixel.col)
+    : [BrushState.hoverPixel];
+
+  // Determine ghost color based on erase mode
+  const isErasing = BrushState.isErasing;
+  ctx.fillStyle = isErasing ? 'rgba(255, 100, 100, 0.4)' : 'rgba(100, 100, 255, 0.4)';
+
+  // Draw ghost preview for each affected pixel (wrapping to pattern bounds)
+  previewPixels.forEach(pixel => {
+    const wrappedRow = ((pixel.row % state.patternSize) + state.patternSize) % state.patternSize;
+    const wrappedCol = ((pixel.col % state.patternSize) + state.patternSize) % state.patternSize;
+
+    // Draw on primary tile
+    const x = primaryTileX + wrappedCol * state.pixelSize;
+    const y = primaryTileY + wrappedRow * state.pixelSize;
+
+    ctx.fillRect(x, y, state.pixelSize, state.pixelSize);
+
+    // Also draw on adjacent tiles for seamless preview
+    const offsets = [[-1, 0], [1, 0], [0, -1], [0, 1], [-1, -1], [-1, 1], [1, -1], [1, 1]];
+    offsets.forEach(([tx, ty]) => {
+      const adjX = primaryTileX + tx * patternPixelSize + wrappedCol * state.pixelSize;
+      const adjY = primaryTileY + ty * patternPixelSize + wrappedRow * state.pixelSize;
+
+      // Only draw if visible
+      if (adjX >= -state.pixelSize && adjX < state.editorCanvas.width &&
+          adjY >= -state.pixelSize && adjY < state.editorCanvas.height) {
+        ctx.fillRect(adjX, adjY, state.pixelSize, state.pixelSize);
+      }
+    });
+  });
 }
 
 function drawPatternEditorInstance(offsetX, offsetY, isPrimary) {

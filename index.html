@@ -488,23 +488,17 @@
                                 <span class="pattern-toolbar-label">Brushes</span>
                                 <div class="pattern-brush-grid">
                                     <button class="pattern-brush-btn active" data-brush="square" title="Square brush">
-                                        <canvas class="brush-preview-canvas" width="24" height="24"></canvas>
+                                        <canvas class="brush-preview-canvas" width="20" height="20"></canvas>
                                     </button>
                                     <button class="pattern-brush-btn" data-brush="round" title="Round brush">
-                                        <canvas class="brush-preview-canvas" width="24" height="24"></canvas>
+                                        <canvas class="brush-preview-canvas" width="20" height="20"></canvas>
                                     </button>
                                     <button class="pattern-brush-btn" data-brush="airbrush" title="Airbrush (random spray)">
-                                        <canvas class="brush-preview-canvas" width="24" height="24"></canvas>
+                                        <canvas class="brush-preview-canvas" width="20" height="20"></canvas>
                                     </button>
-                                </div>
-                                <div class="pattern-brush-custom-row">
-                                    <button class="pattern-brush-btn pattern-brush-custom" data-brush="custom" title="Custom brush" disabled>
-                                        <canvas class="brush-preview-canvas" width="24" height="24"></canvas>
+                                    <button class="pattern-brush-btn pattern-brush-custom" data-brush="custom" title="Custom brush" style="display: none;">
+                                        <canvas class="brush-preview-canvas" width="20" height="20"></canvas>
                                     </button>
-                                    <button id="uploadBrushBtn" class="pattern-tool-btn upload-brush-btn" title="Upload custom brush">
-                                        Upload Brush
-                                    </button>
-                                    <input type="file" id="brushUploadInput" accept="image/*" style="display: none" />
                                 </div>
                                 <button id="patternEraseToggle" class="pattern-erase-toggle">
                                     Erase
@@ -513,16 +507,15 @@
                                     <span class="brush-size-label">Size: <span id="brushSizeDisplay">1</span></span>
                                     <input type="range" id="brushSizeSlider" min="1" max="16" value="1" step="1" />
                                 </div>
+                                <div class="pattern-brush-density-control" id="airbrushDensityControl" style="display: none;">
+                                    <span class="brush-size-label">Density: <span id="brushDensityDisplay">30</span>%</span>
+                                    <input type="range" id="brushDensitySlider" min="10" max="100" value="30" step="5" />
+                                </div>
+                                <a href="#" id="uploadBrushLink" class="upload-brush-link">Upload Brush</a>
+                                <input type="file" id="brushUploadInput" accept="image/*" style="display: none" />
                             </div>
                             <div class="pattern-toolbar-divider"></div>
 
-                            <button
-                                id="patternInvertBtn"
-                                class="pattern-tool-btn"
-                                title="Invert pattern"
-                            >
-                                Invert
-                            </button>
                             <button
                                 id="patternUploadBtn"
                                 class="pattern-tool-btn"
@@ -535,7 +528,7 @@
                                 class="pattern-tool-btn"
                                 title="Download pattern"
                             >
-                                Download
+                                Download Pattern
                             </button>
                             <input
                                 type="file"
@@ -561,6 +554,13 @@
                             <div class="pattern-canvas-wrapper">
                                 <canvas id="patternEditorCanvas"></canvas>
                             </div>
+                            <button
+                                id="patternInvertBtn"
+                                class="pattern-tool-btn pattern-invert-btn"
+                                title="Invert pattern"
+                            >
+                                Invert
+                            </button>
                         </div>
 
                         <!-- Right side: Preview -->
@@ -610,8 +610,8 @@
                                 <td>Click + drag</td>
                             </tr>
                             <tr>
-                                <td>Erase pixels</td>
-                                <td>Toggle "Erase" button</td>
+                                <td>Toggle erase mode</td>
+                                <td>Press X or click "Erase"</td>
                             </tr>
                             <tr>
                                 <td>Draw straight line</td>
@@ -627,7 +627,7 @@
                             </tr>
                             <tr>
                                 <td>Upload custom brush</td>
-                                <td>Click "Upload Brush" button</td>
+                                <td>Click "Upload Brush" link</td>
                             </tr>
                         </tbody>
                     </table>

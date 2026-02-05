@@ -1113,8 +1113,8 @@
 
 .pattern-brush-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4px;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 3px;
 }
 
 .pattern-brush-btn {
@@ -1123,8 +1123,8 @@
   border: 1px solid #ccc;
   background: #fff;
   cursor: pointer;
-  border-radius: 4px;
-  padding: 4px;
+  border-radius: 3px;
+  padding: 3px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1152,22 +1152,15 @@
   image-rendering: pixelated;
 }
 
-.pattern-brush-custom-row {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 4px;
-  align-items: stretch;
+.upload-brush-link {
+  font-size: 10px;
+  color: #007bff;
+  text-align: center;
+  text-decoration: none;
 }
 
-.pattern-brush-custom-row .pattern-brush-btn {
-  width: 36px;
-  height: 36px;
-  aspect-ratio: auto;
-}
-
-.upload-brush-btn {
-  font-size: 9px;
-  padding: 4px 6px;
+.upload-brush-link:hover {
+  text-decoration: underline;
 }
 
 .pattern-erase-toggle {
@@ -1192,7 +1185,8 @@
   border-color: #dc3545;
 }
 
-.pattern-brush-size-control {
+.pattern-brush-size-control,
+.pattern-brush-density-control {
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -1204,20 +1198,23 @@
   text-align: center;
 }
 
-.pattern-brush-size-control input[type="range"] {
+.pattern-brush-size-control input[type="range"],
+.pattern-brush-density-control input[type="range"] {
   width: 100%;
   height: 16px;
   -webkit-appearance: none;
   background: transparent;
 }
 
-.pattern-brush-size-control input[type="range"]::-webkit-slider-runnable-track {
+.pattern-brush-size-control input[type="range"]::-webkit-slider-runnable-track,
+.pattern-brush-density-control input[type="range"]::-webkit-slider-runnable-track {
   height: 4px;
   background: #ddd;
   border-radius: 2px;
 }
 
-.pattern-brush-size-control input[type="range"]::-webkit-slider-thumb {
+.pattern-brush-size-control input[type="range"]::-webkit-slider-thumb,
+.pattern-brush-density-control input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   width: 12px;
   height: 12px;
@@ -1227,19 +1224,27 @@
   cursor: pointer;
 }
 
-.pattern-brush-size-control input[type="range"]::-moz-range-track {
+.pattern-brush-size-control input[type="range"]::-moz-range-track,
+.pattern-brush-density-control input[type="range"]::-moz-range-track {
   height: 4px;
   background: #ddd;
   border-radius: 2px;
 }
 
-.pattern-brush-size-control input[type="range"]::-moz-range-thumb {
+.pattern-brush-size-control input[type="range"]::-moz-range-thumb,
+.pattern-brush-density-control input[type="range"]::-moz-range-thumb {
   width: 12px;
   height: 12px;
   background: #007bff;
   border-radius: 50%;
   border: none;
   cursor: pointer;
+}
+
+/* Invert button below canvas */
+.pattern-invert-btn {
+  align-self: center;
+  margin-top: 5px;
 }
 
 /* Pattern editor container - center */
