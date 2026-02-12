@@ -5,9 +5,6 @@ electron/node_modules/
 # Build outputs
 electron/dist/
 
-# Local Two.js copy (generated during npm install)
-lib/two.min.js
-
 # Logs
 *.log
 npm-debug.log*
