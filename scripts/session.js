@@ -1,5 +1,16 @@
 /* Session save/load functionality */
 
+// Electron autosave state
+var currentSessionFilePath = null;
+var _autosaveTimer = null;
+var _autosaveEnabled = false;
+var _isLoadingSession = false;
+var AUTOSAVE_DELAY_MS = 1000;
+
+function isElectron() {
+  return typeof window.electronAPI !== 'undefined';
+}
+
 function getSessionData() {
   // Gather current session state
   const colorInput = document.getElementById('colorInput').value;
@@ -170,6 +181,14 @@ function applySessionData(data) {
 }
 
 function saveSession() {
+  if (isElectron()) {
+    saveSessionElectron();
+  } else {
+    saveSessionWeb();
+  }
+}
+
+function saveSessionWeb() {
   const sessionData = getSessionData();
   const json = JSON.stringify(sessionData, null, 2);
   const blob = new Blob([json], { type: 'application/json' });
@@ -184,18 +203,86 @@ function saveSession() {
   URL.revokeObjectURL(url);
 }
 
+async function saveSessionElectron() {
+  const sessionData = getSessionData();
+  const json = JSON.stringify(sessionData, null, 2);
+
+  if (currentSessionFilePath) {
+    // Autosave to existing file
+    const result = await window.electronAPI.saveSessionToFile(json, currentSessionFilePath);
+    if (result) {
+      updateWindowTitle();
+    }
+  } else {
+    // No file yet - show Save As dialog
+    const filePath = await window.electronAPI.saveSessionAs(json);
+    if (filePath) {
+      currentSessionFilePath = filePath;
+      _autosaveEnabled = true;
+      updateWindowTitle();
+    }
+  }
+}
+
 function loadSession(file) {
   const reader = new FileReader();
   reader.onload = function(e) {
     try {
       const data = JSON.parse(e.target.result);
+      _isLoadingSession = true;
       applySessionData(data);
+      _isLoadingSession = false;
     } catch (error) {
+      _isLoadingSession = false;
       console.error('Error parsing session file:', error);
       alert('Invalid session file');
     }
   };
   reader.readAsText(file);
+}
+
+async function loadSessionElectron() {
+  const result = await window.electronAPI.loadSessionFromDialog();
+  if (result) {
+    try {
+      const data = JSON.parse(result.data);
+      currentSessionFilePath = result.filePath;
+      _autosaveEnabled = true;
+      _isLoadingSession = true;
+      applySessionData(data);
+      _isLoadingSession = false;
+      updateWindowTitle();
+    } catch (error) {
+      _isLoadingSession = false;
+      console.error('Error parsing session file:', error);
+      alert('Invalid session file');
+    }
+  }
+}
+
+// Debounced autosave - called after state-changing actions
+function triggerAutosave() {
+  if (!isElectron() || !_autosaveEnabled || !currentSessionFilePath || _isLoadingSession) {
+    return;
+  }
+
+  // Clear any pending autosave
+  if (_autosaveTimer) {
+    clearTimeout(_autosaveTimer);
+  }
+
+  _autosaveTimer = setTimeout(function() {
+    _autosaveTimer = null;
+    var sessionData = getSessionData();
+    var json = JSON.stringify(sessionData, null, 2);
+    window.electronAPI.saveSessionToFile(json, currentSessionFilePath);
+  }, AUTOSAVE_DELAY_MS);
+}
+
+function updateWindowTitle() {
+  if (!isElectron() || !currentSessionFilePath) return;
+  var fileName = currentSessionFilePath.split(/[\\/]/).pop();
+  document.title = fileName + ' - Simple Tileset Generator';
 }
 
 // Set up event listeners for session links
@@ -206,7 +293,11 @@ document.getElementById('saveSessionLink').addEventListener('click', function(e)
 
 document.getElementById('loadSessionLink').addEventListener('click', function(e) {
   e.preventDefault();
-  document.getElementById('loadSessionInput').click();
+  if (isElectron()) {
+    loadSessionElectron();
+  } else {
+    document.getElementById('loadSessionInput').click();
+  }
 });
 
 document.getElementById('loadSessionInput').addEventListener('change', function(e) {
@@ -216,3 +307,13 @@ document.getElementById('loadSessionInput').addEventListener('change', function(
     e.target.value = '';
   }
 });
+
+// Set up Electron menu listeners
+if (isElectron()) {
+  window.electronAPI.onMenuSave(function() {
+    saveSession();
+  });
+  window.electronAPI.onMenuLoad(function() {
+    loadSessionElectron();
+  });
+}

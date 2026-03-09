@@ -8,6 +8,11 @@ function generateTileset() {
     .map(color => color.trim()) // Remove whitespace from both ends of each color string
     .filter(color => color); // Filter out empty strings after trim
   drawShapes(colors, sizeInput);
+
+  // Trigger autosave in Electron when a save file exists
+  if (typeof triggerAutosave === 'function') {
+    triggerAutosave();
+  }
 }
 
 
@@ -876,6 +881,9 @@ document.getElementById('fitPreview').addEventListener('change', function() {
     previewBox.classList.add('fit-mode');
   } else {
     previewBox.classList.remove('fit-mode');
+  }
+  if (typeof triggerAutosave === 'function') {
+    triggerAutosave();
   }
 });
 

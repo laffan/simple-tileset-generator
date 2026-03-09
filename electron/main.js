@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, shell, dialog } = require('electron');
+const { app, BrowserWindow, Menu, shell, dialog, ipcMain } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
@@ -31,7 +31,8 @@ function createWindow() {
         webPreferences: {
             nodeIntegration: false,
             contextIsolation: true,
-            sandbox: true
+            sandbox: false,
+            preload: path.join(__dirname, 'preload.js')
         },
         icon: path.join(__dirname, 'icons', 'icon.png'),
         title: 'Simple Tileset Generator',
@@ -50,14 +51,14 @@ function createWindow() {
                     label: 'Save Session',
                     accelerator: 'CmdOrCtrl+S',
                     click: () => {
-                        mainWindow.webContents.executeJavaScript('document.getElementById("saveSessionLink").click()');
+                        mainWindow.webContents.send('menu-save');
                     }
                 },
                 {
                     label: 'Load Session',
                     accelerator: 'CmdOrCtrl+O',
                     click: () => {
-                        mainWindow.webContents.executeJavaScript('document.getElementById("loadSessionLink").click()');
+                        mainWindow.webContents.send('menu-load');
                     }
                 },
                 { type: 'separator' },
@@ -209,6 +210,58 @@ function createWindow() {
         mainWindow = null;
     });
 }
+
+// IPC handlers for file save/load
+ipcMain.handle('save-session-to-file', async (event, jsonString, filePath) => {
+    try {
+        fs.writeFileSync(filePath, jsonString, 'utf-8');
+        return filePath;
+    } catch (err) {
+        console.error('Failed to save session:', err);
+        return null;
+    }
+});
+
+ipcMain.handle('save-session-as', async (event, jsonString) => {
+    const result = await dialog.showSaveDialog(mainWindow, {
+        title: 'Save Session',
+        defaultPath: 'tileset-session.json',
+        filters: [{ name: 'JSON Files', extensions: ['json'] }]
+    });
+
+    if (result.canceled || !result.filePath) {
+        return null;
+    }
+
+    try {
+        fs.writeFileSync(result.filePath, jsonString, 'utf-8');
+        return result.filePath;
+    } catch (err) {
+        console.error('Failed to save session:', err);
+        return null;
+    }
+});
+
+ipcMain.handle('load-session-from-dialog', async () => {
+    const result = await dialog.showOpenDialog(mainWindow, {
+        title: 'Load Session',
+        filters: [{ name: 'JSON Files', extensions: ['json'] }],
+        properties: ['openFile']
+    });
+
+    if (result.canceled || result.filePaths.length === 0) {
+        return null;
+    }
+
+    try {
+        const filePath = result.filePaths[0];
+        const data = fs.readFileSync(filePath, 'utf-8');
+        return { filePath, data };
+    } catch (err) {
+        console.error('Failed to load session:', err);
+        return null;
+    }
+});
 
 // This method will be called when Electron has finished initialization
 app.whenReady().then(() => {
