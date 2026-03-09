@@ -3,12 +3,22 @@
 // Electron autosave state
 var currentSessionFilePath = null;
 var _autosaveTimer = null;
-var _autosaveEnabled = false;
 var _isLoadingSession = false;
 var AUTOSAVE_DELAY_MS = 1000;
 
 function isElectron() {
   return typeof window.electronAPI !== 'undefined';
+}
+
+function isAutosaveActive() {
+  if (!isElectron() || !currentSessionFilePath) return false;
+  var cb = document.getElementById('autosaveCheckbox');
+  return cb && cb.checked;
+}
+
+function showAutosaveUI() {
+  var els = document.querySelectorAll('.autosave-ui');
+  els.forEach(function(el) { el.style.display = ''; });
 }
 
 function getSessionData() {
@@ -208,7 +218,7 @@ async function saveSessionElectron() {
   const json = JSON.stringify(sessionData, null, 2);
 
   if (currentSessionFilePath) {
-    // Autosave to existing file
+    // Save to existing file
     const result = await window.electronAPI.saveSessionToFile(json, currentSessionFilePath);
     if (result) {
       updateWindowTitle();
@@ -218,7 +228,7 @@ async function saveSessionElectron() {
     const filePath = await window.electronAPI.saveSessionAs(json);
     if (filePath) {
       currentSessionFilePath = filePath;
-      _autosaveEnabled = true;
+      showAutosaveUI();
       updateWindowTitle();
     }
   }
@@ -247,10 +257,10 @@ async function loadSessionElectron() {
     try {
       const data = JSON.parse(result.data);
       currentSessionFilePath = result.filePath;
-      _autosaveEnabled = true;
       _isLoadingSession = true;
       applySessionData(data);
       _isLoadingSession = false;
+      showAutosaveUI();
       updateWindowTitle();
     } catch (error) {
       _isLoadingSession = false;
@@ -260,9 +270,9 @@ async function loadSessionElectron() {
   }
 }
 
-// Debounced autosave - called after state-changing actions
+// Debounced autosave - triggered by global mouseup/keyup events
 function triggerAutosave() {
-  if (!isElectron() || !_autosaveEnabled || !currentSessionFilePath || _isLoadingSession) {
+  if (!isAutosaveActive() || _isLoadingSession) {
     return;
   }
 
@@ -308,12 +318,20 @@ document.getElementById('loadSessionInput').addEventListener('change', function(
   }
 });
 
-// Set up Electron menu listeners
+// Set up Electron menu listeners and global autosave triggers
 if (isElectron()) {
   window.electronAPI.onMenuSave(function() {
     saveSession();
   });
   window.electronAPI.onMenuLoad(function() {
     loadSessionElectron();
+  });
+
+  // Trigger autosave on every mouse release and key release
+  document.addEventListener('mouseup', function() {
+    triggerAutosave();
+  });
+  document.addEventListener('keyup', function() {
+    triggerAutosave();
   });
 }

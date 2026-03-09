@@ -3203,6 +3203,21 @@
   color: #666;
 }
 
+.autosave-label {
+  color: white;
+  cursor: pointer;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  user-select: none;
+}
+
+.autosave-label input[type="checkbox"] {
+  cursor: pointer;
+  margin: 0;
+}
+
 /* Download Links Styles */
 .download-links {
   display: inline-flex;
