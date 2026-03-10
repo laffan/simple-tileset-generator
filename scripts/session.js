@@ -327,8 +327,13 @@ if (isElectron()) {
     loadSessionElectron();
   });
 
-  // Trigger autosave on every mouse release and key release
+  // Trigger autosave on every mouse release, click, and key release.
+  // click fires after mouseup and after handlers, resetting the debounce
+  // so the save captures state after the action completes.
   document.addEventListener('mouseup', function() {
+    triggerAutosave();
+  });
+  document.addEventListener('click', function() {
     triggerAutosave();
   });
   document.addEventListener('keyup', function() {
